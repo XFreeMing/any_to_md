@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Set, Tuple
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
@@ -235,6 +235,8 @@ def _rewrite_anchor_tags(
     current_doc_path: str,
     prefix: str,
     doc_prefixes: Dict[str, str],
+    local_ids: Set[str],
+    global_ids: Dict[str, str],
     epub: zipfile.ZipFile,
     assets_dir: Path,
     cache: Dict[str, str],
@@ -248,7 +250,17 @@ def _rewrite_anchor_tags(
             continue
         if href.startswith("#"):
             fragment = href[1:]
-            anchor["href"] = f"#{prefix}-{fragment}" if fragment else f"#{prefix}"
+            if not fragment:
+                anchor["href"] = f"#{prefix}"
+                continue
+            if fragment in local_ids:
+                anchor["href"] = f"#{prefix}-{fragment}"
+                continue
+            dest_prefix = global_ids.get(fragment)
+            if dest_prefix:
+                anchor["href"] = f"#{dest_prefix}-{fragment}"
+                continue
+            anchor["href"] = f"#{prefix}-{fragment}"
             continue
         parsed = urlparse(href)
         if parsed.scheme and parsed.scheme not in ("", "data"):
@@ -271,18 +283,30 @@ def _rewrite_anchor_tags(
 
 
 def _transform_spine_document(
-    raw: bytes,
+    raw_html: str,
     doc_path: str,
     prefix: str,
     doc_prefixes: Dict[str, str],
+    local_ids: Set[str],
+    global_ids: Dict[str, str],
     epub: zipfile.ZipFile,
     assets_dir: Path,
     cache: Dict[str, str],
 ) -> str:
-    soup = BeautifulSoup(raw.decode("utf-8", errors="ignore"), "html.parser")
+    soup = BeautifulSoup(raw_html, "html.parser")
     _rewrite_ids_and_names(soup, prefix)
     _rewrite_images(soup, doc_path, epub, assets_dir, cache)
-    _rewrite_anchor_tags(soup, doc_path, prefix, doc_prefixes, epub, assets_dir, cache)
+    _rewrite_anchor_tags(
+        soup,
+        doc_path,
+        prefix,
+        doc_prefixes,
+        local_ids,
+        global_ids,
+        epub,
+        assets_dir,
+        cache,
+    )
     body = soup.body
     inner_html = body.decode_contents() if body else soup.decode()
     return f'<section id="{prefix}" data-source="{doc_path}">\n{inner_html}\n</section>'
@@ -296,6 +320,8 @@ def _render_spine_sections(
 ) -> List[str]:
     doc_entries: List[Tuple[ManifestItem, str]] = []
     doc_prefixes: Dict[str, str] = {}
+    doc_ids: Dict[str, Set[str]] = {}
+    raw_cache: Dict[str, str] = {}
     for index, idref in enumerate(spine):
         item = manifest.get(idref)
         if not item or not item.path:
@@ -305,11 +331,10 @@ def _render_spine_sections(
         doc_entries.append((item, prefix))
         doc_prefixes[item.path] = prefix
 
-    asset_cache: Dict[str, str] = {}
-    sections: List[str] = []
+    global_ids: Dict[str, str] = {}
     for manifest_item, prefix in doc_entries:
         try:
-            raw = epub.read(manifest_item.path)
+            raw_bytes = epub.read(manifest_item.path)
         except KeyError:
             LOGGER.warning(
                 "Missing resource '%s' referenced by id '%s'",
@@ -317,12 +342,36 @@ def _render_spine_sections(
                 manifest_item.item_id,
             )
             continue
+        raw_html = raw_bytes.decode("utf-8", errors="ignore")
+        raw_cache[manifest_item.path] = raw_html
+        soup = BeautifulSoup(raw_html, "html.parser")
+        ids: Set[str] = set()
+        for tag in soup.find_all(True):
+            tag_id = tag.get("id")
+            if tag_id:
+                ids.add(tag_id)
+            if tag.name == "a":
+                name_attr = tag.get("name")
+                if name_attr:
+                    ids.add(name_attr)
+        doc_ids[manifest_item.path] = ids
+        for fragment in ids:
+            global_ids.setdefault(fragment, prefix)
+
+    asset_cache: Dict[str, str] = {}
+    sections: List[str] = []
+    for manifest_item, prefix in doc_entries:
+        raw_html = raw_cache.get(manifest_item.path)
+        if raw_html is None:
+            continue
         sections.append(
             _transform_spine_document(
-                raw,
+                raw_html,
                 manifest_item.path,
                 prefix,
                 doc_prefixes,
+                doc_ids.get(manifest_item.path, set()),
+                global_ids,
                 epub,
                 assets_dir,
                 asset_cache,
