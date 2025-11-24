@@ -55,5 +55,40 @@ tags:
 
 1. Affirmative action takes many forms. It could simply be a matter of encouraging people from certain backgrounds to apply for jobs or for promotion through a policy of active recruitment. (Wolff, 2006)
 
+> 平权行动有多种形式。它可能只是鼓励来自某些背景的人通过积极招聘政策申请工作或晋升的问题。
+
+- apply for: 申请
+- affirmative action: 平权行动
+- takes many forms: 有多种形式
+- could simply be: 可能只是
+- a matter of: ...的问题
+- encouraging: 鼓励
+- people from certain backgrounds: 来自某些背景的人
+- jobs: 工作
+- promotion: 晋升
+- through: 通过
+- policy of active recruitment: 积极招聘政策
+
 2. University students often become active in the student union or newspaper partly because they hope to learn social skills and make connections that will payoff when they graduate. They may, for example, get to interact with lecturers and administrators, who then will support them when they are looking for a job or applying for postgraduate courses. (Giddens, 2009)
+
+> 大学生经常在学生联合会或报纸中变得活跃，部分原因是他们希望学习社交技能并建立联系，这些在毕业时会有回报。例如，他们可能会与讲师和管理人员互动，这些人在他们找工作或申请研究生课程时会支持他们。
+
+- applying for: 申请
+- university students: 大学生
+- become active: 变得活跃
+- student union: 学生联合会
+- newspaper: 报纸
+- partly because: 部分原因是
+- hope to learn: 希望学习
+- social skills: 社交技能
+- make connections: 建立联系
+- will payoff: 会有回报
+- when they graduate: 当他们毕业时
+- for example: 例如
+- get to interact with: 与...互动
+- lecturers: 讲师
+- administrators: 管理人员
+- will support them: 会支持他们
+- looking for a job: 找工作
+- postgraduate courses: 研究生课程
 
