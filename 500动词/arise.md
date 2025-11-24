@@ -3,8 +3,6 @@ tags:
   - 状态变化/从无到有/发生
 ---
 
-  
-
 1. Whether through the operation of the heavenly bodies or because of our own iniquities which the just wrath of God sought to correct, the plague had arisen in the East some years before, causing the death of countless human beings. (Spielvogel, 2010)
 
 > 无论是通过天体的运行，还是因为我们自己的不义，上帝的正义愤怒试图纠正这些不义，瘟疫在几年前在东方出现，导致无数人的死亡。
@@ -40,12 +38,12 @@ tags:
 
 3. A women's liberation movement would arise in the late 1960s, but much of the theoretical foundation for the emergence of the postwar women's liberation movement was evident in the earlier work of Simone de Beauvoir (1908--1986). (Spielvogel, 2010)
 
-> 妇女解放运动将在20世纪60年代后期出现，但战后妇女解放运动出现的理论基础的很大一部分在西蒙娜·德·波伏娃（1908-1986）的早期作品中就很明显。
+> 妇女解放运动将在 20 世纪 60 年代后期出现，但战后妇女解放运动出现的理论基础的很大一部分在西蒙娜·德·波伏娃（1908-1986）的早期作品中就很明显。
 
 - arise: 出现
 - women's liberation movement: 妇女解放运动
 - would: 将
-- in the late 1960s: 在20世纪60年代后期
+- in the late 1960s: 在 20 世纪 60 年代后期
 - but: 但
 - much of: 很大一部分
 - theoretical foundation: 理论基础
@@ -68,6 +66,3 @@ tags:
 - against: 反对
 - foreign workers: 外国工人
 - immigrants: 移民
-
-  
-

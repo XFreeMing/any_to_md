@@ -3,8 +3,6 @@ tags:
   - 状态变化/从无到有/发生
 ---
 
-  
-
 1. Narrative history effectively transmits the knowledge of the past and is the form that best enables students to remember and understand the past. (Spielvogel, 2010)
 
 > 叙事历史有效地传递过去的知识，是使学生能够最好地记住和理解过去的形式。
@@ -68,6 +66,3 @@ tags:
 - such as: 如
 - wild grain: 野生谷物
 - easier to chew and digest: 更容易咀嚼和消化
-
-  
-
