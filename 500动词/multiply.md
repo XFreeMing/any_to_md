@@ -58,7 +58,37 @@ tags:
 
 1. And once they are on the inside of one group or network, the possibilities for expanding their connections multiply greatly. (Giddens, 2009)
 
+> 一旦他们进入一个群体或网络内部，扩展他们联系的可能性就会大大增加。
+
+- multiply: 增加
+- once: 一旦
+- on the inside of: 进入...内部
+- one group or network: 一个群体或网络
+- possibilities: 可能性
+- for expanding: 扩展的
+- their connections: 他们的联系
+- greatly: 大大地
+
 2. Although the Hellenistic world achieved a degree of political stability, by the late third century B.C. signs of decline were beginning to multiply.
 
+> 尽管希腊化世界取得了一定程度的政治稳定，但到公元前三世纪晚期，衰落的迹象开始增加。
+
+- multiply: 增加
+- although: 尽管
+- Hellenistic world: 希腊化世界
+- achieved: 取得
+- degree of political stability: 一定程度的政治稳定
+- by the late third century B.C.: 到公元前三世纪晚期
+- signs of decline: 衰落的迹象
+- beginning to: 开始
+
 3. It is true that multiple roles can multiply stress.
+
+> 确实，多重角色可以增加压力。
+
+- multiply: 增加
+- it is true that: 确实
+- multiple roles: 多重角色
+- can: 可以
+- stress: 压力
 

@@ -2,7 +2,6 @@
 tags:
   - 状态变化/提取
 ---
-  
 
 1. A pioneer Modernist on the American scene, Georgia O'Keeffe (1887–1986) is often classified with America's regional painters. However, her treatment of haunting, biomorphic images abstracted from greatly enlarged flowers and bleached animal bones gives her early paintings a menacing presence. (Fiero, 2011f)
 
@@ -12,7 +11,6 @@ tags:
 - pioneer Modernist: 先驱现代主义者
 - American scene: 美国场景
 - Georgia O'Keeffe: 乔治亚·奥基夫
-- 1887–1986: 1887-1986年
 - classified with: 被归类为
 - America's regional painters: 美国的区域画家
 - however: 然而
@@ -74,6 +72,3 @@ tags:
 - hypothetical agreement: 假设性的协议
 - must: 必须
 - from real life: 从现实生活中
-
-  
-
