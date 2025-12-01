@@ -3,8 +3,6 @@ tags:
   - 状态变化/从无到有/构建
 ---
 
-  
-
 1. The Greeks created a tradition of warfare that became a prominent element of Western civilization. For example, the Greeks devised excellent weapons and body armor, making effective use of technological improvements. (Spielvogel, 2010)
 
 > 希腊人创造了战争传统，这成为西方文明的一个突出元素。例如，希腊人设计了优秀的武器和盔甲，有效利用了技术进步。
@@ -54,16 +52,13 @@ tags:
 
 4. In math, the Sumerians devised a number system based on 60, using combinations of 6 and 10 for practical solutions. (Perry, 2010)
 
-> 在数学中，苏美尔人设计了一个基于60的数字系统，使用6和10的组合来获得实际解决方案。
+> 在数学中，苏美尔人设计了一个基于 60 的数字系统，使用 6 和 10 的组合来获得实际解决方案。
 
 - devised: 设计
 - in math: 在数学中
 - Sumerians: 苏美尔人
 - number system: 数字系统
-- based on 60: 基于60
+- based on 60: 基于 60
 - using combinations: 使用组合
-- of 6 and 10: 6和10的
+- of 6 and 10: 6 和 10 的
 - practical solutions: 实际解决方案
-
-  
-
