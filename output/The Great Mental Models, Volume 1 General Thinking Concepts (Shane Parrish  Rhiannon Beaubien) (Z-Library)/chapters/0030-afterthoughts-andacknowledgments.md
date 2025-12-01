@@ -1,1 +1,0 @@
-# Afterthoughts and Acknowledgments
