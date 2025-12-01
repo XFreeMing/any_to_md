@@ -58,5 +58,42 @@ tags:
 
 1. The State of Nature, and the State of War, which however some Men have confounded, are as far distant as a State of Peace, Good Will, Mutual Assistance, and Preservation, and a State of Enmity, Malice, Violence, and Mutual Destruction are from one another. (Wolff, 2006)
 
+> 自然状态和战争状态，然而有些人已经混淆了它们，它们之间的距离就像和平、善意、相互援助和保存的状态与敌意、恶意、暴力和相互毁灭的状态之间的距离一样远。
+
+- confounded: 混淆
+- State of Nature: 自然状态
+- State of War: 战争状态
+- however: 然而
+- some Men: 有些人
+- as far distant as: 像...一样远
+- State of Peace: 和平状态
+- Good Will: 善意
+- Mutual Assistance: 相互援助
+- Preservation: 保存
+- State of Enmity: 敌意状态
+- Malice: 恶意
+- Violence: 暴力
+- Mutual Destruction: 相互毁灭
+- from one another: 相互之间
+
 2. Art should be independent of all clap-trap——should stand alone, and appeal to the artistic sense of eye or ear, without confounding this with emotions entirely foreign to it, as devotion, pity, love, patriotism, and the like. (Davies et al., 2015)
+
+> 艺术应该独立于所有哗众取宠——应该独立存在，并诉诸眼睛或耳朵的艺术感，而不将其与完全外来的情感混淆，如奉献、怜悯、爱、爱国主义等等。
+
+- confounding: 混淆
+- art: 艺术
+- independent of: 独立于
+- clap-trap: 哗众取宠
+- stand alone: 独立存在
+- appeal to: 诉诸
+- artistic sense: 艺术感
+- eye or ear: 眼睛或耳朵
+- without: 不
+- emotions: 情感
+- entirely foreign to it: 完全外来的
+- devotion: 奉献
+- pity: 怜悯
+- love: 爱
+- patriotism: 爱国主义
+- and the like: 等等
 
