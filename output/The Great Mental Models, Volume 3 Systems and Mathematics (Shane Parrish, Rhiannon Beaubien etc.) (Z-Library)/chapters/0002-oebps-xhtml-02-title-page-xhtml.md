@@ -1,0 +1,1 @@
+![Book Title, The Great Mental Models, Volume 3: Systems and Mathematics, Author, Shane Parrish, Rhiannon Beaubien, and Rosie Leizrowice, Imprint, Portfolio](../assets/OEBPS/images/9780593720035_title_page.jpg)
