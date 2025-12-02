@@ -75,9 +75,59 @@ tags:
 
 1. The Parthenon is often viewed as the perfect embodiment of the Classical Doric style. (Davies et al., 2015)
 
+> 帕特农神庙经常被视为古典多立克风格的完美体现。
+
+- viewed as: 被视为
+- Parthenon: 帕特农神庙
+- often: 经常
+- perfect embodiment: 完美体现
+- Classical Doric style: 古典多立克风格
+
 2. Classical humanists saw no conflict between humanism and religious belief. They viewed their intellectual mission as both pleasing to God and advantageous to society in general. (Fiero, 2011)
+
+> 古典人文主义者认为人文主义和宗教信仰之间没有冲突。他们将他们的知识使命视为既取悦上帝又对一般社会有利。
+
+- viewed: 将...视为
+- classical humanists: 古典人文主义者
+- saw no conflict: 认为没有冲突
+- between: 在...之间
+- humanism: 人文主义
+- religious belief: 宗教信仰
+- intellectual mission: 知识使命
+- pleasing to God: 取悦上帝
+- advantageous to: 对...有利
+- society in general: 一般社会
 
 3. Nevertheless, people in these early civilizations viewed themselves as subjects of states or empires, not as members of Western civilization. (Spielvogel, 2010)
 
+> 然而，这些早期文明中的人们将自己视为国家或帝国的臣民，而不是西方文明的成员。
+
+- viewed themselves as: 将自己视为
+- nevertheless: 然而
+- people: 人们
+- early civilizations: 早期文明
+- subjects: 臣民
+- states or empires: 国家或帝国
+- not as: 而不是
+- members: 成员
+- Western civilization: 西方文明
+
 4. Moreover, the growing recognition of the nonrational—of human actions determined by hidden impulses—led people to doubt that reason played the dominant role in human behavior. Other thinkers viewed the problem of reason differently. (Perry, 2010)
+
+> 此外，对非理性的日益认识——由隐藏冲动决定的人类行为——使人们怀疑理性在人类行为中起主导作用。其他思想家对理性问题的看法不同。
+
+- viewed: 对...的看法
+- moreover: 此外
+- growing recognition: 日益认识
+- nonrational: 非理性
+- human actions: 人类行为
+- determined by: 由...决定
+- hidden impulses: 隐藏冲动
+- led people to doubt: 使人们怀疑
+- reason: 理性
+- played the dominant role: 起主导作用
+- human behavior: 人类行为
+- other thinkers: 其他思想家
+- problem of reason: 理性问题
+- differently: 不同地
 

@@ -83,9 +83,73 @@ tags:
 
 1. At the end of a devastating world war, a new kind of conflict erupted in the Western world as two of the victors, the United States and the Soviet Union, emerged as superpowers and began to argue over the political organization of a Europe liberated from Nazi Germany. (Spielvogel, 2010)
 
+> 在一场毁灭性的世界大战结束时，西方世界爆发了一种新的冲突，两个胜利者美国和苏联作为超级大国出现，并开始就从纳粹德国解放出来的欧洲的政治组织进行争论。
+
+- argue over: 就...争论
+- end of: 结束
+- devastating world war: 毁灭性的世界大战
+- new kind of conflict: 新的冲突
+- erupted: 爆发
+- Western world: 西方世界
+- two of the victors: 两个胜利者
+- United States: 美国
+- Soviet Union: 苏联
+- emerged as: 作为...出现
+- superpowers: 超级大国
+- began to: 开始
+- political organization: 政治组织
+- Europe: 欧洲
+- liberated from: 从...解放出来
+- Nazi Germany: 纳粹德国
+
 2. Philosophers often argue about liberty, property, free will for hours without reaching a conclusion. (Solomon & Higgins, 2009)
+
+> 哲学家经常就自由、财产、自由意志争论数小时而没有得出结论。
+
+- argue about: 就...争论
+- philosophers: 哲学家
+- often: 经常
+- liberty: 自由
+- property: 财产
+- free will: 自由意志
+- for hours: 数小时
+- without reaching a conclusion: 而没有得出结论
 
 3. Pollution of the Rhine River by factories along its banks provokes angry disputes among European nations, and the United States and Canada have argued about the effects of acid rain on Canadian forests. (Spielvogel, 2010)
 
+> 莱茵河沿岸工厂的污染在欧洲国家之间引发了愤怒的争端，美国和加拿大就酸雨对加拿大森林的影响进行了争论。
+
+- argued about: 就...争论
+- pollution: 污染
+- Rhine River: 莱茵河
+- factories: 工厂
+- along its banks: 沿岸
+- provokes: 引发
+- angry disputes: 愤怒的争端
+- among: 在...之间
+- European nations: 欧洲国家
+- United States: 美国
+- Canada: 加拿大
+- effects: 影响
+- acid rain: 酸雨
+- Canadian forests: 加拿大森林
+
 4. What I shall do, then, is to start by defining a view we could call 'extreme liberal individualism' (without worrying about whether this is a view anyone has ever actually held in its extreme form). At least if we do this we will see what there is to argue over. (Wolff, 2006)
+
+> 那么，我要做的是首先定义一个我们可以称为"极端自由个人主义"的观点（不用担心这是否是任何人实际上以极端形式持有的观点）。至少如果我们这样做，我们将看到有什么可以争论的。
+
+- argue over: 就...争论
+- what I shall do: 我要做的
+- then: 那么
+- start by: 首先
+- defining: 定义
+- view: 观点
+- extreme liberal individualism: 极端自由个人主义
+- without worrying about: 不用担心
+- whether: 是否
+- actually held: 实际上持有
+- extreme form: 极端形式
+- at least: 至少
+- if we do this: 如果我们这样做
+- see what there is: 看到有什么
 

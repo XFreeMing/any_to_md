@@ -66,7 +66,38 @@ tags:
 
 1. In the first consideration, which is to bring them up for God... you should observe five little rules. (Davies et al., 2015)
 
+> 在第一个考虑中，这是为了上帝抚养他们...你应该遵守五条小规则。
+
+- observe: 遵守
+- first consideration: 第一个考虑
+- bring them up: 抚养他们
+- God: 上帝
+- should: 应该
+- five little rules: 五条小规则
+
 2. The classicists insisted that art served a moral purpose and should observe the principles of clarity, unity, and decorum. (Davies et al., 2015)
 
+> 古典主义者坚持认为艺术服务于道德目的，应该遵守清晰、统一和得体的原则。
+
+- observe: 遵守
+- classicists: 古典主义者
+- insisted that: 坚持认为
+- art: 艺术
+- served a moral purpose: 服务于道德目的
+- should: 应该
+- principles: 原则
+- clarity: 清晰
+- unity: 统一
+- decorum: 得体
+
 3. Children are expected to be quiet in class, be punctual at lessons and observe rules of school discipline. (Myers, 2012)
+
+> 孩子们被期望在课堂上保持安静，准时上课，并遵守学校纪律规则。
+
+- observe: 遵守
+- children: 孩子们
+- expected to: 被期望
+- quiet in class: 在课堂上保持安静
+- punctual at lessons: 准时上课
+- rules of school discipline: 学校纪律规则
 
