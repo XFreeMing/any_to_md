@@ -70,9 +70,65 @@ tags:
 
 1. We may as well ask the general population to navigate ships, make medical decisions, tend sheep, and so on. (Wolff, 2006)
 
+> 我们也可以要求普通民众导航船只、做出医疗决定、照料羊群等等。
+
+- tend: 照料
+- may as well: 也可以
+- general population: 普通民众
+- navigate ships: 导航船只
+- make medical decisions: 做出医疗决定
+- sheep: 羊群
+- and so on: 等等
+
 2. His innovation served the narrative and liturgical needs of Siena cathedral by depicting another key moment in the life of the Virgin, her birth, which was also an important feast day in the Church. St. Anne rests in her childbed, while midwives attend the newborn Virgin and other women tend to the mother. (Davies et al., 2015)
+
+> 他的创新通过描绘圣母生活中的另一个关键时刻——她的出生（这也是教会的重要节日）——满足了锡耶纳大教堂的叙事和礼仪需求。圣安妮躺在她的产床上，而助产士照顾新生的圣母，其他妇女照顾母亲。
+
+- tend to: 照顾
+- innovation: 创新
+- served: 满足
+- narrative and liturgical needs: 叙事和礼仪需求
+- Siena cathedral: 锡耶纳大教堂
+- depicting: 描绘
+- key moment: 关键时刻
+- life of the Virgin: 圣母的生活
+- birth: 出生
+- important feast day: 重要节日
+- Church: 教会
+- St. Anne: 圣安妮
+- rests in her childbed: 躺在她的产床上
+- midwives: 助产士
+- attend: 照顾
+- newborn Virgin: 新生的圣母
+- other women: 其他妇女
+- mother: 母亲
 
 3. With steam, the whole pattern of work changed because weaker, younger, and less skilled workers could be taught the few simple tasks necessary to tend the machine. (Perry, 2010)
 
+> 有了蒸汽，整个工作模式改变了，因为较弱、较年轻和技能较低的工人可以被教授照料机器所需的几个简单任务。
+
+- tend: 照料
+- with steam: 有了蒸汽
+- whole pattern of work: 整个工作模式
+- changed: 改变
+- weaker: 较弱的
+- younger: 较年轻的
+- less skilled workers: 技能较低的工人
+- taught: 被教授
+- few simple tasks: 几个简单任务
+- necessary to: 所需的
+- machine: 机器
+
 4. In addition to working their allotted land, the serfs had to tend the fields reserved for the lord. (Perry, 2010)
+
+> 除了耕种分配给他们的土地外，农奴还必须照料为领主保留的田地。
+
+- tend: 照料
+- in addition to: 除了
+- working: 耕种
+- allotted land: 分配的土地
+- serfs: 农奴
+- fields: 田地
+- reserved for: 为...保留
+- lord: 领主
 

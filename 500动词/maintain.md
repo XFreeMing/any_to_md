@@ -89,9 +89,61 @@ tags:
 
 1. Holy stature was often credited to people who built and maintained the actual roads on which pilgrims trekked, as was the case with Santo Domingo de la Calzada (literally of the paved road or roadway ), who built, in addition to a pilgrims hostel and hospital, a long bridge over the Oja River and who maintained the roads around the town that came to be named after him. (Davies et al., 2015)
 
+> 神圣地位通常归功于建造和维护朝圣者跋涉的实际道路的人，就像圣多明各·德拉卡尔萨达（字面意思是铺砌的道路或道路）的情况一样，他除了建造朝圣者旅馆和医院外，还在奥哈河上建造了一座长桥，并维护了城镇周围以他命名的道路。
+
+- maintained: 维护
+- holy stature: 神圣地位
+- credited to: 归功于
+- built: 建造
+- actual roads: 实际道路
+- pilgrims trekked: 朝圣者跋涉
+- Santo Domingo de la Calzada: 圣多明各·德拉卡尔萨达
+- paved road or roadway: 铺砌的道路或道路
+- pilgrims hostel: 朝圣者旅馆
+- hospital: 医院
+- long bridge: 长桥
+- Oja River: 奥哈河
+- roads around the town: 城镇周围的道路
+- named after him: 以他命名
+
 2. Personal space is a sort of portable bubble or buffer zone that we like to maintain between ourselves and others. (Myers, 2012)
+
+> 个人空间是一种我们喜欢在自己和他人之间维持的可携带的气泡或缓冲区域。
+
+- maintain: 维持
+- personal space: 个人空间
+- sort of: 一种
+- portable bubble: 可携带的气泡
+- buffer zone: 缓冲区域
+- between ourselves and others: 在自己和他人之间
 
 3. Solidarity is maintained when individuals are successfully integrated into social groups and are regulated by a set of shared values and customs. (Giddens, 2009)
 
+> 当个人成功地融入社会群体并受到一套共同价值观和习俗的规范时，团结得以维持。
+
+- maintained: 被维持
+- solidarity: 团结
+- individuals: 个人
+- successfully integrated into: 成功地融入
+- social groups: 社会群体
+- regulated by: 受到...规范
+- set of shared values: 一套共同价值观
+- customs: 习俗
+
 4. Thus it is often claimed that the state possesses two essential features: it maintains a monopoly of legitimate coercion or violence and it offers to protect everyone within its territory.
+
+> 因此，人们经常声称国家拥有两个基本特征：它维持合法强制或暴力的垄断，并提供保护其领土内的每个人。
+
+- maintains: 维持
+- thus: 因此
+- often claimed: 经常声称
+- state: 国家
+- possesses: 拥有
+- two essential features: 两个基本特征
+- monopoly: 垄断
+- legitimate coercion: 合法强制
+- violence: 暴力
+- offers to protect: 提供保护
+- everyone: 每个人
+- within its territory: 在其领土内
 

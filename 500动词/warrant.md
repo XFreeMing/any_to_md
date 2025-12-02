@@ -68,7 +68,33 @@ tags:
 
 1. Such a move, reasoned British officials, did not warrant risking a war, and France would not act alone. (Perry, 2010)
 
+> 英国官员推理说，这样的行动不值得冒战争的风险，法国也不会单独行动。
+
+- warrant: 值得
+- such a move: 这样的行动
+- reasoned: 推理说
+- British officials: 英国官员
+- did not: 不值得
+- risking a war: 冒战争的风险
+- France: 法国
+- would not act alone: 不会单独行动
+
 2. The allegations are serious enough to warrant an investigation, for it's in great demand. (Oxford English Dictionary, 1989)
 
+> 这些指控足够严重，值得进行调查，因为它有很大的需求。
+
+- warrant: 值得
+- allegations: 指控
+- serious enough: 足够严重
+- investigation: 调查
+- great demand: 很大的需求
+
 3. Another area that warrants attention is that of funding for universities.
+
+> 另一个值得关注的领域是大学资助。
+
+- warrants: 值得
+- another area: 另一个领域
+- attention: 关注
+- funding for universities: 大学资助
 

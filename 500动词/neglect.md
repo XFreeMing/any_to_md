@@ -79,9 +79,45 @@ tags:
 
 1. In attending to, and serving, the needs of others, women typically neglect themselves. (Wolff, 2006)
 
+> 在关注和服务他人需求时，女性通常忽视自己。
+
+- neglect: 忽视
+- attending to: 关注
+- serving: 服务
+- needs of others: 他人的需求
+- women: 女性
+- typically: 通常
+- themselves: 自己
+
 2. The few who were given the opportunity to do sociological research of lasting importance have frequently been neglected. They became unknown to the mass of scholars in this field. (Giddens, 2009)
+
+> 少数被给予机会进行具有持久重要性的社会学研究的人经常被忽视。他们在这个领域的大多数学者中变得不为人知。
+
+- neglected: 被忽视
+- few: 少数
+- given the opportunity: 被给予机会
+- sociological research: 社会学研究
+- lasting importance: 持久重要性
+- frequently: 经常
+- became unknown: 变得不为人知
+- mass of scholars: 大多数学者
+- field: 领域
 
 3. Many literary works of classical antiquity were either lost or neglected. (Perry, 2010)
 
+> 许多古典古代文学作品要么丢失，要么被忽视。
+
+- neglected: 被忽视
+- many literary works: 许多文学作品
+- classical antiquity: 古典古代
+- either lost or: 要么丢失要么
+
 4. Hours are long and they worry that they neglect their children. (Giddens, 2009)
+
+> 工作时间很长，他们担心他们忽视了自己的孩子。
+
+- neglect: 忽视
+- hours are long: 工作时间很长
+- worry that: 担心
+- children: 孩子
 
