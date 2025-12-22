@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Any to Markdown - Document Converter</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Any to Markdown</h1>
+            <p class="subtitle">Document Format Converter</p>
+        </header>
+
+        <main>
+            <!-- Upload Section -->
+            <section class="upload-section" id="uploadSection">
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-content">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <p>Drag and drop file here, or click to select</p>
+                        <p class="supported-formats">Supported: EPUB, PDF, DOCX, PNG, JPG, GIF, BMP, WEBP</p>
+                    </div>
+                    <input type="file" id="fileInput" hidden accept=".epub,.pdf,.docx,.doc,.png,.jpg,.jpeg,.gif,.bmp,.webp,.html,.htm">
+                </div>
+
+                <div class="divider">
+                    <span>OR</span>
+                </div>
+
+                <div class="url-input-section">
+                    <input type="url" id="urlInput" placeholder="Enter webpage URL" class="url-input">
+                    <button id="fetchBtn" class="btn btn-secondary">Fetch</button>
+                </div>
+            </section>
+
+            <!-- Format Selection (hidden initially) -->
+            <section class="format-section hidden" id="formatSection">
+                <div class="file-info" id="fileInfo">
+                    <span class="file-name" id="fileName"></span>
+                    <span class="file-format" id="fileFormat"></span>
+                    <button class="btn-clear" id="clearBtn" title="Clear">&times;</button>
+                </div>
+
+                <div class="format-options">
+                    <h3>Output Format</h3>
+                    <div class="radio-group" id="formatOptions">
+                        <!-- Options will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <button id="convertBtn" class="btn btn-primary">Start Conversion</button>
+            </section>
+
+            <!-- Progress Section (hidden initially) -->
+            <section class="progress-section hidden" id="progressSection">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p class="progress-text" id="progressText">Processing...</p>
+            </section>
+
+            <!-- Result Section (hidden initially) -->
+            <section class="result-section hidden" id="resultSection">
+                <div class="result-success" id="resultSuccess">
+                    <svg class="success-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    <p>Conversion completed!</p>
+                    <button id="downloadBtn" class="btn btn-primary">Download Result</button>
+                    <button id="newConversionBtn" class="btn btn-secondary">New Conversion</button>
+                </div>
+
+                <div class="result-error hidden" id="resultError">
+                    <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                    <p class="error-message" id="errorMessage">An error occurred</p>
+                    <button id="retryBtn" class="btn btn-secondary">Try Again</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Powered by FastAPI &amp; Python</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

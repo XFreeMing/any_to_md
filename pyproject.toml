@@ -1,12 +1,35 @@
 [project]
 name = "any-to-md"
 version = "0.1.0"
-description = "Add your description here"
+description = "Document format conversion toolkit with web interface"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    # Existing dependencies
     "beautifulsoup4>=4.14.2",
     "ebooklib>=0.20",
     "markdownify>=1.2.0",
     "weasyprint>=61.0",
+
+    # Web framework
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "python-multipart>=0.0.12",
+    "pydantic-settings>=2.0.0",
+
+    # PDF conversion
+    "pymupdf4llm>=0.0.17",
+
+    # Word conversion
+    "mammoth>=1.8.0",
+
+    # Web scraping
+    "trafilatura>=2.0.0",
+    "httpx>=0.28.0",
+
+    # Markdown processing
+    "markdown>=3.0.0",
 ]
+
+[project.scripts]
+any-to-md = "web.app:main"

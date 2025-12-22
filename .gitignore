@@ -9,3 +9,9 @@ wheels/
 # Virtual environments
 .venv
 .vscode/PythonImportHelper-v2-Completion.json
+
+# Environment variables
+.env
+
+# Temporary files
+temp/
