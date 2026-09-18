@@ -15,3 +15,6 @@ wheels/
 
 # Temporary files
 temp/
+
+# Local book catalog, immutable exports, caches, and model files
+var/

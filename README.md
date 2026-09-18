@@ -1,11 +1,35 @@
 # any_to_md
 
+Implementation TODO: [人机协作实现计划](TODO.md) — 按可用功能逐次交付，Codex 实现并提供脚本，用户执行、验证和反馈；M01 当前待用户验证。
+
+Architecture proposal: [文档转换架构演进方案](specs/0002-conversion-architecture.md) — 多格式互转、统一 Markdown 输出、PDF 分页/图片/表格与未来本地小模型 OCR 的设计及迁移计划（尚未实现）。
+
+Book structure proposal: [书籍结构、双版本 Markdown 与目录重组](specs/0003-book-structure-and-navigation.md) — 完整章节树、整体/分章定位、索引、文件命名与目标源码目录（尚未实现）。
+
+Persistence proposal: [SQLite 持久化设计](specs/0004-sqlite-persistence.md) — 书籍身份、章节修订、任务恢复和导出地址映射（尚未实现）。
+
 Utility scripts that turn EPUB books (and their exported HTML) into Markdown/PDF. Available workflows:
 
 - `epub_to_md_cli.py`: splits every EPUB into chapter-level Markdown files.
 - `epub_to_md_single_cli.py`: produces one Markdown file per EPUB, keeping images under an `assets/` directory.
 - `html_to_md_cli.py`: converts HTML exports (for example, the output of `epub_to_html.py`) into Markdown, generating both chapter-per-file and single-file variants.
 - `html_to_pdf_cli.py`: renders HTML exports to PDF with Chinese, emoji, images, and tables preserved.
+
+## M01: Book-oriented EPUB conversion
+
+The new book conversion path generates the whole-book and split Markdown views from one chapter tree and one export plan:
+
+```bash
+uv sync
+uv run python scripts/run/convert_book.py \
+  --input "/absolute/path/to/book.epub" \
+  --data-dir "./var" \
+  --view both
+```
+
+Each run creates an immutable `var/exports/<export_id>/` directory containing `book.md`, `chapters/`, `TOC.md`, `toc.json`, `locations.json`, `book.json`, `report.json`, `manifest.json`, and `assets/`. Book identity, revision, chapter identity, export state, and view locations are stored in `var/catalog.sqlite`. Repeating the command keeps earlier exports.
+
+M01 is intended for EPUB files with a usable navigation structure. It includes basic images and simple tables. Complex chapter-boundary recovery is planned for M02; complex tables, footnotes, and source cross-chapter links are planned for M03. See `report.json` for warnings and partial results.
 
 ## Requirements
 

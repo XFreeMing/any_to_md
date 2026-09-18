@@ -33,10 +33,11 @@ dependencies = [
 
 [project.scripts]
 any-to-md = "web.app:main"
+any-to-md-book = "any_to_md.interfaces.cli.convert_book:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["web", "epub_to_md", "epub_to_html", "html_to_md", "html_to_pdf"]
+packages = ["src/any_to_md", "web", "epub_to_md", "epub_to_html", "html_to_md", "html_to_pdf"]
