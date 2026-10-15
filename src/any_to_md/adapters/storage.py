@@ -6,7 +6,23 @@ import os
 import shutil
 import uuid
 import hashlib
+import time
 from pathlib import Path
+
+
+def _replace_with_retry(source: Path, destination: Path) -> None:
+    """Allow transient Windows locks to clear without abandoning atomic publication."""
+    delays = (0.1, 0.2, 0.4, 0.8, 1.6, 2.0)
+    for attempt in range(len(delays) + 1):
+        try:
+            os.replace(source, destination)
+            return
+        except OSError as exc:
+            # Windows may temporarily deny renaming freshly written files/dirs
+            # while another process scans them. Other errors must fail immediately.
+            if getattr(exc, "winerror", None) not in (5, 32, 33) or attempt == len(delays):
+                raise
+            time.sleep(delays[attempt])
 
 
 class LocalStorage:
@@ -31,7 +47,7 @@ class LocalStorage:
         if not destination.exists():
             temporary = destination.with_name(f".{destination.name}.{uuid.uuid4().hex}.tmp")
             shutil.copyfile(source_path, temporary)
-            os.replace(temporary, destination)
+            _replace_with_retry(temporary, destination)
         return destination, destination.relative_to(self.root).as_posix()
 
     def create_staging(self, export_id: str) -> Path:
@@ -44,7 +60,7 @@ class LocalStorage:
         destination = self.exports_dir / export_id
         if destination.exists():
             raise FileExistsError(f"导出目录已经存在：{destination}")
-        os.replace(source, destination)
+        _replace_with_retry(source, destination)
         return destination
 
     def rollback_publish(self, export_id: str) -> Path:
@@ -52,7 +68,7 @@ class LocalStorage:
         destination = self.staging_dir / export_id
         if destination.exists():
             raise FileExistsError(f"无法隔离未完成导出，暂存目录已存在：{destination}")
-        os.replace(source, destination)
+        _replace_with_retry(source, destination)
         return destination
 
     @staticmethod
@@ -82,5 +98,5 @@ class LocalStorage:
         shutil.copyfile(source, temporary_dir / "book.json")
         if source_assets.exists():
             shutil.copytree(source_assets, temporary_dir / "assets")
-        os.replace(temporary_dir, destination_dir)
+        _replace_with_retry(temporary_dir, destination_dir)
         return destination.relative_to(self.root).as_posix()

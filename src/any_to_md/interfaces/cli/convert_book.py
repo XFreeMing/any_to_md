@@ -9,15 +9,18 @@ from pathlib import Path
 from ...application.convert_book import convert_book
 
 
-def build_parser() -> argparse.ArgumentParser:
+def build_parser(*, shortcut: bool = False) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="any-to-md-book",
+        prog="e2m" if shortcut else "any-to-md-book",
         description=(
             "将一本 EPUB 同时转换为整体版和分章节版 Markdown，并生成统一目录、"
             "位置索引和 SQLite 记录。M01 当前优先支持目录结构有效的 EPUB。"
         ),
     )
-    parser.add_argument("--input", required=True, type=Path, help="EPUB 文件路径")
+    if shortcut:
+        parser.add_argument("input", type=Path, help="EPUB 文件路径（含空格时请加引号）")
+    else:
+        parser.add_argument("--input", required=True, type=Path, help="EPUB 文件路径")
     parser.add_argument(
         "--data-dir",
         type=Path,
@@ -33,8 +36,8 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+def main(argv: list[str] | None = None, *, shortcut: bool = False) -> int:
+    args = build_parser(shortcut=shortcut).parse_args(argv)
     try:
         result = convert_book(args.input, args.data_dir)
     except Exception as exc:
@@ -48,8 +51,15 @@ def main(argv: list[str] | None = None) -> int:
     print(f"export_id：{result.export_id}")
     print(f"警告数量：{result.warning_count}")
     print(f"输出目录：{result.output_dir}")
+    print(f"整本 Markdown：{result.output_dir / 'book.md'}")
+    print(f"章节目录：{result.output_dir / 'TOC.md'}")
     print(f"报告：{result.report_path}")
     return 0
+
+
+def e2m(argv: list[str] | None = None) -> int:
+    """Short EPUB-to-Markdown command using the shared book workflow."""
+    return main(argv, shortcut=True)
 
 
 if __name__ == "__main__":

@@ -34,6 +34,7 @@ dependencies = [
 [project.scripts]
 any-to-md = "web.app:main"
 any-to-md-book = "any_to_md.interfaces.cli.convert_book:main"
+e2m = "any_to_md.interfaces.cli.convert_book:e2m"
 
 [build-system]
 requires = ["hatchling"]

@@ -17,6 +17,18 @@ Utility scripts that turn EPUB books (and their exported HTML) into Markdown/PDF
 
 ## M01: Book-oriented EPUB conversion
 
+快捷命令（在项目根目录执行，路径含空格时加引号）：
+
+```bash
+uv run e2m "/absolute/path/to/book.epub"
+# 可选：指定数据和导出目录
+uv run e2m "/absolute/path/to/book.epub" --data-dir "./var"
+uv run e2m --help
+```
+
+默认同时生成整本 `book.md`、分章节 `chapters/`、目录 `TOC.md` 和图片 `assets/`。
+终端会打印完整输出路径；每次转换保留独立版本，原 EPUB 不变。
+
 The new book conversion path generates the whole-book and split Markdown views from one chapter tree and one export plan:
 
 ```bash

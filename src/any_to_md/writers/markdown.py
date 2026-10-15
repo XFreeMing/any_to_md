@@ -82,7 +82,7 @@ def _render_content(
     content = node.content_markdown
     for asset_id, asset in book.assets.items():
         target = root / "assets" / asset.file_name
-        relative = PurePosixPath(os.path.relpath(target, output_file.parent)).as_posix()
+        relative = Path(os.path.relpath(target, output_file.parent)).as_posix()
         content = content.replace(asset_token(asset_id), quote(relative, safe="/._-"))
     return _shift_markdown_headings(content, heading_offset).strip()
 
@@ -161,7 +161,7 @@ def _write_whole_book(book: BookRevision, plan: ExportPlan, root: Path) -> None:
 
 
 def _relative_link(from_path: str, to_path: str, anchor: str | None = None) -> str:
-    relative = PurePosixPath(os.path.relpath(to_path, PurePosixPath(from_path).parent)).as_posix()
+    relative = Path(os.path.relpath(to_path, PurePosixPath(from_path).parent)).as_posix()
     return _markdown_link(relative, anchor)
 
 
