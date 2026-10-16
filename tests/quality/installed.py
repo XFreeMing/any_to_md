@@ -36,12 +36,14 @@ suite = unittest.defaultTestLoader.loadTestsFromNames([
     "tests.quality.test_html_conversion",
     "tests.quality.test_docx_conversion",
     "tests.quality.test_url_conversion",
+    "tests.quality.test_pdf_analysis",
+    "tests.quality.test_ocr_provider",
 ])
 result = unittest.TextTestRunner(verbosity=2).run(suite)
 prefix = Path(sys.prefix)
 origins = {}
 for name, module in tuple(sys.modules.items()):
-    if name.split(".")[0] in {"any_to_md", "web"} and getattr(module, "__file__", None):
+    if name.split(".")[0] in {"any_to_md", "web", "pdf_to_md", "ocr_to_md"} and getattr(module, "__file__", None):
         origin = Path(module.__file__).resolve()
         if not origin.is_relative_to(prefix):
             raise RuntimeError(f"Production import escaped the installed environment: {name}")

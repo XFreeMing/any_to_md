@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import stat
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from zipfile import ZipFile, ZipInfo
 
 MAX_ARCHIVE_BYTES = 256 * 1024 * 1024
@@ -29,3 +29,18 @@ def validate_archive(archive: ZipFile, *, max_files: int = MAX_ARCHIVE_FILES, ma
         seen.add(name)
         result.append((name, item))
     return result
+
+
+def write_members(root: Path, members: dict[str, bytes]) -> None:
+    """Materialize validated members without allowing preexisting symlink escape."""
+    root.mkdir(parents=True, exist_ok=True)
+    base = root.resolve()
+    paths = [(root/member_name(name), content) for name, content in members.items()]
+    names = [member_name(name).casefold() for name in members]
+    if len(names) != len(set(names)):
+        raise ValueError('来源资源文件名在不区分大小写的文件系统中冲突')
+    if any(not path.resolve().is_relative_to(base) for path, _ in paths):
+        raise ValueError('来源资源输出路径越界')
+    for path, content in paths:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)

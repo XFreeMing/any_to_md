@@ -1,9 +1,10 @@
 """PDF to Markdown conversion with automatic OCR fallback."""
 
+import asyncio
 from pathlib import Path
 from typing import Callable, Optional
 
-from .detector import is_scanned_pdf
+from any_to_md.readers.pdf.analysis import analyze_pdf
 
 
 async def convert_pdf_to_markdown(
@@ -35,7 +36,8 @@ async def convert_pdf_to_markdown(
     # Check if PDF needs OCR
     report_progress(0.1, "Analyzing PDF...")
 
-    if force_ocr or is_scanned_pdf(pdf_path):
+    analysis = await asyncio.to_thread(analyze_pdf, pdf_path)
+    if force_ocr or analysis.needs_ocr:
         # Use OCR for scanned PDFs
         report_progress(0.2, "Detected scanned PDF, using OCR...")
 
@@ -50,12 +52,7 @@ async def convert_pdf_to_markdown(
         # Use pymupdf4llm for text-based PDFs
         report_progress(0.2, "Extracting text from PDF...")
 
-        import pymupdf4llm
-
-        md_content = pymupdf4llm.to_markdown(str(pdf_path))
-
-        md_path = output_dir / f"{pdf_path.stem}.md"
-        md_path.write_text(md_content, encoding="utf-8")
+        md_path = await asyncio.to_thread(_write_native_markdown, pdf_path, output_dir)
 
         report_progress(1.0, "Text extraction complete")
         return md_path
@@ -75,16 +72,18 @@ def convert_pdf_to_markdown_sync(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    if force_ocr or is_scanned_pdf(pdf_path):
+    analysis = analyze_pdf(pdf_path)
+    if force_ocr or analysis.needs_ocr:
         raise ValueError(
             "Scanned PDF detected. Use async convert_pdf_to_markdown() for OCR support."
         )
 
+    return _write_native_markdown(pdf_path, output_dir)
+
+
+def _write_native_markdown(pdf_path: Path, output_dir: Path) -> Path:
     import pymupdf4llm
 
-    md_content = pymupdf4llm.to_markdown(str(pdf_path))
-
     md_path = output_dir / f"{pdf_path.stem}.md"
-    md_path.write_text(md_content, encoding="utf-8")
-
+    md_path.write_text(pymupdf4llm.to_markdown(str(pdf_path)), encoding="utf-8")
     return md_path

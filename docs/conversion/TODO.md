@@ -4,12 +4,12 @@
 
 ## 当前检查点
 
-- 当前任务：阶段 01 已收尾；阶段 02 URL 技术验收通过，已完成代码审查；阶段 03 核实 OCR 环境并推进独立子项。
-- 文档更新：2026-10-16（Asia/Shanghai）；本轮实现 URL 收敛、删旧、完整回归与源码外安装。
-- 代码/证据核对：2026-10-16 17:13；`var/quality/url-phase02/checkpoint.json` 记录 90 个源码/检查文件、69 个 wheel/安装文件的匹配哈希。
-- 实际验证：2026-10-16 17:06—17:13；源码测试会话 `71680`、安装测试 `71434`、真实来源审计 `60750` 均已退出 0；完整命令见质量说明，日志与清单保存于下述目录。
-- 环境：macOS arm64 / CPython 3.13.12、Homebrew PDF 库；新建源码外 venv `/private/tmp/any-to-md-phase02-20261016`，依赖从既有 wheel 缓存安装。
-- 当前证据：`var/quality/url-phase02/`（本地、不随 Git 分发）；阶段 01 原证据保留在 `var/quality/checkpoints/phase-01-2026-10-16-final/`，已验证代码为 `3eacd68`，收尾文档提交 `9478ba9` 已推送。
+- 当前任务：阶段 01 已收尾；阶段 02 已验收并推送 `aab9ecb`；阶段 03 的逐页分析与唯一安全 OCR provider 已实现并审查，真实服务与页级组合待验收。
+- 文档更新：2026-10-16（Asia/Shanghai）；本轮完成 URL 收敛，继续完成 PDF 分析/唯一 OCR 客户端及协议安全验证；阶段 03 未关闭。
+- 代码/证据核对：2026-10-16 17:26；当前哈希/安装核对见 `var/quality/pdf-phase03/checkpoint.json`，URL 已验收提交的独立证据见 `var/quality/url-phase02/checkpoint.json`。
+- 实际验证：2026-10-16；PDF/OCR 源码测试会话 `96258` 已退出 0，安装测试会话 `53387` 已退出 0；URL 真实来源审计 `60750` 已退出 0；完整命令见质量说明。
+- 环境：macOS arm64 / CPython 3.13.12、Homebrew PDF 库；新建源码外 venv `/private/tmp/any-to-md-phase03-20261016`，依赖从既有 wheel 缓存安装。
+- 当前证据：`var/quality/pdf-phase03/` 与 `var/quality/url-phase02/`（本地、不随 Git 分发）；阶段 01 原证据保留在 `var/quality/checkpoints/phase-01-2026-10-16-final/`，已验证代码为 `3eacd68`，收尾文档提交 `9478ba9` 已推送。
 - 设计：[转换架构](../../specs/0002-conversion-architecture.md)；依据：[取舍与样本边界](evidence.md)；复验命令：[质量检查](../../tests/quality/README.md)，独立安装的 `--python` 指向上述源码外 venv。
 - 实现：[应用服务](../../src/any_to_md/application/convert.py)、[能力表](../../src/any_to_md/application/capabilities.py)、[Reader](../../src/any_to_md/readers/)、[共享正文](../../src/any_to_md/content/)、[Writer](../../src/any_to_md/writers/)。
 
@@ -17,24 +17,24 @@
 | --- | --- |
 | 设计 | 共同链路与格式边界已定义；后续格式沿用现有契约 |
 | 实现 | EPUB / HTML / DOCX / URL 已接入共同链路；PDF、图片待收敛 |
-| 技术验证 | 源码 111 项、源码外安装 97 项通过，均零失败/跳过；见 `source-tests.log`、`installed-report.json`；69 个安装文件与最终 wheel/源码匹配，旧 URL 包未分发 |
+| 技术验证 | 当前源码 119 项、源码外安装 105 项通过，均零失败/跳过；wheel/源码/安装哈希匹配，见 PDF/OCR 的 `checkpoint.json`、`source-tests.log`、`installed-report.json` |
 | 产物与页面 | URL 固定样本覆盖三种输出、全部入口、离线重放和搬移；真实 Python 文档的 108 个正文块无漏/重、内部链接有效、12 页零空白；中文样本与真实前两页已审阅，详见 `fixture-export.json`、`real-replay.json` |
 | 用户试用 | 无已完成记录；浏览器上传→转换→下载未验收，HTTP 自动检查不能替代 |
 | 部署 | 待核实；本机安装验证不能代表部署完成 |
 
 ## 下一步
 
-1. 推进 PDF 逐页分类等不依赖真实 OCR 的独立工作。
-2. 复用公共路径/配额规则整理唯一 OCR provider 和 MD 导入边界。
-3. 等待可用 OCR 服务地址/启动说明；真实单页与混合页能力验收后再切换全入口、删旧。
+1. 获取可用 OCR 服务地址/启动说明，核实单页提交及响应覆盖；模拟协议不代替此步骤。
+2. 依据真实页级能力接入唯一 MD 导入/页组合，逐页记录覆盖、失败、顺序与去重。
+3. 验证 PDF/图片全入口和输出后切换共同 Reader、删除根包，再进入阶段 04。
 
 ## 阶段与依赖
 
 | 阶段 | 状态 | 前置条件 |
 | --- | --- | --- |
 | 01 EPUB / HTML / DOCX | 技术验收与交付已核实 | 用户试用/部署单列 |
-| 02 URL | 技术验收与代码审查通过；按约定提交/推送 | 阶段 01 已关闭 |
-| 03 PDF / 图片与 OCR | 环境核实中，独立子项待实现 | 当前 OCR 健康与接口说明请求均超时 |
+| 02 URL | 技术验收完成，`aab9ecb` 已推送 | 阶段 01 已关闭 |
+| 03 PDF / 图片与 OCR | 分析/provider 独立子项通过审查；组合与格式切换未实现 | 当前 OCR 健康与接口说明请求均超时 |
 | 04 结构与交付 | 待开始 | 各格式完成切换 |
 
 ## 02 URL 验收
@@ -45,6 +45,10 @@
 - [x] 删除 `url_to_md/` 源码、Web URL 业务分支、wheel 引用与 Trafilatura 依赖；保留用户资料和既有产物。
 
 ## 03 PDF / 图片
+
+已实现：[逐页分析](../../src/any_to_md/readers/pdf/analysis.py) 为两种旧查询及转换共用；已删除采样均值与异常转 OCR，覆盖短原生、扫描、混合、白页、旋转、损坏/加密；同步/异步共用原生提取。混合分类不自动把普通插图送 OCR，混合页位图中的文字覆盖仍待核实。
+
+[唯一 OCR provider](../../src/any_to_md/adapters/ocr.py) 返回 MD/资源/原响应/损失诊断，配置和 HTTP 可注入；旧图片/PDF 入口已委托同一个 provider。ZIP 路径、配额、重名、符号链接和落盘由公共规则处理；共享 HTTP 解压受限。真实 OCR、MD 共同导入、页级组合与根包删除均未完成，以下整体验收项保持未勾选。
 
 - [ ] 逐页区分原生、扫描、混合与空白，明确损坏/加密失败；删除两套采样判断及异常转 OCR，按原序覆盖并去重。
 - [ ] 先核实真实 OCR 页级能力，再实现唯一组合流程；图片/PDF 共用可注入配置的 provider，压缩包解包复用公共路径/配额校验。
@@ -65,7 +69,7 @@
 - DOCX 页眉/页脚、未知符号、自定义编号等未完整保留时报告 `partial`；只支持 `.docx`，不支持 `.doc`。固定上游样本不代表真实业务文件均无损。
 - HTML/SVG `foreignObject` 尚不能安全跨格式保留；PDF 为重排版，EPUB 标题/封面仍有已知排版限制；代表页检查不等于逐页布局验收。
 - URL 未标记文章的页面保留清理后正文并告警，不保证所有广告识别；不执行 JS、不穿过登录。必要响应只支持 identity/gzip，超配额硬失败。真实站点仅验收所列来源和代表页。
-- OCR 服务 `http://localhost:9122` 的 `/health`、`/openapi.json` 于 17:12 各 5 秒超时，见 `var/quality/pdf-phase03/ocr-environment.json`；已请求可用地址/说明。真实 OCR、浏览器完整流程、用户试用与部署各自未验收。
+- OCR 服务 `http://localhost:9122` 的 `/health`、`/openapi.json` 于 17:12 各 5 秒超时；17:26 排除代理直连 TCP/健康接口均连接拒绝，见 `var/quality/pdf-phase03/ocr-environment.json`；已请求可用地址/说明。真实 OCR、浏览器完整流程、用户试用与部署各自未验收。
 - 原数据库与历史文件保留；既有升级证据仅来自副本，不能推论 MD-only 数据迁移。跨机器复验需准备原件、依赖与证据。
 
 ## 最终验收

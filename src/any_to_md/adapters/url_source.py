@@ -5,7 +5,6 @@ from __future__ import annotations
 import io
 import json
 import mimetypes
-import zlib
 from email.message import Message
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,6 +16,7 @@ from bs4 import BeautifulSoup
 from bs4.element import Stylesheet
 
 from .archive import validate_archive
+from .http import read_response_body
 from .html_source import _html_references, MAX_SOURCE_BYTES, MAX_SOURCE_FILES
 from ..content.styles import style_references, rewrite_stylesheet_resources
 
@@ -126,29 +126,7 @@ def _response(client: httpx.Client, url: str, remaining: int) -> tuple[bytes, st
     with client.stream('GET', http_url(url), headers={'Accept-Encoding': 'identity'}) as response:
         response.raise_for_status()
         http_url(str(response.url))
-        data = bytearray()
-        limit = min(MAX_RESPONSE_BYTES, remaining)
-        encoding = response.headers.get('content-encoding', 'identity').lower().strip()
-        if encoding not in {'identity', 'gzip'}:
-            raise ValueError(f'网页响应使用不支持的压缩编码：{encoding}')
-        # Mock/in-memory HTTP responses may already be decoded. Network streams
-        # use bounded raw reads and bounded zlib output, before allocation.
-        decoder = zlib.decompressobj(16+zlib.MAX_WBITS) if encoding == 'gzip' and not response.is_stream_consumed else None
-        chunks = [response.content] if response.is_stream_consumed else response.iter_raw(chunk_size=65536)
-        transferred = 0
-        for chunk in chunks:
-            transferred += len(chunk)
-            if transferred > limit:
-                raise ValueError('网页响应超过传输大小限制')
-            try:
-                decoded = decoder.decompress(chunk, max(1, limit+1-len(data))) if decoder else chunk
-            except zlib.error as error:
-                raise httpx.DecodingError(f'网页 gzip 响应无效：{error}') from error
-            data.extend(decoded)
-            if len(data) > limit or (decoder and decoder.unconsumed_tail):
-                raise ValueError('网页响应超过单资源 20 MiB 或快照累计大小限制')
-        if decoder and (not decoder.eof or decoder.unused_data):
-            raise httpx.DecodingError('网页 gzip 响应不完整或包含多段压缩数据')
+        data = read_response_body(response, min(MAX_RESPONSE_BYTES, remaining))
         media = response.headers.get('content-type', '').split(';', 1)[0].lower()
         return bytes(data), str(response.url), media, dict(response.headers)
 

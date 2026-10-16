@@ -16,6 +16,8 @@
 
 `test_url_conversion.py` / `url_fixtures.py` 覆盖文章/未标记正文、中文、表格跨度、代码缩进、图片像素、来源与链接、重定向/CSS/字符集/脚注、gzip 配额、故障/中断、长文分页和快照离线重放；临时本机 HTTP 服务验证 Web、CLI 多 URL 与目录批处理。运行环境须允许监听回环端口；没有监听权限是环境阻塞，不能改成通过。源码外安装检查也运行这组测试并验证 `url_to_md` 缺席。
 
+`test_pdf_analysis.py` 覆盖超过前五页的分类、短原生、图文/白页/矢量、旋转坐标、损坏/加密及实际原生 Web 三种输出；`test_ocr_provider.py` 只验证注入传输、上传协议、ZIP 路径/配额/冲突、符号链接、响应保留与状态失败，不能证明真实识别质量或单页能力。两者也纳入源码外安装验证。
+
 `test_jobs.py`、`test_publication.py`、`test_catalog_migration.py` 检查持久任务、执行权、重启、并发、发布失败、历史导出保持、校验和和旧 schema 副本重建。它们不代替格式解析效果检查。
 
 ```bash

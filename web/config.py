@@ -11,9 +11,6 @@ class Settings(BaseSettings):
     OCR_TIMEOUT: int = 600  # 10 minutes for large files
     OCR_RETRY_COUNT: int = 2
 
-    # PDF Detection Threshold
-    PDF_TEXT_THRESHOLD: int = 50  # Characters per page below this = scanned PDF
-
     # File Storage
     DATA_DIR: str = "var"
     MAX_UPLOAD_SIZE: int = 100 * 1024 * 1024  # 100MB
