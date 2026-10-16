@@ -1,5 +1,5 @@
 """Book-oriented document conversion toolkit."""
 
-from .application.convert_book import ConversionResult, convert_book
+from .application.convert import ConversionRequest, ConversionResult, convert
 
-__all__ = ["ConversionResult", "convert_book"]
+__all__ = ["ConversionRequest", "ConversionResult", "convert"]

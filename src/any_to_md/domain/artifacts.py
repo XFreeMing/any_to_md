@@ -30,6 +30,7 @@ class ExportPlan:
     single_locations: dict[str, ViewLocation]
     split_locations: dict[str, ViewLocation]
     split_policy: str = "chapter-v1"
+    targets: tuple[str, ...] = ("markdown",)
 
 
 @dataclass(frozen=True)

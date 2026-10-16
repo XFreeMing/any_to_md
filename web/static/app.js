@@ -30,6 +30,22 @@ const downloadBtn = document.getElementById('downloadBtn');
 const newConversionBtn = document.getElementById('newConversionBtn');
 const retryBtn = document.getElementById('retryBtn');
 
+async function loadCapabilities() {
+    try {
+        const response = await fetch('/api/capabilities');
+        if (!response.ok) throw new Error('Could not load supported formats');
+        const capabilities = await response.json();
+        const suffixes = Object.values(capabilities).flatMap(item => item.suffixes);
+        fileInput.accept = suffixes.join(',');
+        fileInput.disabled = false;
+        document.getElementById('supportedFormats').textContent = 'Supported: ' + suffixes.join(', ');
+    } catch (error) {
+        document.getElementById('supportedFormats').textContent = error.message;
+    }
+}
+
+loadCapabilities();
+
 // Format labels
 const FORMAT_LABELS = {
     'md_single': 'Markdown (Single File)',
@@ -199,7 +215,8 @@ async function startConversion() {
             throw new Error(error.detail || 'Conversion failed');
         }
 
-        // Start polling for status
+        const job = await response.json();
+        currentTaskId = job.task_id;
         startPolling();
     } catch (error) {
         convertBtn.disabled = false;
@@ -218,7 +235,7 @@ function startPolling() {
 
             updateProgress(data.progress, data.message);
 
-            if (data.status === 'completed') {
+            if (data.status === 'completed' || data.status === 'completed_with_warnings' || data.status === 'partial') {
                 stopPolling();
                 showSuccess();
             } else if (data.status === 'failed') {

@@ -1,138 +1,49 @@
-"""Unified conversion service that dispatches to appropriate converters."""
+"""Web boundary for the shared runtime and formats awaiting Reader cutover."""
 
-import zipfile
+import asyncio
 from pathlib import Path
-from typing import Callable, Optional
 
-from ..config import settings
-from .file_manager import FileManager
-from .task_manager import Task, TaskStatus, task_manager
+from any_to_md.application.convert import ConversionRequest, convert
+from any_to_md.application.capabilities import CAPABILITIES
+from any_to_md.application.jobs import JobExecution, JobRuntime
+from any_to_md.domain.jobs import Job
+from any_to_md.export.bundle import finalize_bundle
 
 
 class ConversionService:
-    """Handles document conversion dispatching."""
-
-    def __init__(self, task: Task, file_manager: FileManager):
-        self.task = task
-        self.file_manager = file_manager
+    def __init__(self, job: Job, runtime: JobRuntime):
+        self.job = job
+        self.runtime = runtime
+        self.execution: JobExecution | None = None
 
     def update_progress(self, progress: int, message: str):
-        """Update task progress."""
-        task_manager.update_task(
-            self.task.task_id,
-            progress=progress,
-            message=message,
-        )
+        self.execution.progress(progress, message)
+
+    def output_path(self, filename: str) -> Path:
+        return self.runtime.storage.output_path(self.execution.root, filename)
 
     async def convert(self, output_format: str) -> Path:
-        """Execute conversion based on input and output formats."""
-        input_format = self.task.input_format
-        input_path = self.file_manager.get_upload_path(self.task.filename)
-
-        task_manager.update_task(
-            self.task.task_id,
-            status=TaskStatus.PROCESSING,
-            progress=10,
-            message="Starting conversion...",
-        )
-
-        try:
-            # Route to appropriate converter
-            if input_format == "epub":
-                output_path = await self._convert_epub(input_path, output_format)
-            elif input_format == "pdf":
-                output_path = await self._convert_pdf(input_path, output_format)
-            elif input_format == "docx":
-                output_path = await self._convert_docx(input_path, output_format)
-            elif input_format == "image":
-                output_path = await self._convert_image(input_path, output_format)
-            elif input_format == "url":
-                output_path = await self._convert_url(input_path, output_format)
-            elif input_format == "html":
-                output_path = await self._convert_html(input_path, output_format)
-            else:
-                raise ValueError(f"Unsupported input format: {input_format}")
-
-            task_manager.update_task(
-                self.task.task_id,
-                status=TaskStatus.COMPLETED,
-                progress=100,
-                message="Conversion completed",
-                download_filename=output_path.name,
-            )
-            return output_path
-
-        except Exception as e:
-            task_manager.update_task(
-                self.task.task_id,
-                status=TaskStatus.FAILED,
-                message=f"Conversion failed: {str(e)}",
-            )
-            raise
-
-    async def _convert_epub(self, input_path: Path, output_format: str) -> Path:
-        """Convert EPUB to target format."""
-        self.update_progress(20, "Reading EPUB file...")
-
-        if output_format == "md_single":
-            from epub_to_md import convert_epub_to_single_markdown
-
-            output_path = self.file_manager.get_output_path(
-                f"{input_path.stem}.md"
-            )
-            assets_dir = self.file_manager.output_dir / "assets"
-            self.update_progress(50, "Converting to Markdown...")
-            convert_epub_to_single_markdown(
-                input_path,
-                output_file=output_path,
-                assets_dir=assets_dir,
-            )
-            return output_path
-
-        elif output_format == "md_chapters":
-            from epub_to_md import convert_epub_to_markdown
-
-            self.update_progress(50, "Converting to Markdown chapters...")
-            chapters = convert_epub_to_markdown(
-                input_path,
-                output_dir=self.file_manager.output_dir / "chapters",
-                assets_dir=self.file_manager.output_dir / "assets",
-            )
-            # Create ZIP of chapters
-            zip_path = self.file_manager.get_output_path(f"{input_path.stem}.zip")
-            self.update_progress(80, "Creating ZIP archive...")
-            with zipfile.ZipFile(zip_path, "w") as zf:
-                for chapter in chapters:
-                    if chapter.output_path and chapter.output_path.exists():
-                        zf.write(chapter.output_path, chapter.output_path.name)
-                # Add assets
-                assets_dir = self.file_manager.output_dir / "assets"
-                if assets_dir.exists():
-                    for asset in assets_dir.iterdir():
-                        zf.write(asset, f"assets/{asset.name}")
-            return zip_path
-
-        elif output_format == "html":
-            from epub_to_html import convert_epub
-
-            self.update_progress(50, "Converting to HTML...")
-            html_path = convert_epub(input_path, self.file_manager.output_dir)
-            return html_path
-
-        elif output_format == "pdf":
-            from epub_to_html import convert_epub
-            from html_to_pdf import convert_html_to_pdf
-
-            self.update_progress(30, "Converting to HTML...")
-            html_path = convert_epub(input_path, self.file_manager.output_dir)
-            self.update_progress(60, "Converting to PDF...")
-            pdf_path = convert_html_to_pdf(
-                html_path,
-                output_path=self.file_manager.get_output_path(f"{input_path.stem}.pdf"),
-            )
-            return pdf_path
-
-        raise ValueError(f"Unsupported output format for EPUB: {output_format}")
+        if output_format != self.job.output_format:
+            raise ValueError('输出配置与持久任务不一致')
+        if CAPABILITIES[self.job.input_format].reader is not None:
+            await asyncio.to_thread(convert, ConversionRequest(data_dir=self.runtime.storage.root, job_id=self.job.job_id))
+            return await asyncio.to_thread(self.runtime.download, self.job.job_id)
+        # These formats still have their sole existing parsers. State, files,
+        # packaging and publication already use the same runtime as EPUB/CLI.
+        with self.runtime.execute(self.job.job_id) as execution:
+            self.execution = execution
+            execution.begin()
+            input_path = self.runtime.source_path(self.job)
+            handlers = {'pdf': self._convert_pdf, 'image': self._convert_image, 'url': self._convert_url}
+            handler = handlers.get(self.job.input_format)
+            if handler is None:
+                raise ValueError(f'Unsupported input format: {self.job.input_format}')
+            output_path = await handler(input_path, output_format)
+            relative = output_path.relative_to(execution.root).as_posix()
+            report = {'schema_version': 2, 'job_id': self.job.job_id, 'export_id': execution.export_id, 'status': 'completed', 'targets': self.job.targets, 'diagnostics': [], 'limitations': ['输出完整性与布局需按相应格式的质量记录评估。']}
+            artifacts = finalize_bundle(execution.root, report, self.job.targets, execution.export_id, views={output_format: relative})
+            await asyncio.to_thread(execution.publish, report, artifacts)
+            return await asyncio.to_thread(self.runtime.download, self.job.job_id)
 
     async def _convert_pdf(self, input_path: Path, output_format: str) -> Path:
         """Convert PDF to target format."""
@@ -143,7 +54,7 @@ class ConversionService:
 
         md_path = await convert_pdf_to_markdown(
             input_path,
-            self.file_manager.output_dir,
+            self.execution.root,
             progress_callback=lambda p, m: self.update_progress(20 + int(p * 0.5), m),
         )
 
@@ -153,7 +64,7 @@ class ConversionService:
         elif output_format == "html":
             self.update_progress(80, "Converting to HTML...")
             html_content = self._markdown_to_html(md_path.read_text(encoding="utf-8"))
-            html_path = self.file_manager.get_output_path(f"{input_path.stem}.html")
+            html_path = self.output_path(f"{input_path.stem}.html")
             html_path.write_text(html_content, encoding="utf-8")
             return html_path
 
@@ -161,55 +72,20 @@ class ConversionService:
             # For PDF input, if it's a scanned PDF we OCR'd, regenerate PDF from HTML
             self.update_progress(80, "Generating PDF...")
             html_content = self._markdown_to_html(md_path.read_text(encoding="utf-8"))
-            html_path = self.file_manager.get_output_path(f"{input_path.stem}_temp.html")
+            html_path = self.output_path(f"{input_path.stem}_temp.html")
             html_path.write_text(html_content, encoding="utf-8")
 
-            from html_to_pdf import convert_html_to_pdf
+            from any_to_md.writers.pdf import render_pdf
 
-            pdf_path = convert_html_to_pdf(
+            pdf_path = render_pdf(
                 html_path,
-                output_path=self.file_manager.get_output_path(
+                output_path=self.output_path(
                     f"{input_path.stem}_converted.pdf"
                 ),
             )
             return pdf_path
 
         raise ValueError(f"Unsupported output format for PDF: {output_format}")
-
-    async def _convert_docx(self, input_path: Path, output_format: str) -> Path:
-        """Convert Word document to target format."""
-        self.update_progress(20, "Reading Word document...")
-
-        from docx_to_md import convert_docx_to_markdown
-
-        md_path = convert_docx_to_markdown(input_path, self.file_manager.output_dir)
-        self.update_progress(60, "Converted to Markdown")
-
-        if output_format == "md_single":
-            return md_path
-
-        elif output_format == "html":
-            self.update_progress(80, "Converting to HTML...")
-            html_content = self._markdown_to_html(md_path.read_text(encoding="utf-8"))
-            html_path = self.file_manager.get_output_path(f"{input_path.stem}.html")
-            html_path.write_text(html_content, encoding="utf-8")
-            return html_path
-
-        elif output_format == "pdf":
-            self.update_progress(80, "Converting to PDF...")
-            html_content = self._markdown_to_html(md_path.read_text(encoding="utf-8"))
-            html_path = self.file_manager.get_output_path(f"{input_path.stem}_temp.html")
-            html_path.write_text(html_content, encoding="utf-8")
-
-            from html_to_pdf import convert_html_to_pdf
-
-            pdf_path = convert_html_to_pdf(
-                html_path,
-                output_path=self.file_manager.get_output_path(f"{input_path.stem}.pdf"),
-            )
-            return pdf_path
-
-        raise ValueError(f"Unsupported output format for DOCX: {output_format}")
 
     async def _convert_image(self, input_path: Path, output_format: str) -> Path:
         """Convert image to target format using OCR."""
@@ -219,7 +95,7 @@ class ConversionService:
 
         md_path, _ = await convert_with_ocr(
             input_path,
-            self.file_manager.output_dir,
+            self.execution.root,
         )
         self.update_progress(70, "OCR completed")
 
@@ -229,21 +105,21 @@ class ConversionService:
         elif output_format == "html":
             self.update_progress(80, "Converting to HTML...")
             html_content = self._markdown_to_html(md_path.read_text(encoding="utf-8"))
-            html_path = self.file_manager.get_output_path(f"{input_path.stem}.html")
+            html_path = self.output_path(f"{input_path.stem}.html")
             html_path.write_text(html_content, encoding="utf-8")
             return html_path
 
         elif output_format == "pdf":
             self.update_progress(80, "Converting to PDF...")
             html_content = self._markdown_to_html(md_path.read_text(encoding="utf-8"))
-            html_path = self.file_manager.get_output_path(f"{input_path.stem}_temp.html")
+            html_path = self.output_path(f"{input_path.stem}_temp.html")
             html_path.write_text(html_content, encoding="utf-8")
 
-            from html_to_pdf import convert_html_to_pdf
+            from any_to_md.writers.pdf import render_pdf
 
-            pdf_path = convert_html_to_pdf(
+            pdf_path = render_pdf(
                 html_path,
-                output_path=self.file_manager.get_output_path(f"{input_path.stem}.pdf"),
+                output_path=self.output_path(f"{input_path.stem}.pdf"),
             )
             return pdf_path
 
@@ -259,7 +135,7 @@ class ConversionService:
 
         md_content, title = await fetch_url_to_markdown(url)
         filename = title or "webpage"
-        md_path = self.file_manager.get_output_path(f"{filename}.md")
+        md_path = self.output_path(f"{filename}.md")
         md_path.write_text(md_content, encoding="utf-8")
         self.update_progress(60, "Content extracted")
 
@@ -269,50 +145,25 @@ class ConversionService:
         elif output_format == "html":
             self.update_progress(80, "Converting to HTML...")
             html_content = self._markdown_to_html(md_content)
-            html_path = self.file_manager.get_output_path(f"{filename}.html")
+            html_path = self.output_path(f"{filename}.html")
             html_path.write_text(html_content, encoding="utf-8")
             return html_path
 
         elif output_format == "pdf":
             self.update_progress(80, "Converting to PDF...")
             html_content = self._markdown_to_html(md_content)
-            html_path = self.file_manager.get_output_path(f"{filename}_temp.html")
+            html_path = self.output_path(f"{filename}_temp.html")
             html_path.write_text(html_content, encoding="utf-8")
 
-            from html_to_pdf import convert_html_to_pdf
+            from any_to_md.writers.pdf import render_pdf
 
-            pdf_path = convert_html_to_pdf(
+            pdf_path = render_pdf(
                 html_path,
-                output_path=self.file_manager.get_output_path(f"{filename}.pdf"),
+                output_path=self.output_path(f"{filename}.pdf"),
             )
             return pdf_path
 
         raise ValueError(f"Unsupported output format for URL: {output_format}")
-
-    async def _convert_html(self, input_path: Path, output_format: str) -> Path:
-        """Convert HTML to target format."""
-        self.update_progress(20, "Reading HTML file...")
-
-        if output_format == "md_single":
-            from html_to_md import convert_html_to_markdown_single
-
-            self.update_progress(50, "Converting to Markdown...")
-            doc = convert_html_to_markdown_single(
-                input_path, output_root=self.file_manager.output_dir
-            )
-            return doc.output_path
-
-        elif output_format == "pdf":
-            self.update_progress(50, "Converting to PDF...")
-            from html_to_pdf import convert_html_to_pdf
-
-            pdf_path = convert_html_to_pdf(
-                input_path,
-                output_path=self.file_manager.get_output_path(f"{input_path.stem}.pdf"),
-            )
-            return pdf_path
-
-        raise ValueError(f"Unsupported output format for HTML: {output_format}")
 
     def _markdown_to_html(self, markdown_content: str) -> str:
         """Convert Markdown to HTML with basic styling."""

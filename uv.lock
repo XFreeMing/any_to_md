@@ -26,6 +26,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
+    { name = "cssselect2" },
     { name = "ebooklib" },
     { name = "fastapi" },
     { name = "httpx" },
@@ -35,6 +36,8 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "pymupdf4llm" },
     { name = "python-multipart" },
+    { name = "soupsieve" },
+    { name = "tinycss2" },
     { name = "trafilatura" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "weasyprint" },
@@ -43,6 +46,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.14.2" },
+    { name = "cssselect2", specifier = ">=0.8.0" },
     { name = "ebooklib", specifier = ">=0.20" },
     { name = "fastapi", specifier = ">=0.115.0" },
     { name = "httpx", specifier = ">=0.28.0" },
@@ -52,6 +56,8 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.0.0" },
     { name = "pymupdf4llm", specifier = ">=0.0.17" },
     { name = "python-multipart", specifier = ">=0.0.12" },
+    { name = "soupsieve", specifier = ">=2.7" },
+    { name = "tinycss2", specifier = ">=1.4.0" },
     { name = "trafilatura", specifier = ">=2.0.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.32.0" },
     { name = "weasyprint", specifier = ">=61.0" },

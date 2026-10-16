@@ -1,6 +1,5 @@
 """Configuration settings loaded from environment variables."""
 
-from pathlib import Path
 from pydantic_settings import BaseSettings
 
 
@@ -16,9 +15,8 @@ class Settings(BaseSettings):
     PDF_TEXT_THRESHOLD: int = 50  # Characters per page below this = scanned PDF
 
     # File Storage
-    TEMP_DIR: str = "temp"
+    DATA_DIR: str = "var"
     MAX_UPLOAD_SIZE: int = 100 * 1024 * 1024  # 100MB
-    FILE_EXPIRE_SECONDS: int = 3600  # 1 hour
 
     # Server
     HOST: str = "0.0.0.0"
@@ -27,22 +25,9 @@ class Settings(BaseSettings):
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
+        "extra": "ignore",
     }
 
-    @property
-    def temp_path(self) -> Path:
-        """Get temp directory as Path object."""
-        return Path(self.TEMP_DIR)
-
-    @property
-    def uploads_path(self) -> Path:
-        """Get uploads directory path."""
-        return self.temp_path / "uploads"
-
-    @property
-    def outputs_path(self) -> Path:
-        """Get outputs directory path."""
-        return self.temp_path / "outputs"
 
 
 settings = Settings()

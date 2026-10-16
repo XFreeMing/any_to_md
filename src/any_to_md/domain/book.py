@@ -28,12 +28,14 @@ class SourceLocator:
     path: str | None = None
     fragment: str | None = None
     spine_index: int | None = None
+    format: str = "epub"
+    page_index: int | None = None
 
     @property
     def key(self) -> str:
         if self.path:
             suffix = f"#{self.fragment}" if self.fragment else ""
-            return f"epub:{self.path}{suffix}"
+            return f"{self.format}:{self.path}{suffix}"
         return ""
 
     def to_dict(self) -> dict[str, Any]:
@@ -41,6 +43,8 @@ class SourceLocator:
             "path": self.path,
             "fragment": self.fragment,
             "spine_index": self.spine_index,
+            "format": self.format,
+            "page_index": self.page_index,
         }
 
 
@@ -58,7 +62,7 @@ class StructureNode:
     source_key: str
     source: SourceLocator
     continuation_sources: list[SourceLocator] = field(default_factory=list)
-    content_markdown: str = ""
+    content_ids: list[str] = field(default_factory=list)
 
     @property
     def anchor(self) -> str:
@@ -88,9 +92,33 @@ class StructureNode:
             "source": source_documents["primary"],
             "continuation_sources": source_documents["continuations"],
             "anchor": self.anchor,
-            "has_direct_content": bool(self.content_markdown.strip()),
-            "content_markdown": self.content_markdown,
+            "has_direct_content": bool(self.content_ids),
+            "content_ids": self.content_ids,
         }
+
+
+@dataclass(frozen=True)
+class ContentFragment:
+    """One owned fragment in source reading order; all views reference it."""
+
+    fragment_id: str
+    node_id: str
+    source: SourceLocator
+    html: str
+    heading_before: bool = True
+
+    def to_dict(self) -> dict[str, Any]:
+        result = {
+            "fragment_id": self.fragment_id,
+            "node_id": self.node_id,
+            "source": self.source.to_dict(),
+            "html": self.html,
+        }
+        # Older snapshots imply True. A prelude belongs to the following node
+        # but must be read before that node's source heading.
+        if not self.heading_before:
+            result['heading_before'] = False
+        return result
 
 
 @dataclass(frozen=True)
@@ -144,6 +172,10 @@ class BookRevision:
     assets: dict[str, AssetRef]
     diagnostics: list[Diagnostic]
     pipeline_version: str
+    content: list[ContentFragment] = field(default_factory=list)
+    styles: dict[str, str] = field(default_factory=dict)
+    anchor_owners: dict[str, str] = field(default_factory=dict)
+    source_format: str = "epub"
 
     def walk_ids(self, roots: list[str] | None = None) -> list[str]:
         ordered: list[str] = []
@@ -159,13 +191,17 @@ class BookRevision:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "book_id": self.book_id,
             "edition_id": self.edition_id,
             "revision_id": self.revision_id,
             "source_id": self.source_id,
             "source_sha256": self.source_sha256,
             "pipeline_version": self.pipeline_version,
+            "source_format": self.source_format,
+            "content": [fragment.to_dict() for fragment in self.content],
+            "styles": self.styles,
+            "anchor_owners": self.anchor_owners,
             "metadata": self.metadata.to_dict(),
             "roots": self.roots,
             "reading_order_ids": self.reading_order_ids,

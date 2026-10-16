@@ -2,25 +2,28 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import posixpath
 import re
 import unicodedata
 import uuid
 from collections import defaultdict
-from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 from urllib.parse import unquote, urlsplit
 from zipfile import ZipFile
 
 import ebooklib
-from bs4 import BeautifulSoup, NavigableString, ProcessingInstruction, Tag
+from bs4 import BeautifulSoup, Comment, NavigableString, ProcessingInstruction, Tag
 from ebooklib import epub
-from markdownify import markdownify
 
+from ...content.dom import can_replace_with_text, partition, strip_title
+from ...content.references import source_anchor
+from ...content.document import DocumentStyleSources, document_styles, prepare_html_document, scoped_fragment
+from ...content.typography import FontEvidence, author_font_evidence
+from ...content.media import ResourceState
 from ...domain.book import (
+    ContentFragment,
     AssetRef,
     BookMetadata,
     BookRevision,
@@ -29,27 +32,12 @@ from ...domain.book import (
     StructureNode,
 )
 
-PIPELINE_VERSION = "epub-book-v7"
-_ASSET_TOKEN_PREFIX = "ANYTOMDASSETTOKEN"
-_ASSET_TOKEN_SUFFIX = "ENDTOKEN"
-_SECTION_TOKEN_PREFIX = "ANYTOMDSECTIONTOKEN"
-_SECTION_TOKEN_SUFFIX = "ENDTOKEN"
-_END_TOKEN = "ANYTOMDDOCUMENTENDTOKEN"
-_HEADING_TOKEN_PREFIX = "ANYTOMDHEADINGTOKEN"
-_HEADING_TOKEN_SUFFIX = "ENDTOKEN"
-_CODE_LINE_TOKEN_PREFIX = "ANYTOMDCODELINETOKEN"
-_CODE_LINE_TOKEN_SUFFIX = "ENDTOKEN"
+PIPELINE_VERSION = "epub-dom-v3"
 _SOURCE_ANCHORS_ATTRIBUTE = "data-any-to-md-source-anchors"
 _SPLIT_DOCUMENT_RE = re.compile(
     r"^(?P<family>.+)_split_(?P<part>\d+)(?P<suffix>\.[^./]+)$",
     re.IGNORECASE,
 )
-
-
-@dataclass(frozen=True)
-class _DocumentStyleSources:
-    linked_paths: frozenset[str] = frozenset()
-    inline_css: tuple[str, ...] = ()
 
 
 def _metadata_value(book: epub.EpubBook, field: str) -> str | None:
@@ -95,8 +83,8 @@ def _split_href(href: str | None) -> tuple[str | None, str | None]:
 def _style_sources_by_document(
     source_path: Path,
     document_paths: Iterable[str],
-) -> dict[str, _DocumentStyleSources]:
-    sources: dict[str, _DocumentStyleSources] = {}
+) -> dict[str, DocumentStyleSources]:
+    sources: dict[str, DocumentStyleSources] = {}
     with ZipFile(source_path) as archive:
         available = set(archive.namelist())
         container = BeautifulSoup(
@@ -122,26 +110,11 @@ def _style_sources_by_document(
             if archive_path not in available and normalized in available:
                 archive_path = normalized
             if archive_path not in available:
-                sources[normalized] = _DocumentStyleSources()
+                sources[normalized] = DocumentStyleSources()
                 continue
             raw = archive.read(archive_path).decode("utf-8", errors="replace")
             soup = BeautifulSoup(raw, "html.parser")
-            paths: set[str] = set()
-            for link in soup.find_all("link", href=True):
-                rel = link.get("rel") or []
-                rel_values = [rel] if isinstance(rel, str) else list(rel)
-                if "stylesheet" not in {str(value).lower() for value in rel_values}:
-                    continue
-                resolved = _resolve_package_path(normalized, str(link.get("href")))
-                if resolved:
-                    paths.add(resolved)
-            inline_css = tuple(
-                style.get_text("", strip=False) for style in soup.find_all("style")
-            )
-            sources[normalized] = _DocumentStyleSources(
-                linked_paths=frozenset(paths),
-                inline_css=inline_css,
-            )
+            sources[normalized] = document_styles(soup, normalized, raw)
     return sources
 
 
@@ -193,149 +166,62 @@ def _heading_text(heading: Tag) -> str:
     return re.sub(r"\s+", " ", value).strip()
 
 
-def _strip_leading_title_headings(markdown: str, title: str) -> str:
-    text = markdown.strip()
-    if not text:
-        return ""
-    target = _normalized_heading_text(title)
-    consumed = 0
-    combined = ""
-    pattern = re.compile(
-        rf"\A\s*(#{{1,6}})[ \t]+"
-        rf"(?:{_HEADING_TOKEN_PREFIX}\d{_HEADING_TOKEN_SUFFIX})?"
-        r"(.+?)[ \t]*(?:\n+|\Z)"
-    )
-    for _ in range(4):
-        match = pattern.match(text[consumed:])
-        if not match:
-            break
-        candidate = combined + _normalized_heading_text(match.group(2))
-        if not target.startswith(candidate):
-            break
-        combined = candidate
-        consumed += match.end()
-        if combined == target:
-            return text[consumed:].strip()
-    return text
 
 
-def _normalize_relative_headings(markdown: str) -> str:
-    """Map source h-levels to levels relative to the owning structure node."""
-    pattern = re.compile(
-        rf"^(#{{1,6}})[ \t]+{_HEADING_TOKEN_PREFIX}"
-        rf"(?P<level>[1-6]){_HEADING_TOKEN_SUFFIX}"
-        r"(?P<title>.*)$",
-        re.MULTILINE,
-    )
-    matches = list(pattern.finditer(markdown))
-    if not matches:
-        return markdown.strip()
-    base_level = min(int(match.group("level")) for match in matches)
-
-    def replace(match: re.Match[str]) -> str:
-        relative_level = min(int(match.group("level")) - base_level + 1, 6)
-        return f"{'#' * relative_level} {match.group('title').strip()}"
-
-    return pattern.sub(replace, markdown).strip()
 
 
-def _table_to_markdown(table: Tag) -> str:
-    rows: list[tuple[list[str], bool]] = []
-    for row in table.find_all("tr"):
-        cells: list[str] = []
-        header = False
-        for cell in row.find_all(["th", "td"]):
-            cells.append(cell.get_text(" ", strip=True).replace("|", "\\|"))
-            header = header or cell.name == "th"
-        if cells:
-            rows.append((cells, header))
-    if not rows:
-        return ""
-    width = max(len(cells) for cells, _ in rows)
-    padded = [(cells + [""] * (width - len(cells)), header) for cells, header in rows]
-    first = padded[0][0] if padded[0][1] else [" "] * width
-    body = [cells for cells, _ in (padded[1:] if padded[0][1] else padded)]
-    lines = [
-        "| " + " | ".join(first) + " |",
-        "| " + " | ".join(["---"] * width) + " |",
-    ]
-    lines.extend("| " + " | ".join(cells) + " |" for cells in body)
-    return "\n".join(lines)
 
 
-def _monospace_rules(
+def _source_font_evidence(
     book: epub.EpubBook,
     soup: BeautifulSoup,
-    style_sources: _DocumentStyleSources,
-) -> set[tuple[str | None, str]]:
-    rules: set[tuple[str | None, str]] = set()
-    family_pattern = re.compile(
-        r"font-family\s*:\s*[^;}]*(?:mono|courier|consolas|source\s+code|menlo)",
-        re.IGNORECASE,
-    )
-    rule_pattern = re.compile(r"([^{}]+)\{([^{}]*)\}")
-    css_sources = [*style_sources.inline_css]
-    css_sources.extend(style.get_text("", strip=False) for style in soup.find_all("style"))
-    css_sources.extend(
-        style_item.get_content().decode("utf-8", errors="replace")
-        for style_item in book.get_items_of_type(ebooklib.ITEM_STYLE)
-        if _normalize_package_path(style_item.file_name) in style_sources.linked_paths
-    )
-    for css in css_sources:
-        css = re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
-        for selector, declarations in rule_pattern.findall(css):
-            if not family_pattern.search(declarations):
-                continue
-            for component in selector.split(","):
-                simple = re.fullmatch(
-                    r"\s*(?:(?P<tag>[a-zA-Z][\w-]*))?"
-                    r"\.(?P<class>[_a-zA-Z][\w-]*)\s*",
-                    component,
-                )
-                if simple:
-                    tag_name = simple.group("tag")
-                    rules.add((tag_name.lower() if tag_name else None, simple.group("class")))
-    return rules
+    style_sources: DocumentStyleSources,
+    report,
+) -> FontEvidence:
+    styles = []
+    for kind, value, media in style_sources.ordered_css:
+        if kind == 'path':
+            item = next((item for item in book.get_items_of_type(ebooklib.ITEM_STYLE) if _normalize_package_path(item.file_name) == value), None)
+            if item is None:
+                report('字体样式文件缺失，保留源编号。')
+                return {}
+            value = item.get_content().decode('utf-8', errors='replace')
+        styles.append((value, bool(media and media.lower() != 'all')))
+    return author_font_evidence(soup, styles, report)
 
 
-def _element_has_monospace_style(
-    tag: Tag,
-    monospace_rules: set[tuple[str | None, str]],
-) -> bool:
-    classes = tag.get("class") or []
-    for class_name in classes:
-        if (None, str(class_name)) in monospace_rules:
-            return True
-        if (str(tag.name).lower(), str(class_name)) in monospace_rules:
-            return True
-    style = str(tag.get("style") or "")
-    return bool(
-        re.search(
-            r"font-family\s*:[^;]*(?:mono|courier|consolas|source\s+code|menlo)",
-            style,
-            re.IGNORECASE,
-        )
-    )
-
-
-def _has_monospace_style(
-    tag: Tag,
-    monospace_rules: set[tuple[str | None, str]],
-) -> bool:
-    current: Tag | None = tag
-    while current is not None:
-        if _element_has_monospace_style(current, monospace_rules):
-            return True
-        parent = current.parent
-        current = parent if isinstance(parent, Tag) else None
-
-    full_text = _preserved_element_text(tag)
-    for candidate in tag.find_all(True):
-        if not _element_has_monospace_style(candidate, monospace_rules):
+def _has_monospace_style(tag: Tag, evidence: FontEvidence) -> bool:
+    mono_text, other_text, source_text, fallback_positions = [], [], [], []
+    offset = 0
+    for text in tag.descendants:
+        if isinstance(text, Tag):
+            if text.name == 'br':
+                offset += 1
+                source_text.append('\n')
             continue
-        if _preserved_element_text(candidate) == full_text:
-            return True
-    return False
+        if isinstance(text, (Comment, ProcessingInstruction)):
+            continue
+        font = evidence.get(id(text.parent))
+        if font is None and str(text).strip():
+            return False
+        (mono_text if font is True else other_text).append(str(text))
+        source_text.append(str(text))
+        if font is not True:
+            fallback_positions.extend(offset+index for index, character in enumerate(str(text)) if character.isalnum())
+        offset += len(str(text))
+    mono = ''.join(mono_text)
+    other = ''.join(other_text)
+    if not mono.strip():
+        return False
+    if not any(character.isalnum() for character in other):
+        return True
+    # Known proportional text is accepted only inside a comment or string,
+    # allowing CJK annotations in separate spans without consuming plain prose.
+    if not re.search(r'[(){}\[\];=/*#$%<>:"\'\\]', mono):
+        return False
+    full_text = ''.join(source_text)
+    literals = [match.span() for match in re.finditer(r'/\*.*?\*/|//[^\n]*|(?<!\S)#[^\n]*|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', full_text, re.DOTALL)]
+    return all(any(left <= position < right for left, right in literals) for position in fallback_positions)
 
 
 def _preserved_element_text(tag: Tag) -> str:
@@ -388,11 +274,13 @@ def _preserve_source_anchors(tag: Tag) -> bool:
 
 def _code_line_payload(
     tag: Tag,
-    monospace_rules: set[tuple[str | None, str]],
+    font_evidence: FontEvidence,
 ) -> str | None:
     if tag.find_parent(["pre", "code", "table"]) is not None:
         return None
-    if not _has_monospace_style(tag, monospace_rules):
+    if not can_replace_with_text(tag):
+        return None
+    if not _has_monospace_style(tag, font_evidence):
         return None
     text = _preserved_element_text(tag)
     match = re.fullmatch(
@@ -408,33 +296,74 @@ def _code_line_payload(
 def _mark_code_listing_lines(
     soup: BeautifulSoup,
     book: epub.EpubBook,
-    style_sources: _DocumentStyleSources,
+    style_sources: DocumentStyleSources,
+    report,
 ) -> None:
-    monospace_rules = _monospace_rules(book, soup, style_sources)
-    group_id = 0
-    in_group = False
-    for tag in list(soup.find_all(["p", "h1", "h2", "h3", "h4", "h5", "h6"])):
-        code = _code_line_payload(tag, monospace_rules)
-        if code is None:
-            in_group = False
+    rules = _source_font_evidence(book, soup, style_sources, report)
+
+    def following_block(current: Tag) -> Tag | None:
+        tail = current
+        while isinstance(tail, Tag) and tail.contents:
+            tail = tail.contents[-1]
+        following = tail.next_element
+        while following is not None:
+            if isinstance(following, Tag):
+                if following.name in {"p", "h1", "h2", "h3", "h4", "h5", "h6"}:
+                    return following
+                if following.name not in {"div", "section", "article", "main"}:
+                    return None
+            elif not isinstance(following, Comment) and str(following).strip():
+                return None
+            following = following.next_element
+        return None
+
+    candidates = list(soup.find_all(["p", "h1", "h2", "h3", "h4", "h5", "h6"]))
+    consumed: set[int] = set()
+    for tag in candidates:
+        if id(tag) in consumed or tag.parent is None:
             continue
-        if not in_group:
-            group_id += 1
-            in_group = True
-        _preserve_source_anchors(tag)
-        encoded = code.encode("utf-8").hex()
-        tag.name = "p"
-        tag.clear()
-        tag.append(
-            NavigableString(
-                f"\n{_CODE_LINE_TOKEN_PREFIX}{group_id}X{encoded}"
-                f"{_CODE_LINE_TOKEN_SUFFIX}\n"
-            )
-        )
+        payload = _code_line_payload(tag, rules)
+        if payload is None:
+            continue
+        run = [(tag, payload)]
+        number = int(re.match(r"\s*(\d+)", _preserved_element_text(tag)).group(1))
+        current = tag
+        while True:
+            following = following_block(current)
+            if following is None:
+                break
+            value = _code_line_payload(following, rules)
+            match = re.match(r"\s*(\d+)", _preserved_element_text(following))
+            if value is None or match is None or int(match.group(1)) != number + 1:
+                break
+            run.append((following, value))
+            current = following
+            number += 1
+        if len(run) < 2:
+            continue
+        pre = soup.new_tag("pre")
+        code = soup.new_tag("code")
+        language = _infer_code_language([value for _, value in run])
+        if language:
+            code["class"] = [f"language-{language}"]
+        code.string = "\n".join(value for _, value in run) + "\n"
+        pre.append(code)
+        tag.insert_before(pre)
+        for original, _ in run:
+            _preserve_source_anchors(original)
+            aliases = set(json.loads(original.get(_SOURCE_ANCHORS_ATTRIBUTE) or "[]"))
+            aliases.update(str(original.get(key)) for key in ("id", "name") if original.get(key))
+            for alias in sorted(aliases):
+                pre.insert_before(soup.new_tag("a", id=alias))
+            consumed.add(id(original))
+            original.decompose()
+
 
 
 def _normalize_code_listing_captions(soup: BeautifulSoup) -> None:
     for tag in soup.find_all(["p", "figcaption"]):
+        if not can_replace_with_text(tag):
+            continue
         text = _heading_text(tag)
         if not re.match(r"^(?:代码清单|程序清单|code\s+listing\b|listing\b)", text, re.I):
             continue
@@ -469,54 +398,6 @@ def _infer_code_language(lines: list[str]) -> str:
     return ""
 
 
-def _restore_code_blocks(markdown: str) -> str:
-    token_pattern = re.compile(
-        rf"^(?P<indent>[ \t]*){_CODE_LINE_TOKEN_PREFIX}(?P<group>\d+)X"
-        rf"(?P<code>[0-9a-f]*){_CODE_LINE_TOKEN_SUFFIX}[ \t]*$"
-    )
-    source_lines = markdown.splitlines()
-    output: list[str] = []
-    index = 0
-    while index < len(source_lines):
-        match = token_pattern.fullmatch(source_lines[index])
-        if match is None:
-            output.append(source_lines[index])
-            index += 1
-            continue
-        group = match.group("group")
-        indent = match.group("indent")
-        code_lines: list[str] = []
-        while match is not None and match.group("group") == group:
-            code_lines.append(bytes.fromhex(match.group("code")).decode("utf-8"))
-            index += 1
-            lookahead = index
-            while lookahead < len(source_lines) and not source_lines[lookahead].strip():
-                lookahead += 1
-            if lookahead >= len(source_lines):
-                break
-            following = token_pattern.fullmatch(source_lines[lookahead])
-            if (
-                following is None
-                or following.group("group") != group
-                or following.group("indent") != indent
-            ):
-                break
-            index = lookahead
-            match = following
-        longest_fence = max(
-            (len(run) for line in code_lines for run in re.findall(r"`+", line)),
-            default=0,
-        )
-        fence = "`" * max(3, longest_fence + 1)
-        language = _infer_code_language(code_lines)
-        output.extend(
-            [
-                f"{indent}{fence}{language}",
-                *(f"{indent}{line}" for line in code_lines),
-                f"{indent}{fence}",
-            ]
-        )
-    return "\n".join(output)
 
 
 def _merge_adjacent_emphasis(soup: BeautifulSoup) -> None:
@@ -591,12 +472,6 @@ def _promote_numbered_emphasis_blocks(soup: BeautifulSoup) -> None:
         tag.name = f"h{min(current_heading_level + 1, 6)}"
 
 
-def _asset_file_name(source_path: str, content: bytes) -> tuple[str, str]:
-    digest = hashlib.sha256(content).hexdigest()
-    original = PurePosixPath(source_path)
-    stem = re.sub(r"[^0-9A-Za-z]+", "-", original.stem).strip("-") or "image"
-    suffix = re.sub(r"[^0-9A-Za-z.]", "", original.suffix.lower())
-    return digest, f"{stem}-{digest[:12]}{suffix}"
 
 
 def _prepare_document(
@@ -604,71 +479,23 @@ def _prepare_document(
     item: epub.EpubHtml,
     assets: dict[str, AssetRef],
     asset_items: dict[str, Any],
-    style_sources: _DocumentStyleSources,
+    style_sources: DocumentStyleSources,
+    styles: dict[str, str],
+    diagnostics: list[Diagnostic],
+    resource_state: ResourceState | None = None,
 ) -> BeautifulSoup:
-    soup = BeautifulSoup(item.get_content().decode("utf-8", errors="replace"), "html.parser")
-    for node in list(soup.find_all(string=lambda value: isinstance(value, ProcessingInstruction))):
-        node.extract()
-    _mark_code_listing_lines(soup, book, style_sources)
+    soup = BeautifulSoup(style_sources.source_html or item.content.decode("utf-8", errors="replace"), "html.parser")
+    _mark_code_listing_lines(soup, book, style_sources, lambda message: diagnostics.append(
+        Diagnostic('code_font_uncertain', message, source_path=_normalize_package_path(item.file_name))
+    ))
     _normalize_code_listing_captions(soup)
-    for node in soup.find_all(["script", "style"]):
-        node.decompose()
-    for table in soup.find_all("table"):
-        table.replace_with(NavigableString(f"\n{_table_to_markdown(table)}\n"))
     _merge_adjacent_emphasis(soup)
     _promote_numbered_emphasis_blocks(soup)
-    for heading in soup.find_all(re.compile(r"^h[1-6]$")):
-        text = _heading_text(heading)
-        has_source_anchor = _preserve_source_anchors(heading)
-        if re.fullmatch(r"\d+", text) and not has_source_anchor:
-            heading.replace_with(NavigableString(text))
-            continue
-        level = int(heading.name[1])
-        heading.clear()
-        heading.append(
-            NavigableString(
-                f"{_HEADING_TOKEN_PREFIX}{level}{_HEADING_TOKEN_SUFFIX}{text}"
-            )
-        )
-    for image in soup.find_all("img"):
-        src = image.get("src")
-        if not src or src.startswith("data:"):
-            continue
-        package_path = _resolve_package_path(item.file_name, src)
-        asset_item = asset_items.get(package_path)
-        if asset_item is None:
-            continue
-        content = asset_item.get_content()
-        asset_id, file_name = _asset_file_name(package_path, content)
-        assets.setdefault(
-            asset_id,
-            AssetRef(
-                asset_id=asset_id,
-                source_path=package_path,
-                file_name=file_name,
-                media_type=getattr(asset_item, "media_type", None),
-                content=content,
-            ),
-        )
-        image["src"] = f"{_ASSET_TOKEN_PREFIX}{asset_id}{_ASSET_TOKEN_SUFFIX}"
-    return soup
+    def load_resource(path):
+        resource = asset_items.get(path)
+        return (resource.get_content(), getattr(resource, "media_type", None)) if resource is not None else None
 
-
-def _find_fragment(container: Tag | BeautifulSoup, fragment: str) -> Tag | None:
-    direct = container.find(id=fragment) or container.find(attrs={"name": fragment})
-    if direct is not None:
-        return direct
-    for candidate in container.find_all(attrs={_SOURCE_ANCHORS_ATTRIBUTE: True}):
-        encoded = candidate.get(_SOURCE_ANCHORS_ATTRIBUTE)
-        if not isinstance(encoded, str):
-            continue
-        try:
-            aliases = json.loads(encoded)
-        except (TypeError, json.JSONDecodeError):
-            continue
-        if isinstance(aliases, list) and fragment in aliases:
-            return candidate
-    return None
+    return prepare_html_document(soup, _normalize_package_path(item.file_name), assets, load_resource, style_sources, styles, diagnostics, resource_state=resource_state)
 
 
 def _render_and_split_document(
@@ -679,133 +506,39 @@ def _render_and_split_document(
     nodes: dict[str, StructureNode],
     assets: dict[str, AssetRef],
     asset_items: dict[str, Any],
-    style_sources: _DocumentStyleSources,
+    style_sources: DocumentStyleSources,
+    styles: dict[str, str],
     diagnostics: list[Diagnostic],
-) -> list[str]:
-    soup = _prepare_document(
-        book,
-        item,
-        assets,
-        asset_items,
-        style_sources,
-    )
+    resource_state: ResourceState | None = None,
+) -> list[tuple[str, str]]:
+    soup = _prepare_document(book, item, assets, asset_items, style_sources, styles, diagnostics, resource_state)
     container = soup.body or soup
-    inserted: set[str] = set()
-    index_to_node: dict[int, str] = {}
-
-    for index, node_id in enumerate(node_ids):
+    boundaries: dict[int, str] = {}
+    seen: set[str] = set()
+    for node_id in node_ids:
         node = nodes[node_id]
-        locator = node.source.key
-        if locator in inserted:
-            diagnostics.append(
-                Diagnostic(
-                    code="duplicate_source_target",
-                    message="多个目录节点指向同一正文位置；正文只归属首次出现的节点。",
-                    node_id=node_id,
-                    source_path=node.source.path,
-                )
-            )
+        key = node.source.key
+        if key in seen:
+            diagnostics.append(Diagnostic("duplicate_source_target", "重复目录目标仅保留一份正文。", node_id=node_id, source_path=item.file_name))
             continue
-        marker = NavigableString(f"{_SECTION_TOKEN_PREFIX}{index}{_SECTION_TOKEN_SUFFIX}")
-        if node.source.fragment:
-            target = _find_fragment(container, node.source.fragment)
-            if target is None:
-                diagnostics.append(
-                    Diagnostic(
-                        code="missing_toc_anchor",
-                        message=f"目录锚点不存在：#{node.source.fragment}",
-                        node_id=node_id,
-                        source_path=node.source.path,
-                    )
-                )
-                continue
-            target.insert_before(marker)
+        seen.add(key)
+        target = container.find(id=source_anchor(_normalize_package_path(item.file_name), node.source.fragment or ""))
+        if target is None:
+            diagnostics.append(Diagnostic("missing_toc_anchor", f"目录锚点不存在：#{node.source.fragment}", node_id=node_id, source_path=item.file_name))
         else:
-            container.insert(0, marker)
-        inserted.add(locator)
-        index_to_node[index] = node_id
+            boundaries[id(target)] = node_id
+    return [(owner, scoped_fragment(soup, html, _normalize_package_path(item.file_name))) for owner, html in partition(container, boundaries, node_ids[0])]
 
-    container.append(NavigableString(_END_TOKEN))
-    rendered = markdownify(
-        str(container),
-        heading_style="ATX",
-        bullets="-",
-        escape_asterisks=False,
-        escape_underscores=False,
-    )
-    end_at = rendered.find(_END_TOKEN)
-    if end_at >= 0:
-        rendered = rendered[:end_at]
-    rendered = _restore_code_blocks(rendered)
-
-    token_pattern = re.compile(
-        rf"{_SECTION_TOKEN_PREFIX}(\d+){_SECTION_TOKEN_SUFFIX}"
-    )
-    matches = list(token_pattern.finditer(rendered))
-    if not matches:
-        fallback_id = node_ids[0]
-        nodes[fallback_id].content_markdown = _strip_leading_title_headings(
-            rendered, nodes[fallback_id].title_display
-        )
-        diagnostics.append(
-            Diagnostic(
-                code="document_assigned_by_fallback",
-                message="正文锚点均无法解析，整篇正文已唯一归入首个目录节点。",
-                node_id=fallback_id,
-                source_path=item.file_name,
-            )
-        )
-        return [fallback_id]
-
-    prefix = rendered[: matches[0].start()].strip()
-    for position, match in enumerate(matches):
-        marker_index = int(match.group(1))
-        node_id = index_to_node.get(marker_index)
-        if node_id is None:
-            continue
-        end = matches[position + 1].start() if position + 1 < len(matches) else len(rendered)
-        content = rendered[match.end() : end].strip()
-        if position == 0 and prefix:
-            content = f"{prefix}\n\n{content}".strip()
-        nodes[node_id].content_markdown = _strip_leading_title_headings(
-            content, nodes[node_id].title_display
-        )
-    return [
-        index_to_node[int(match.group(1))]
-        for match in matches
-        if int(match.group(1)) in index_to_node
-    ]
 
 
 def _render_complete_document(
-    *,
-    book: epub.EpubBook,
-    item: epub.EpubHtml,
-    assets: dict[str, AssetRef],
-    asset_items: dict[str, Any],
-    style_sources: _DocumentStyleSources,
+    *, book: epub.EpubBook, item: epub.EpubHtml, assets: dict[str, AssetRef],
+    asset_items: dict[str, Any], style_sources: DocumentStyleSources,
+    styles: dict[str, str], diagnostics: list[Diagnostic], resource_state: ResourceState | None = None,
 ) -> str:
-    """Render an unindexed physical continuation without inventing a section."""
-    soup = _prepare_document(
-        book,
-        item,
-        assets,
-        asset_items,
-        style_sources,
-    )
-    container = soup.body or soup
-    container.append(NavigableString(_END_TOKEN))
-    rendered = markdownify(
-        str(container),
-        heading_style="ATX",
-        bullets="-",
-        escape_asterisks=False,
-        escape_underscores=False,
-    )
-    end_at = rendered.find(_END_TOKEN)
-    if end_at >= 0:
-        rendered = rendered[:end_at]
-    return _restore_code_blocks(rendered).strip()
+    soup = _prepare_document(book, item, assets, asset_items, style_sources, styles, diagnostics, resource_state)
+    return scoped_fragment(soup, (soup.body or soup).decode_contents(), _normalize_package_path(item.file_name))
+
 
 
 def _split_document_family(path: str) -> tuple[str, str] | None:
@@ -815,12 +548,16 @@ def _split_document_family(path: str) -> tuple[str, str] | None:
     return match.group("family"), match.group("suffix").lower()
 
 
-def _first_heading(item: epub.EpubHtml) -> str:
-    soup = BeautifulSoup(item.get_content().decode("utf-8", errors="replace"), "html.parser")
+def _first_heading(item: epub.EpubHtml, fallback: str) -> str:
+    soup = BeautifulSoup(item.content.decode("utf-8", errors="replace"), "html.parser")
     heading = soup.find(["h1", "h2", "h3"])
     if heading and _heading_text(heading):
         return _heading_text(heading)
-    return str(item.get_id() or PurePosixPath(item.file_name).stem or "未分章正文")
+    if soup.title:
+        title = _heading_text(soup.title)
+        if title.casefold() not in {"", "unknown", "untitled", "未知", "无标题"} and not re.fullmatch(r".*\.(?:x?html?|xml)", title, re.I):
+            return title
+    return fallback
 
 
 def read_epub_book(
@@ -951,7 +688,7 @@ def read_epub_book(
             continue
 
         ordinal = (len(roots) + 1,)
-        title = _first_heading(item)
+        title = _first_heading(item, f"正文 {spine_index[normalized] + 1}")
         node_id = add_node(epub.Link(normalized, title), None, ordinal)
         nodes[node_id].role = "frontmatter" if len(roots) == 1 else "chapter"
         if family:
@@ -992,7 +729,7 @@ def read_epub_book(
     )
     asset_items = {
         _normalize_package_path(item.file_name): item
-        for item in book.get_items_of_type(ebooklib.ITEM_IMAGE)
+        for item in book.get_items()
     }
     assets: dict[str, AssetRef] = {}
     node_ids_by_path: dict[str, list[str]] = defaultdict(list)
@@ -1008,76 +745,58 @@ def read_epub_book(
         walk(root_id)
 
     source_order: list[str] = []
+    content: list[ContentFragment] = []
+    styles: dict[str, str] = {}
+    anchor_owners: dict[str, str] = {}
     processed_paths: set[str] = set()
-    ordered_paths = [
-        _normalize_package_path(item.file_name) for item in spine_items
-    ] + [path for path in node_ids_by_path if path not in spine_index]
+    resource_state = ResourceState()
+    ordered_paths = [_normalize_package_path(item.file_name) for item in spine_items]
+    ordered_paths.extend(path for path in node_ids_by_path if path not in spine_index)
     for path in ordered_paths:
         if path in processed_paths:
             continue
-        continuation_owner = continuation_owner_by_path.get(path)
-        if continuation_owner:
-            processed_paths.add(path)
-            item = item_by_path.get(path)
-            if item is None:
-                diagnostics.append(
-                    Diagnostic(
-                        code="missing_continuation_document",
-                        message="章节的 EPUB 后续物理分片不存在。",
-                        node_id=continuation_owner,
-                        source_path=path,
-                        severity="error",
-                    )
-                )
-                continue
-            continuation = _render_complete_document(
-                book=book,
-                item=item,
-                assets=assets,
-                asset_items=asset_items,
-                style_sources=style_sources_by_path.get(
-                    path,
-                    _DocumentStyleSources(),
-                ),
-            )
-            if continuation:
-                owner = nodes[continuation_owner]
-                owner.content_markdown = (
-                    f"{owner.content_markdown}\n\n{continuation}".strip()
-                )
-            source_order.append(continuation_owner)
-            continue
-        if path not in node_ids_by_path:
-            continue
         processed_paths.add(path)
-        path_node_ids = node_ids_by_path[path]
         item = item_by_path.get(path)
         if item is None:
-            diagnostics.append(
-                Diagnostic(
-                    code="missing_content_document",
-                    message="目录指向的 EPUB 正文文件不存在。",
-                    source_path=path,
-                    severity="error",
-                )
-            )
+            diagnostics.append(Diagnostic("missing_content_document", "目录指向的正文文件不存在。", severity="error", source_path=path))
             continue
-        source_order.extend(_render_and_split_document(
-            book=book,
-            item=item,
-            node_ids=path_node_ids,
-            nodes=nodes,
-            assets=assets,
-            asset_items=asset_items,
-            style_sources=style_sources_by_path.get(
-                path,
-                _DocumentStyleSources(),
-            ),
-            diagnostics=diagnostics,
-        ))
+        continuation_owner = continuation_owner_by_path.get(path)
+        style_sources = style_sources_by_path.get(path, DocumentStyleSources())
+        if continuation_owner:
+            pieces = [(continuation_owner, _render_complete_document(
+                book=book, item=item, assets=assets, asset_items=asset_items,
+                style_sources=style_sources, styles=styles, diagnostics=diagnostics, resource_state=resource_state,
+            ))]
+        elif path in node_ids_by_path:
+            pieces = _render_and_split_document(
+                book=book, item=item, node_ids=node_ids_by_path[path], nodes=nodes,
+                assets=assets, asset_items=asset_items, style_sources=style_sources,
+                styles=styles, diagnostics=diagnostics, resource_state=resource_state,
+            )
+        else:
+            continue
+        for index, (node_id, html) in enumerate(pieces):
+            node = nodes[node_id]
+            if not node.content_ids:
+                html = strip_title(html, node.title_display)
+            scoped = BeautifulSoup(html, "html.parser")
+            fragment_id = _uuid5(edition_id, f"fragment:{path}:{index}:{node_id}")
+            fragment = ContentFragment(fragment_id, node_id, SourceLocator(path=path, spine_index=spine_index.get(path)), str(scoped))
+            content.append(fragment)
+            node.content_ids.append(fragment_id)
+            source_order.append(node_id)
+            for target in scoped.find_all(id=True):
+                anchor = str(target["id"])
+                if anchor in anchor_owners:
+                    raise ValueError(f"规范内容锚点重复：{anchor}")
+                anchor_owners[anchor] = node_id
 
-    for node in nodes.values():
-        node.content_markdown = _normalize_relative_headings(node.content_markdown)
+    for fragment in content:
+        soup = BeautifulSoup(fragment.html, "html.parser")
+        for link in soup.find_all("a", href=True):
+            href = str(link["href"])
+            if href.startswith("#src-") and href[1:] not in anchor_owners:
+                diagnostics.append(Diagnostic("unresolved_internal_reference", f"源引用目标不存在：{href}", node_id=fragment.node_id, source_path=fragment.source.path))
 
     reading_order_ids: list[str] = []
     emitted: set[str] = set()
@@ -1162,11 +881,12 @@ def read_epub_book(
         assets=assets,
         diagnostics=diagnostics,
         pipeline_version=PIPELINE_VERSION,
+        content=content,
+        styles=styles,
+        anchor_owners=anchor_owners,
     )
 
 
-def asset_token(asset_id: str) -> str:
-    return f"{_ASSET_TOKEN_PREFIX}{asset_id}{_ASSET_TOKEN_SUFFIX}"
 
 
 def _walk_node_ids(nodes: dict[str, StructureNode], root_id: str) -> list[str]:

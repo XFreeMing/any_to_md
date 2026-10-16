@@ -1,0 +1,1829 @@
+{
+  "schema_version": 1,
+  "source_revision": "fc5b9a6193d25fb2f3f1efc7321bd7dfc7a124b4",
+  "quality_contract_sha256": "7438ab4a04d6d87ef365b1bc9c691223aba470a98558e3c17f49e3cb11671cab",
+  "inspection_source_sha256": "4f930284ba3f0b9f3c58cdfeb0c8e4152adf26c45a3e4346ca46bd7db42c6416",
+  "fixture_builder_sha256": "8f0908ed92ea3c1ea56ffbac663c772bfb18c3abeb5846e0a5a9e39277611fab",
+  "capture_source_sha256": "a06aa19710b061f04fd7d2b83982cf78073b994343b47b7f24a712fbe9637963",
+  "source_sha256": {
+    "src/any_to_md/__init__.py": "061abb115fae4b5068679e49a979d4d24b458afb98ea849052edddc6887e52c5",
+    "src/any_to_md/adapters/__init__.py": "67e03f5ba72ec5613a2b4b75c065dba766e620908a88a91a6571f8e49f91bb5e",
+    "src/any_to_md/adapters/persistence/__init__.py": "a5006c97bffb4d2976c2167a585eff73292d2a0e4144b47ad2beca32b18d0f6d",
+    "src/any_to_md/adapters/persistence/sqlite.py": "6472789a544aea6ae583ee8a3ede7b059352e91b62665edf9809462f77d28cbc",
+    "src/any_to_md/adapters/storage.py": "06503224cc80b961c820b7eb0105ccbbbc935652dabcd3ad98a7ef51601210e3",
+    "src/any_to_md/application/__init__.py": "dc880efa440178cb6d63773932d6f2c49a8335edefa7d0e225b11968a9af330f",
+    "src/any_to_md/application/convert_book.py": "38fe451f01736388ab65d557ee874ab16311f64fe4b17a891def1cbe08ac290a",
+    "src/any_to_md/domain/__init__.py": "7d3754cd466fcf3871056a2fb832bbb8ddbda83f0359cf76e4a507e54323f1fa",
+    "src/any_to_md/domain/artifacts.py": "d62b1cb942847638010e2a9a52d922f8c78477f010215d256e4eff687c13eadd",
+    "src/any_to_md/domain/book.py": "eb041e5a365fbf22cb2c72fc082f2e299a0d54fb8aec5794eaf0d295eb80f975",
+    "src/any_to_md/export/__init__.py": "48124262418cf9bc4299adbf6f9305791ad0ed6a2797c4be3881d3e267414758",
+    "src/any_to_md/export/naming.py": "ea1037e19a58c5a5b8045188c3b2d62559f7e15150de521e221fa5ff32acf10c",
+    "src/any_to_md/export/planning.py": "a466aa416a99655514bd06eb946b445a7f62a3902423a5c6618c86fec0786988",
+    "src/any_to_md/interfaces/__init__.py": "467da33cc69799507082acd6b0c39897e806bc553ad358d74356715a02a95926",
+    "src/any_to_md/interfaces/cli/__init__.py": "8bd37c2e93c8fd085c6501f88af05656f32116b13b161f796e5cc32aa5608c93",
+    "src/any_to_md/interfaces/cli/convert_book.py": "d736c510599df4bc0fe22d686bc8090282dd31a4966c1c9e191e5549b6d502b4",
+    "src/any_to_md/readers/__init__.py": "43b284e5e3700ba89c56a852b39748d1d310602bff1ad0d0f59f720a6ca176c6",
+    "src/any_to_md/readers/epub/__init__.py": "9de9d2a5d68f87d0bfe05a8779a5ff7691aac422870dd59fc8d0a2e7630fb160",
+    "src/any_to_md/readers/epub/reader.py": "a0b72591fc6bc2520682c11c5c7fc67361fbcd2c11314d7b6e0f340c166df195",
+    "src/any_to_md/writers/__init__.py": "6f07d951b85e6d00547ad33f1bac400693dfecdfdb9c3f153555222f2bf40ff4",
+    "src/any_to_md/writers/markdown.py": "b8a3f0dfb508c7f1361e342710347f1d7b1248459f3b922923061bd5d58b9963",
+    "web/__init__.py": "82d8c40fc11d5b22041a3ac755b6075ba240c8dabbfd442ab81b42d4dc1d98e5",
+    "web/app.py": "dfd6847beda21dbbbb14cd117f605fb227133259ab8ee8f2ceece7c1da0e16cb",
+    "web/config.py": "86219825aad3dc52aabaf95f2efd52b1e1e5d264b3cffb08d63b800b86fdd3e2",
+    "web/routes/__init__.py": "94d14bbfc8b13c5f3fa6a549c1f3bb5ef51a43867aec46c131323f7dca54ddbc",
+    "web/routes/convert.py": "71343d5a80ebde560bb036da6f516d097a0425e202ce43d1b34122d237658baa",
+    "web/routes/download.py": "ca130eac13d77d3a698aeb8e1a98041ee833c4cada5806e783e1b2f6e6e5613d",
+    "web/routes/upload.py": "e3e8e8aa8771d4ff525d290e25efaa842d8b9498494650f16ab5516d9b18a756",
+    "web/services/__init__.py": "2cd4d9b3703f570a10257318619ae87a9b8422e637fd17df4e10103aab14a026",
+    "web/services/converter.py": "73ec502d311ad96be5ba289c21ada14459187fad79ce1563e5e227cebc43791d",
+    "web/services/file_manager.py": "92dd99007dc7b345b0959717ce30f5628098587cd00391bb6edbc8f32db721c0",
+    "web/services/task_manager.py": "db31f4f8198dff764eebcc92b5fd5d4d1df9a4b47dd131a5f555f00b91137daa",
+    "epub_to_md/__init__.py": "50a43ef5c0f69abdc9de173aa31a5ed4e7cad43e2bef0f78869c7fef7236f515",
+    "epub_to_md/epub_to_md_cli.py": "217d0181f4aea8c41a8a55a479eb02416856c18e56c5685d8038dee61b1f6022",
+    "epub_to_md/epub_to_md_single_cli.py": "2797a50fb3e0eced664c43b3cfcaae8161e632ffc4d9d5e18fff4a9fca4577fc",
+    "epub_to_html/__init__.py": "68b0117a9d74da2fd9868bac6e6b0719caa0579958d424deba51f056781849e2",
+    "epub_to_html/epub_to_html.py": "bd544ca25551e0b98c9eaaf21bfb7e45a079befde1d75086ff11dcb540bbb90b",
+    "html_to_md/__init__.py": "3c76f6237718359bdd1e1a715834029b27f800a7bfff78d286095256d739c2dd",
+    "html_to_md/converter.py": "21656eea837f0c8fb7ba67c015b2f10c7418bbd550644437440b8f4325a78283",
+    "html_to_md/html_to_md_cli.py": "561d5d04bcfa5c26436620fafa3a3483b429a1cdaffd0e97cfa33f1dd05e5b0d",
+    "html_to_pdf/__init__.py": "0871513ea358130eb1858f3097ea1be130e22d5ee3801747c978995887d32c67",
+    "html_to_pdf/converter.py": "0a2f7345484b33f65aa5f27462321bc9b9c4f3098c5895e3824f8a7f2682070e",
+    "html_to_pdf/html_to_pdf_cli.py": "da1c482c9072ef25187cfbe425d4d03a068eca54213ea2695b1fe8e5a447ad6c",
+    "docx_to_md/__init__.py": "8d72243162caebd86446b034067c4d32638738407f65150976619447cfd9de58",
+    "docx_to_md/converter.py": "880df8a6cb10993e8b428a18425c4db706554b0fb7703f09f3b10c49f973f609",
+    "url_to_md/__init__.py": "223eba9f50ecd791ced7f561fbac0f0e4f085b4250d6315215ace30fa6575b3b",
+    "url_to_md/converter.py": "e4a1a683dbd8d51d1a143ee3504e6e10920ff4f7810a2c18b2d7762a4251b40e",
+    "pdf_to_md/__init__.py": "3732305760d278a2f3830d0a09b032e40318d3a0884c6dfcd2b85b9e127bee48",
+    "pdf_to_md/converter.py": "faf724fac4d08b7f15ef1f7116e3fb496a4b4ff3cd1ee71217825bcc2d58c17e",
+    "pdf_to_md/detector.py": "764540555d31965ae8ad107272cfcdd5db42086b32a7995d3f7406c7e5bc772c",
+    "ocr_to_md/__init__.py": "f22e47bcf120f76ea5120dc0955a5de2f9b4ca8780e8d2a235abc158b24b69da",
+    "ocr_to_md/converter.py": "d9a2b907df23a721eafd4580a41ed05af138fcd6d00e16e1612f272c1a5ffb7c"
+  },
+  "loaded_converter_modules": {
+    "web": {
+      "path": "web/__init__.py",
+      "sha256": "82d8c40fc11d5b22041a3ac755b6075ba240c8dabbfd442ab81b42d4dc1d98e5"
+    },
+    "web.config": {
+      "path": "web/config.py",
+      "sha256": "86219825aad3dc52aabaf95f2efd52b1e1e5d264b3cffb08d63b800b86fdd3e2"
+    },
+    "web.services.file_manager": {
+      "path": "web/services/file_manager.py",
+      "sha256": "92dd99007dc7b345b0959717ce30f5628098587cd00391bb6edbc8f32db721c0"
+    },
+    "web.services.task_manager": {
+      "path": "web/services/task_manager.py",
+      "sha256": "db31f4f8198dff764eebcc92b5fd5d4d1df9a4b47dd131a5f555f00b91137daa"
+    },
+    "web.services.converter": {
+      "path": "web/services/converter.py",
+      "sha256": "73ec502d311ad96be5ba289c21ada14459187fad79ce1563e5e227cebc43791d"
+    },
+    "web.services": {
+      "path": "web/services/__init__.py",
+      "sha256": "2cd4d9b3703f570a10257318619ae87a9b8422e637fd17df4e10103aab14a026"
+    },
+    "any_to_md.application": {
+      "path": "src/any_to_md/application/__init__.py",
+      "sha256": "dc880efa440178cb6d63773932d6f2c49a8335edefa7d0e225b11968a9af330f"
+    },
+    "any_to_md.adapters": {
+      "path": "src/any_to_md/adapters/__init__.py",
+      "sha256": "67e03f5ba72ec5613a2b4b75c065dba766e620908a88a91a6571f8e49f91bb5e"
+    },
+    "any_to_md.domain": {
+      "path": "src/any_to_md/domain/__init__.py",
+      "sha256": "7d3754cd466fcf3871056a2fb832bbb8ddbda83f0359cf76e4a507e54323f1fa"
+    },
+    "any_to_md.domain.artifacts": {
+      "path": "src/any_to_md/domain/artifacts.py",
+      "sha256": "d62b1cb942847638010e2a9a52d922f8c78477f010215d256e4eff687c13eadd"
+    },
+    "any_to_md.domain.book": {
+      "path": "src/any_to_md/domain/book.py",
+      "sha256": "eb041e5a365fbf22cb2c72fc082f2e299a0d54fb8aec5794eaf0d295eb80f975"
+    },
+    "any_to_md.adapters.persistence.sqlite": {
+      "path": "src/any_to_md/adapters/persistence/sqlite.py",
+      "sha256": "6472789a544aea6ae583ee8a3ede7b059352e91b62665edf9809462f77d28cbc"
+    },
+    "any_to_md.adapters.persistence": {
+      "path": "src/any_to_md/adapters/persistence/__init__.py",
+      "sha256": "a5006c97bffb4d2976c2167a585eff73292d2a0e4144b47ad2beca32b18d0f6d"
+    },
+    "any_to_md.adapters.storage": {
+      "path": "src/any_to_md/adapters/storage.py",
+      "sha256": "06503224cc80b961c820b7eb0105ccbbbc935652dabcd3ad98a7ef51601210e3"
+    },
+    "any_to_md.export.naming": {
+      "path": "src/any_to_md/export/naming.py",
+      "sha256": "ea1037e19a58c5a5b8045188c3b2d62559f7e15150de521e221fa5ff32acf10c"
+    },
+    "any_to_md.export.planning": {
+      "path": "src/any_to_md/export/planning.py",
+      "sha256": "a466aa416a99655514bd06eb946b445a7f62a3902423a5c6618c86fec0786988"
+    },
+    "any_to_md.export": {
+      "path": "src/any_to_md/export/__init__.py",
+      "sha256": "48124262418cf9bc4299adbf6f9305791ad0ed6a2797c4be3881d3e267414758"
+    },
+    "any_to_md.readers": {
+      "path": "src/any_to_md/readers/__init__.py",
+      "sha256": "43b284e5e3700ba89c56a852b39748d1d310602bff1ad0d0f59f720a6ca176c6"
+    },
+    "any_to_md.readers.epub.reader": {
+      "path": "src/any_to_md/readers/epub/reader.py",
+      "sha256": "a0b72591fc6bc2520682c11c5c7fc67361fbcd2c11314d7b6e0f340c166df195"
+    },
+    "any_to_md.readers.epub": {
+      "path": "src/any_to_md/readers/epub/__init__.py",
+      "sha256": "9de9d2a5d68f87d0bfe05a8779a5ff7691aac422870dd59fc8d0a2e7630fb160"
+    },
+    "any_to_md.writers": {
+      "path": "src/any_to_md/writers/__init__.py",
+      "sha256": "6f07d951b85e6d00547ad33f1bac400693dfecdfdb9c3f153555222f2bf40ff4"
+    },
+    "any_to_md.writers.markdown": {
+      "path": "src/any_to_md/writers/markdown.py",
+      "sha256": "b8a3f0dfb508c7f1361e342710347f1d7b1248459f3b922923061bd5d58b9963"
+    },
+    "any_to_md.application.convert_book": {
+      "path": "src/any_to_md/application/convert_book.py",
+      "sha256": "38fe451f01736388ab65d557ee874ab16311f64fe4b17a891def1cbe08ac290a"
+    },
+    "any_to_md": {
+      "path": "src/any_to_md/__init__.py",
+      "sha256": "061abb115fae4b5068679e49a979d4d24b458afb98ea849052edddc6887e52c5"
+    },
+    "epub_to_md": {
+      "path": "epub_to_md/__init__.py",
+      "sha256": "50a43ef5c0f69abdc9de173aa31a5ed4e7cad43e2bef0f78869c7fef7236f515"
+    },
+    "epub_to_html.epub_to_html": {
+      "path": "epub_to_html/epub_to_html.py",
+      "sha256": "bd544ca25551e0b98c9eaaf21bfb7e45a079befde1d75086ff11dcb540bbb90b"
+    },
+    "epub_to_html": {
+      "path": "epub_to_html/__init__.py",
+      "sha256": "68b0117a9d74da2fd9868bac6e6b0719caa0579958d424deba51f056781849e2"
+    },
+    "html_to_md.converter": {
+      "path": "html_to_md/converter.py",
+      "sha256": "21656eea837f0c8fb7ba67c015b2f10c7418bbd550644437440b8f4325a78283"
+    },
+    "html_to_md": {
+      "path": "html_to_md/__init__.py",
+      "sha256": "3c76f6237718359bdd1e1a715834029b27f800a7bfff78d286095256d739c2dd"
+    },
+    "html_to_pdf.converter": {
+      "path": "html_to_pdf/converter.py",
+      "sha256": "0a2f7345484b33f65aa5f27462321bc9b9c4f3098c5895e3824f8a7f2682070e"
+    },
+    "html_to_pdf": {
+      "path": "html_to_pdf/__init__.py",
+      "sha256": "0871513ea358130eb1858f3097ea1be130e22d5ee3801747c978995887d32c67"
+    },
+    "docx_to_md.converter": {
+      "path": "docx_to_md/converter.py",
+      "sha256": "880df8a6cb10993e8b428a18425c4db706554b0fb7703f09f3b10c49f973f609"
+    },
+    "docx_to_md": {
+      "path": "docx_to_md/__init__.py",
+      "sha256": "8d72243162caebd86446b034067c4d32638738407f65150976619447cfd9de58"
+    },
+    "url_to_md.converter": {
+      "path": "url_to_md/converter.py",
+      "sha256": "e4a1a683dbd8d51d1a143ee3504e6e10920ff4f7810a2c18b2d7762a4251b40e"
+    },
+    "url_to_md": {
+      "path": "url_to_md/__init__.py",
+      "sha256": "223eba9f50ecd791ced7f561fbac0f0e4f085b4250d6315215ace30fa6575b3b"
+    },
+    "pdf_to_md.detector": {
+      "path": "pdf_to_md/detector.py",
+      "sha256": "764540555d31965ae8ad107272cfcdd5db42086b32a7995d3f7406c7e5bc772c"
+    },
+    "pdf_to_md.converter": {
+      "path": "pdf_to_md/converter.py",
+      "sha256": "faf724fac4d08b7f15ef1f7116e3fb496a4b4ff3cd1ee71217825bcc2d58c17e"
+    },
+    "pdf_to_md": {
+      "path": "pdf_to_md/__init__.py",
+      "sha256": "3732305760d278a2f3830d0a09b032e40318d3a0884c6dfcd2b85b9e127bee48"
+    }
+  },
+  "fixture_sha256": {
+    "epub-plain": "dd40c3ac226f41ce8efd0b8af133b114b55291c3e70c55b3c53cf136c9de77c9",
+    "epub-structured": "f6fdd3c2a07e0f8958b2bff11c14c2cc7d5d6c3cdd8a608f62f0ee52e8022432",
+    "epub-no-toc": "d9e38ff68692b7cf45bd4efa665471b71a0843002d9c32cd3bf8c5833e8b93e2",
+    "epub-anchors": "83ec3cf04439e3199f98773100d9de6d61351e5e964e4b627c20ca1cda0a417c",
+    "epub-titles": "4d8b8a485ae1cd4a6700f9ddc49e950a31e6796956f26252b40301c7b85bbf09",
+    "html-rich": "1a2469b058617ca957b40b1888c9b94c231fca07810a0f05054b987f5f9cce3e",
+    "docx-rich": "7c179afb4cf875e84ff1cf2349a8bad45da26bc42d7a5c4fe8ece79c49d62978",
+    "url-article": "48968607524ca1b0047fc27aac38031addc8817ed2f63ea99378dd88b1d1cdf4",
+    "pdf-native": "212a0cda97d93e0ae7d91ff2e5eef766dcc91d2c883087cba6a6d7bddb77a319",
+    "pdf-scanned": "ffa33c479e2aef78214b7f57c9810528c21d9825d97084fc86832680dec22171",
+    "pdf-mixed": "5cc7e9a83e323d16e82d50ff817515c0eb61d8cdf68b6ffc7be15b9c3a6a8eba",
+    "image-ocr": "9648c082b6042d0b848c2a101573622a203ce8b42ebae2c23096501c558b404d"
+  },
+  "python": "3.13.12 (main, Mar 10 2026, 18:26:32) [Clang 21.1.4 ]",
+  "dependencies": {
+    "ebooklib": "0.20",
+    "beautifulsoup4": "4.14.2",
+    "markdownify": "1.2.0",
+    "weasyprint": "66.0",
+    "mammoth": "1.11.0",
+    "trafilatura": "2.0.0",
+    "pymupdf4llm": "0.2.7"
+  },
+  "pdf_detection": {
+    "pdf-native": {
+      "is_scanned_pdf": false,
+      "get_pdf_info": {
+        "page_count": 2,
+        "is_encrypted": false,
+        "metadata": {
+          "format": "PDF 1.7",
+          "title": "",
+          "author": "",
+          "subject": "",
+          "keywords": "",
+          "creator": "",
+          "producer": "",
+          "creationDate": "",
+          "modDate": "",
+          "trapped": "",
+          "encryption": null
+        },
+        "avg_chars_per_page": 305.0,
+        "has_images": false,
+        "is_scanned": false
+      }
+    },
+    "pdf-scanned": {
+      "is_scanned_pdf": true,
+      "get_pdf_info": {
+        "page_count": 2,
+        "is_encrypted": false,
+        "metadata": {
+          "format": "PDF 1.7",
+          "title": "",
+          "author": "",
+          "subject": "",
+          "keywords": "",
+          "creator": "",
+          "producer": "",
+          "creationDate": "",
+          "modDate": "",
+          "trapped": "",
+          "encryption": null
+        },
+        "avg_chars_per_page": 0.0,
+        "has_images": true,
+        "is_scanned": true
+      }
+    },
+    "pdf-mixed": {
+      "is_scanned_pdf": false,
+      "get_pdf_info": {
+        "page_count": 5,
+        "is_encrypted": false,
+        "metadata": {
+          "format": "PDF 1.7",
+          "title": "",
+          "author": "",
+          "subject": "",
+          "keywords": "",
+          "creator": "",
+          "producer": "",
+          "creationDate": "",
+          "modDate": "",
+          "trapped": "",
+          "encryption": null
+        },
+        "avg_chars_per_page": 0.0,
+        "has_images": true,
+        "is_scanned": true
+      }
+    }
+  },
+  "limitations": [
+    "Self-authored structural fixtures do not prove real-book/OCR quality",
+    "Visual checks remain not_run",
+    "URL extraction snapshots do not verify HTTP acquisition",
+    "No live OCR requests made",
+    "CLI argument parsing and HTTP routes are not exercised by the capture runner"
+  ],
+  "results": [
+    {
+      "case": "epub-plain",
+      "lane": "book",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PLAIN_BODY_001": 1
+        },
+        "local_references_checked": 1,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Chinese chapter heading is legible"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-plain",
+      "lane": "epub-md",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PLAIN_BODY_001": 1
+        },
+        "local_references_checked": 1,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Chinese chapter heading is legible"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-plain",
+      "lane": "epub-html-md",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PLAIN_BODY_001": 1
+        },
+        "local_references_checked": 0,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Chinese chapter heading is legible"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-plain",
+      "lane": "web",
+      "target": "md_single",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PLAIN_BODY_001": 1
+        },
+        "local_references_checked": 1,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Chinese chapter heading is legible"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-plain",
+      "lane": "web",
+      "target": "md_chapters",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PLAIN_BODY_001": 1
+        },
+        "local_references_checked": 1,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [
+          "nav.md: missing anchor: #普通章节-0001"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Chinese chapter heading is legible"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-plain",
+      "lane": "web",
+      "target": "html",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PLAIN_BODY_001": 1
+        },
+        "local_references_checked": 0,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Chinese chapter heading is legible"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-plain",
+      "lane": "web",
+      "target": "pdf",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order and embedded image identities only; PDF table/link/layout checks are manual",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PLAIN_BODY_001": 1
+        },
+        "output_pages": 1,
+        "embedded_images": 0,
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Chinese chapter heading is legible"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-structured",
+      "lane": "book",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "BODY_FIRST_101": 1,
+          "TABLE_HEADER_102": 1,
+          "TABLE_SPAN_103": 1,
+          "TABLE_LINK_104": 1,
+          "TABLE_LAST_105": 1,
+          "CODE_HASH_106": 1,
+          "BODY_SUB_107": 1,
+          "BODY_CONTINUATION_110": 1,
+          "BODY_SECOND_108": 1,
+          "FOOTNOTE_109": 1
+        },
+        "local_references_checked": 7,
+        "local_images": 1,
+        "decoded_images": 1,
+        "external_references": [],
+        "failures": [
+          "Source body order changed",
+          "book.md: missing dependency: second.xhtml#second",
+          "book.md: missing dependency: second.xhtml#note",
+          "book.md: missing dependency: chapter_split_000.xhtml#first",
+          "Expected at least 2 distinct decoded images, found 1",
+          "Source image pixels lost: 2dcdc8df5bacc622ac25611f014794e578de3174c3eca9399247d5c3fe290811",
+          "Table cell structure changed: TABLE_HEADER_102",
+          "Table cell structure changed: TABLE_SPAN_103",
+          "Table cell structure changed: TABLE_LAST_105",
+          "Source link lost or mistargeted: 下一章 -> BODY_SECOND_108",
+          "Source link lost or mistargeted: 脚注一 -> FOOTNOTE_109",
+          "Source link lost or mistargeted: TABLE_LINK_104 -> BODY_SECOND_108",
+          "Source link lost or mistargeted: 返回 -> BODY_FIRST_101"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Merged cells and image inside table survive",
+          "Code indentation and literal hash survive",
+          "Linked CSS and source color are retained for HTML/PDF",
+          "Physical continuation is not a new chapter"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-structured",
+      "lane": "epub-md",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "BODY_FIRST_101": 1,
+          "TABLE_HEADER_102": 1,
+          "TABLE_SPAN_103": 1,
+          "TABLE_LINK_104": 1,
+          "TABLE_LAST_105": 1,
+          "CODE_HASH_106": 1,
+          "BODY_SUB_107": 1,
+          "BODY_CONTINUATION_110": 1,
+          "BODY_SECOND_108": 1,
+          "FOOTNOTE_109": 1
+        },
+        "local_references_checked": 7,
+        "local_images": 1,
+        "decoded_images": 1,
+        "external_references": [],
+        "failures": [
+          "Source body order changed",
+          "Expected at least 2 distinct decoded images, found 1",
+          "Source image pixels lost: 2dcdc8df5bacc622ac25611f014794e578de3174c3eca9399247d5c3fe290811",
+          "Table cell structure changed: TABLE_HEADER_102",
+          "Table cell structure changed: TABLE_SPAN_103",
+          "Table cell structure changed: TABLE_LAST_105",
+          "Source link lost or mistargeted: 脚注一 -> FOOTNOTE_109",
+          "Source link lost or mistargeted: TABLE_LINK_104 -> BODY_SECOND_108"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Merged cells and image inside table survive",
+          "Code indentation and literal hash survive",
+          "Linked CSS and source color are retained for HTML/PDF",
+          "Physical continuation is not a new chapter"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-structured",
+      "lane": "epub-html-md",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "BODY_FIRST_101": 1,
+          "TABLE_HEADER_102": 1,
+          "TABLE_SPAN_103": 1,
+          "TABLE_LINK_104": 1,
+          "TABLE_LAST_105": 1,
+          "CODE_HASH_106": 1,
+          "BODY_SUB_107": 1,
+          "BODY_CONTINUATION_110": 1,
+          "BODY_SECOND_108": 1,
+          "FOOTNOTE_109": 1
+        },
+        "local_references_checked": 5,
+        "local_images": 1,
+        "decoded_images": 1,
+        "external_references": [],
+        "failures": [
+          "structured.md: missing anchor: #s0002-second-second",
+          "structured.md: missing anchor: #s0002-second-note",
+          "structured.md: missing anchor: #s0002-second-second",
+          "structured.md: missing anchor: #s0000-chapter-split-000-first",
+          "Expected at least 2 distinct decoded images, found 1",
+          "Source image pixels lost: 2dcdc8df5bacc622ac25611f014794e578de3174c3eca9399247d5c3fe290811",
+          "Table cell structure changed: TABLE_HEADER_102",
+          "Table cell structure changed: TABLE_SPAN_103",
+          "Table cell structure changed: TABLE_LAST_105",
+          "Source link lost or mistargeted: 下一章 -> BODY_SECOND_108",
+          "Source link lost or mistargeted: 脚注一 -> FOOTNOTE_109",
+          "Source link lost or mistargeted: TABLE_LINK_104 -> BODY_SECOND_108",
+          "Source link lost or mistargeted: 返回 -> BODY_FIRST_101"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Merged cells and image inside table survive",
+          "Code indentation and literal hash survive",
+          "Linked CSS and source color are retained for HTML/PDF",
+          "Physical continuation is not a new chapter"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-structured",
+      "lane": "web",
+      "target": "md_single",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "BODY_FIRST_101": 1,
+          "TABLE_HEADER_102": 1,
+          "TABLE_SPAN_103": 1,
+          "TABLE_LINK_104": 1,
+          "TABLE_LAST_105": 1,
+          "CODE_HASH_106": 1,
+          "BODY_SUB_107": 1,
+          "BODY_CONTINUATION_110": 1,
+          "BODY_SECOND_108": 1,
+          "FOOTNOTE_109": 1
+        },
+        "local_references_checked": 7,
+        "local_images": 1,
+        "decoded_images": 1,
+        "external_references": [],
+        "failures": [
+          "Source body order changed",
+          "Expected at least 2 distinct decoded images, found 1",
+          "Source image pixels lost: 2dcdc8df5bacc622ac25611f014794e578de3174c3eca9399247d5c3fe290811",
+          "Table cell structure changed: TABLE_HEADER_102",
+          "Table cell structure changed: TABLE_SPAN_103",
+          "Table cell structure changed: TABLE_LAST_105",
+          "Source link lost or mistargeted: 脚注一 -> FOOTNOTE_109",
+          "Source link lost or mistargeted: TABLE_LINK_104 -> BODY_SECOND_108"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Merged cells and image inside table survive",
+          "Code indentation and literal hash survive",
+          "Linked CSS and source color are retained for HTML/PDF",
+          "Physical continuation is not a new chapter"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-structured",
+      "lane": "web",
+      "target": "md_chapters",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "BODY_FIRST_101": 1,
+          "TABLE_HEADER_102": 1,
+          "TABLE_SPAN_103": 1,
+          "TABLE_LINK_104": 1,
+          "TABLE_LAST_105": 1,
+          "CODE_HASH_106": 1,
+          "BODY_SUB_107": 1,
+          "BODY_CONTINUATION_110": 1,
+          "BODY_SECOND_108": 1,
+          "FOOTNOTE_109": 1
+        },
+        "local_references_checked": 7,
+        "local_images": 1,
+        "decoded_images": 1,
+        "external_references": [],
+        "failures": [
+          "Source body order changed",
+          "nav.md: missing anchor: #第一节：同文件小节-0001",
+          "nav.md: missing anchor: #第一节：同文件小节-0001",
+          "nav.md: missing anchor: #第二章：同名锚点-0002",
+          "第一节：同文件小节.md: missing anchor: #第二章：同名锚点-0002",
+          "第一节：同文件小节.md: missing anchor: #第二章：同名锚点-0002",
+          "第二章：同名锚点.md: missing anchor: #第一节：同文件小节-0001",
+          "Expected at least 2 distinct decoded images, found 1",
+          "Source image pixels lost: 2dcdc8df5bacc622ac25611f014794e578de3174c3eca9399247d5c3fe290811",
+          "Table cell structure changed: TABLE_HEADER_102",
+          "Table cell structure changed: TABLE_SPAN_103",
+          "Table cell structure changed: TABLE_LAST_105",
+          "Source link lost or mistargeted: 下一章 -> BODY_SECOND_108",
+          "Source link lost or mistargeted: 脚注一 -> FOOTNOTE_109",
+          "Source link lost or mistargeted: TABLE_LINK_104 -> BODY_SECOND_108",
+          "Source link lost or mistargeted: 返回 -> BODY_FIRST_101"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Merged cells and image inside table survive",
+          "Code indentation and literal hash survive",
+          "Linked CSS and source color are retained for HTML/PDF",
+          "Physical continuation is not a new chapter"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-structured",
+      "lane": "web",
+      "target": "html",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "BODY_FIRST_101": 1,
+          "TABLE_HEADER_102": 1,
+          "TABLE_SPAN_103": 1,
+          "TABLE_LINK_104": 1,
+          "TABLE_LAST_105": 1,
+          "CODE_HASH_106": 1,
+          "BODY_SUB_107": 1,
+          "BODY_CONTINUATION_110": 1,
+          "BODY_SECOND_108": 1,
+          "FOOTNOTE_109": 1
+        },
+        "local_references_checked": 8,
+        "local_images": 2,
+        "decoded_images": 2,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Merged cells and image inside table survive",
+          "Code indentation and literal hash survive",
+          "Linked CSS and source color are retained for HTML/PDF",
+          "Physical continuation is not a new chapter"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-structured",
+      "lane": "web",
+      "target": "pdf",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order and embedded image identities only; PDF table/link/layout checks are manual",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "BODY_FIRST_101": 1,
+          "TABLE_HEADER_102": 1,
+          "TABLE_SPAN_103": 1,
+          "TABLE_LINK_104": 1,
+          "TABLE_LAST_105": 1,
+          "CODE_HASH_106": 1,
+          "BODY_SUB_107": 1,
+          "BODY_CONTINUATION_110": 1,
+          "BODY_SECOND_108": 1,
+          "FOOTNOTE_109": 1
+        },
+        "output_pages": 1,
+        "embedded_images": 2,
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Merged cells and image inside table survive",
+          "Code indentation and literal hash survive",
+          "Linked CSS and source color are retained for HTML/PDF",
+          "Physical continuation is not a new chapter"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-no-toc",
+      "lane": "book",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "NO_TOC_FIRST_201": 1,
+          "NO_TOC_SECOND_202": 1
+        },
+        "local_references_checked": 2,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Both spine documents appear exactly once in source order",
+          "Uncertain chapter granularity is reported"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-no-toc",
+      "lane": "epub-md",
+      "target": "md_single",
+      "execution": "error",
+      "error_type": "NameError"
+    },
+    {
+      "case": "epub-no-toc",
+      "lane": "epub-html-md",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "NO_TOC_FIRST_201": 1,
+          "NO_TOC_SECOND_202": 1
+        },
+        "local_references_checked": 0,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Both spine documents appear exactly once in source order",
+          "Uncertain chapter granularity is reported"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-no-toc",
+      "lane": "web",
+      "target": "md_single",
+      "execution": "error",
+      "error_type": "NameError"
+    },
+    {
+      "case": "epub-no-toc",
+      "lane": "web",
+      "target": "md_chapters",
+      "execution": "error",
+      "error_type": "NameError"
+    },
+    {
+      "case": "epub-no-toc",
+      "lane": "web",
+      "target": "html",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "NO_TOC_FIRST_201": 1,
+          "NO_TOC_SECOND_202": 1
+        },
+        "local_references_checked": 0,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Both spine documents appear exactly once in source order",
+          "Uncertain chapter granularity is reported"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-no-toc",
+      "lane": "web",
+      "target": "pdf",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order and embedded image identities only; PDF table/link/layout checks are manual",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "NO_TOC_FIRST_201": 1,
+          "NO_TOC_SECOND_202": 1
+        },
+        "output_pages": 1,
+        "embedded_images": 0,
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Both spine documents appear exactly once in source order",
+          "Uncertain chapter granularity is reported"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-anchors",
+      "lane": "book",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PREFIX_301": 1,
+          "ANCHOR_FIRST_302": 1,
+          "ANCHOR_SUB_303": 1,
+          "ANCHOR_SECOND_304": 1
+        },
+        "local_references_checked": 6,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [
+          "book.md: missing dependency: one.xhtml#sub",
+          "Source link lost or mistargeted: 返回子节 -> ANCHOR_SUB_303"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate TOC target does not duplicate body",
+          "Missing target is diagnosed",
+          "Parent introduction and cross-document link survive"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-anchors",
+      "lane": "epub-md",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PREFIX_301": 2,
+          "ANCHOR_FIRST_302": 2,
+          "ANCHOR_SUB_303": 2,
+          "ANCHOR_SECOND_304": 1
+        },
+        "local_references_checked": 6,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [
+          "PREFIX_301: expected once, found 2",
+          "ANCHOR_FIRST_302: expected once, found 2",
+          "ANCHOR_SUB_303: expected once, found 2",
+          "Source link lost or mistargeted: 返回子节 -> ANCHOR_SUB_303"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate TOC target does not duplicate body",
+          "Missing target is diagnosed",
+          "Parent introduction and cross-document link survive"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-anchors",
+      "lane": "epub-html-md",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PREFIX_301": 1,
+          "ANCHOR_FIRST_302": 1,
+          "ANCHOR_SUB_303": 1,
+          "ANCHOR_SECOND_304": 1
+        },
+        "local_references_checked": 1,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [
+          "anchors.md: missing anchor: #s0000-one-sub",
+          "Source link lost or mistargeted: 返回子节 -> ANCHOR_SUB_303"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate TOC target does not duplicate body",
+          "Missing target is diagnosed",
+          "Parent introduction and cross-document link survive"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-anchors",
+      "lane": "web",
+      "target": "md_single",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PREFIX_301": 2,
+          "ANCHOR_FIRST_302": 2,
+          "ANCHOR_SUB_303": 2,
+          "ANCHOR_SECOND_304": 1
+        },
+        "local_references_checked": 6,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [
+          "PREFIX_301: expected once, found 2",
+          "ANCHOR_FIRST_302: expected once, found 2",
+          "ANCHOR_SUB_303: expected once, found 2",
+          "Source link lost or mistargeted: 返回子节 -> ANCHOR_SUB_303"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate TOC target does not duplicate body",
+          "Missing target is diagnosed",
+          "Parent introduction and cross-document link survive"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-anchors",
+      "lane": "web",
+      "target": "md_chapters",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PREFIX_301": 2,
+          "ANCHOR_FIRST_302": 2,
+          "ANCHOR_SUB_303": 2,
+          "ANCHOR_SECOND_304": 1
+        },
+        "local_references_checked": 6,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [
+          "PREFIX_301: expected once, found 2",
+          "ANCHOR_FIRST_302: expected once, found 2",
+          "ANCHOR_SUB_303: expected once, found 2",
+          "nav.md: missing anchor: #缺失锚点-0002",
+          "nav.md: missing anchor: #子节-0001",
+          "nav.md: missing anchor: #缺失锚点-0002",
+          "nav.md: missing anchor: #第二章重复目录项-0004",
+          "nav.md: missing anchor: #第二章重复目录项-0004",
+          "第二章重复目录项.md: missing anchor: #子节-0001",
+          "Source link lost or mistargeted: 返回子节 -> ANCHOR_SUB_303"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate TOC target does not duplicate body",
+          "Missing target is diagnosed",
+          "Parent introduction and cross-document link survive"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-anchors",
+      "lane": "web",
+      "target": "html",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PREFIX_301": 1,
+          "ANCHOR_FIRST_302": 1,
+          "ANCHOR_SUB_303": 1,
+          "ANCHOR_SECOND_304": 1
+        },
+        "local_references_checked": 1,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate TOC target does not duplicate body",
+          "Missing target is diagnosed",
+          "Parent introduction and cross-document link survive"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-anchors",
+      "lane": "web",
+      "target": "pdf",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order and embedded image identities only; PDF table/link/layout checks are manual",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PREFIX_301": 1,
+          "ANCHOR_FIRST_302": 1,
+          "ANCHOR_SUB_303": 1,
+          "ANCHOR_SECOND_304": 1
+        },
+        "output_pages": 1,
+        "embedded_images": 0,
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate TOC target does not duplicate body",
+          "Missing target is diagnosed",
+          "Parent introduction and cross-document link survive"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-titles",
+      "lane": "book",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "TITLE_FIRST_701": 1,
+          "TITLE_SECOND_702": 1,
+          "TITLE_LONG_703": 1
+        },
+        "local_references_checked": 3,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate chapter titles retain distinct identities and paths",
+          "Long Chinese title yields a valid filesystem name"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-titles",
+      "lane": "epub-md",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "TITLE_FIRST_701": 1,
+          "TITLE_SECOND_702": 1,
+          "TITLE_LONG_703": 1
+        },
+        "local_references_checked": 3,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate chapter titles retain distinct identities and paths",
+          "Long Chinese title yields a valid filesystem name"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-titles",
+      "lane": "epub-html-md",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "TITLE_FIRST_701": 1,
+          "TITLE_SECOND_702": 1,
+          "TITLE_LONG_703": 1
+        },
+        "local_references_checked": 0,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate chapter titles retain distinct identities and paths",
+          "Long Chinese title yields a valid filesystem name"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-titles",
+      "lane": "web",
+      "target": "md_single",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "TITLE_FIRST_701": 1,
+          "TITLE_SECOND_702": 1,
+          "TITLE_LONG_703": 1
+        },
+        "local_references_checked": 3,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate chapter titles retain distinct identities and paths",
+          "Long Chinese title yields a valid filesystem name"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-titles",
+      "lane": "web",
+      "target": "md_chapters",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "TITLE_FIRST_701": 1,
+          "TITLE_SECOND_702": 1,
+          "TITLE_LONG_703": 1
+        },
+        "local_references_checked": 3,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [
+          "Source body order changed",
+          "nav.md: missing anchor: #同名章节-0001",
+          "nav.md: missing anchor: #同名章节-0002",
+          "nav.md: missing anchor: #中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题中文长标题-0003"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate chapter titles retain distinct identities and paths",
+          "Long Chinese title yields a valid filesystem name"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-titles",
+      "lane": "web",
+      "target": "html",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "TITLE_FIRST_701": 1,
+          "TITLE_SECOND_702": 1,
+          "TITLE_LONG_703": 1
+        },
+        "local_references_checked": 0,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate chapter titles retain distinct identities and paths",
+          "Long Chinese title yields a valid filesystem name"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "epub-titles",
+      "lane": "web",
+      "target": "pdf",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order and embedded image identities only; PDF table/link/layout checks are manual",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "TITLE_FIRST_701": 1,
+          "TITLE_SECOND_702": 1,
+          "TITLE_LONG_703": 1
+        },
+        "output_pages": 1,
+        "embedded_images": 0,
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Duplicate chapter titles retain distinct identities and paths",
+          "Long Chinese title yields a valid filesystem name"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "html-rich",
+      "lane": "html-cli",
+      "target": "md_chapters",
+      "entry_scope": "CLI conversion library; command-line parsing not exercised",
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "BODY_FIRST_101": 1,
+          "TABLE_HEADER_102": 1,
+          "TABLE_SPAN_103": 1,
+          "TABLE_LINK_104": 1,
+          "TABLE_LAST_105": 1,
+          "CODE_HASH_106": 1,
+          "BODY_SUB_107": 1,
+          "BODY_SECOND_108": 1,
+          "FOOTNOTE_109": 1
+        },
+        "local_references_checked": 5,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [
+          "0001-section-0001.md: missing anchor: #second",
+          "0001-section-0001.md: missing anchor: #note",
+          "0001-section-0001.md: missing dependency: assets/red.png",
+          "0001-section-0001.md: missing anchor: #second",
+          "0002-section-0002.md: missing anchor: #first",
+          "Expected at least 2 distinct decoded images, found 0",
+          "Source image pixels lost: c24b766a4b9160e0c2b9de46b17ae5926100702b233052bfb684cabd7d01390d",
+          "Source image pixels lost: 2dcdc8df5bacc622ac25611f014794e578de3174c3eca9399247d5c3fe290811",
+          "Table cell structure changed: TABLE_HEADER_102",
+          "Table cell structure changed: TABLE_SPAN_103",
+          "Table cell structure changed: TABLE_LAST_105",
+          "Source link lost or mistargeted: 下一章 -> BODY_SECOND_108",
+          "Source link lost or mistargeted: 脚注一 -> FOOTNOTE_109",
+          "Source link lost or mistargeted: TABLE_LINK_104 -> BODY_SECOND_108",
+          "Source link lost or mistargeted: 返回 -> BODY_FIRST_101"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Chinese, merged cells, table image, code and source color"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "html-rich",
+      "lane": "web",
+      "target": "md_single",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": false,
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "BODY_FIRST_101": 1,
+          "TABLE_HEADER_102": 1,
+          "TABLE_SPAN_103": 1,
+          "TABLE_LINK_104": 1,
+          "TABLE_LAST_105": 1,
+          "CODE_HASH_106": 1,
+          "BODY_SUB_107": 1,
+          "BODY_SECOND_108": 1,
+          "FOOTNOTE_109": 1
+        },
+        "local_references_checked": 5,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [
+          "rich.md: missing anchor: #second",
+          "rich.md: missing anchor: #note",
+          "rich.md: missing dependency: assets/red.png",
+          "rich.md: missing anchor: #second",
+          "rich.md: missing anchor: #first",
+          "Expected at least 2 distinct decoded images, found 0",
+          "Source image pixels lost: c24b766a4b9160e0c2b9de46b17ae5926100702b233052bfb684cabd7d01390d",
+          "Source image pixels lost: 2dcdc8df5bacc622ac25611f014794e578de3174c3eca9399247d5c3fe290811",
+          "Table cell structure changed: TABLE_HEADER_102",
+          "Table cell structure changed: TABLE_SPAN_103",
+          "Table cell structure changed: TABLE_LAST_105",
+          "Source link lost or mistargeted: 下一章 -> BODY_SECOND_108",
+          "Source link lost or mistargeted: 脚注一 -> FOOTNOTE_109",
+          "Source link lost or mistargeted: TABLE_LINK_104 -> BODY_SECOND_108",
+          "Source link lost or mistargeted: 返回 -> BODY_FIRST_101",
+          "Web download filename does not resolve to the actual artifact"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Chinese, merged cells, table image, code and source color"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "html-rich",
+      "lane": "web",
+      "target": "pdf",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order and embedded image identities only; PDF table/link/layout checks are manual",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "BODY_FIRST_101": 1,
+          "TABLE_HEADER_102": 1,
+          "TABLE_SPAN_103": 1,
+          "TABLE_LINK_104": 1,
+          "TABLE_LAST_105": 1,
+          "CODE_HASH_106": 1,
+          "BODY_SUB_107": 1,
+          "BODY_SECOND_108": 1,
+          "FOOTNOTE_109": 1
+        },
+        "output_pages": 1,
+        "embedded_images": 0,
+        "failures": [
+          "Expected at least 2 embedded images, found 0",
+          "Source image pixels lost: c24b766a4b9160e0c2b9de46b17ae5926100702b233052bfb684cabd7d01390d",
+          "Source image pixels lost: 2dcdc8df5bacc622ac25611f014794e578de3174c3eca9399247d5c3fe290811"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Chinese, merged cells, table image, code and source color"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "docx-rich",
+      "lane": "web",
+      "target": "md_single",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "DOCX_FIRST_401": 1,
+          "DOCX_SECOND_402": 1,
+          "DOCX_TABLE_403": 1
+        },
+        "local_references_checked": 1,
+        "local_images": 1,
+        "decoded_images": 1,
+        "external_references": [],
+        "failures": [
+          "Table cell structure changed: DOCX_TABLE_403"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Chinese text, embedded red image and merged table cell"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "docx-rich",
+      "lane": "web",
+      "target": "html",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "DOCX_FIRST_401": 1,
+          "DOCX_SECOND_402": 1,
+          "DOCX_TABLE_403": 1
+        },
+        "local_references_checked": 1,
+        "local_images": 1,
+        "decoded_images": 1,
+        "external_references": [],
+        "failures": [
+          "Table cell structure changed: DOCX_TABLE_403"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Chinese text, embedded red image and merged table cell"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "docx-rich",
+      "lane": "web",
+      "target": "pdf",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order and embedded image identities only; PDF table/link/layout checks are manual",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "DOCX_FIRST_401": 1,
+          "DOCX_SECOND_402": 1,
+          "DOCX_TABLE_403": 1
+        },
+        "output_pages": 1,
+        "embedded_images": 1,
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Chinese text, embedded red image and merged table cell"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "url-article",
+      "lane": "url-async",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "URL_PARAGRAPH_1_501": 1,
+          "URL_PARAGRAPH_2_501": 1,
+          "URL_PARAGRAPH_3_501": 1,
+          "URL_PARAGRAPH_4_501": 1
+        },
+        "local_references_checked": 1,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [
+          "article.md: missing dependency: assets/red.png",
+          "Expected at least 1 distinct decoded images, found 0",
+          "Source image pixels lost: c24b766a4b9160e0c2b9de46b17ae5926100702b233052bfb684cabd7d01390d"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Article text and relative image survive with source URL"
+        ],
+        "ocr_status": "not_applicable"
+      },
+      "transport": "immutable_snapshot_mock; live acquisition not verified"
+    },
+    {
+      "case": "url-article",
+      "lane": "url-sync",
+      "target": "md_single",
+      "execution": "completed",
+      "quality": {
+        "passed": false,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "URL_PARAGRAPH_1_501": 1,
+          "URL_PARAGRAPH_2_501": 1,
+          "URL_PARAGRAPH_3_501": 1,
+          "URL_PARAGRAPH_4_501": 1
+        },
+        "local_references_checked": 1,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [
+          "article.md: missing dependency: assets/red.png",
+          "Expected at least 1 distinct decoded images, found 0",
+          "Source image pixels lost: c24b766a4b9160e0c2b9de46b17ae5926100702b233052bfb684cabd7d01390d"
+        ],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Article text and relative image survive with source URL"
+        ],
+        "ocr_status": "not_applicable"
+      },
+      "transport": "immutable_snapshot_mock; live acquisition not verified"
+    },
+    {
+      "case": "url-article",
+      "lane": "web",
+      "target": "md_single",
+      "execution": "error",
+      "error_type": "FileNotFoundError"
+    },
+    {
+      "case": "url-article",
+      "lane": "web",
+      "target": "html",
+      "execution": "error",
+      "error_type": "FileNotFoundError"
+    },
+    {
+      "case": "url-article",
+      "lane": "web",
+      "target": "pdf",
+      "execution": "error",
+      "error_type": "FileNotFoundError"
+    },
+    {
+      "case": "pdf-native",
+      "lane": "web",
+      "target": "md_single",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PDF_NATIVE_PAGE_1": 1,
+          "PDF_NATIVE_PAGE_2": 1
+        },
+        "local_references_checked": 0,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Every source page is represented in order"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "pdf-native",
+      "lane": "web",
+      "target": "html",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order, local/required links, decoded image identities, required table cells and code",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PDF_NATIVE_PAGE_1": 1,
+          "PDF_NATIVE_PAGE_2": 1
+        },
+        "local_references_checked": 0,
+        "local_images": 0,
+        "decoded_images": 0,
+        "external_references": [],
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Every source page is represented in order"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "pdf-native",
+      "lane": "web",
+      "target": "pdf",
+      "entry_scope": "Web conversion service; HTTP transport not exercised",
+      "download_path_resolves": true,
+      "execution": "completed",
+      "quality": {
+        "passed": true,
+        "automatic_scope": "source marker order and embedded image identities only; PDF table/link/layout checks are manual",
+        "overall_status": "unverified; visual/source review still required",
+        "marker_counts": {
+          "PDF_NATIVE_PAGE_1": 1,
+          "PDF_NATIVE_PAGE_2": 1
+        },
+        "output_pages": 1,
+        "embedded_images": 0,
+        "failures": [],
+        "visual_status": "not_run",
+        "visual_checks": [
+          "Every source page is represented in order"
+        ],
+        "ocr_status": "not_applicable"
+      }
+    },
+    {
+      "case": "pdf-scanned",
+      "lane": "web",
+      "target": "md_single",
+      "execution": "not_run",
+      "reason": "Real OCR service and independent recognition validation required"
+    },
+    {
+      "case": "pdf-scanned",
+      "lane": "web",
+      "target": "html",
+      "execution": "not_run",
+      "reason": "Real OCR service and independent recognition validation required"
+    },
+    {
+      "case": "pdf-scanned",
+      "lane": "web",
+      "target": "pdf",
+      "execution": "not_run",
+      "reason": "Real OCR service and independent recognition validation required"
+    },
+    {
+      "case": "pdf-mixed",
+      "lane": "web",
+      "target": "md_single",
+      "execution": "not_run",
+      "reason": "Real OCR service and independent recognition validation required"
+    },
+    {
+      "case": "pdf-mixed",
+      "lane": "web",
+      "target": "html",
+      "execution": "not_run",
+      "reason": "Real OCR service and independent recognition validation required"
+    },
+    {
+      "case": "pdf-mixed",
+      "lane": "web",
+      "target": "pdf",
+      "execution": "not_run",
+      "reason": "Real OCR service and independent recognition validation required"
+    },
+    {
+      "case": "image-ocr",
+      "lane": "web",
+      "target": "md_single",
+      "execution": "not_run",
+      "reason": "Real OCR service and independent recognition validation required"
+    },
+    {
+      "case": "image-ocr",
+      "lane": "web",
+      "target": "html",
+      "execution": "not_run",
+      "reason": "Real OCR service and independent recognition validation required"
+    },
+    {
+      "case": "image-ocr",
+      "lane": "web",
+      "target": "pdf",
+      "execution": "not_run",
+      "reason": "Real OCR service and independent recognition validation required"
+    }
+  ]
+}

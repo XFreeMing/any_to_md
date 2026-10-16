@@ -1,0 +1,377 @@
+{
+  "schema_version": 1,
+  "policy": "Expectations are source-authored and frozen before comparing candidates; generated navigation and run IDs do not count as source body.",
+  "cases": [
+    {
+      "id": "epub-plain",
+      "kind": "epub",
+      "variant": "plain",
+      "filename": "plain.epub",
+      "markers": [
+        "PLAIN_BODY_001"
+      ],
+      "minimum_images": 0,
+      "visual_checks": [
+        "Chinese chapter heading is legible"
+      ],
+      "allowed_differences": [
+        "Generated metadata, TOC and heading level"
+      ],
+      "requires_ocr": false
+    },
+    {
+      "id": "epub-structured",
+      "kind": "epub",
+      "variant": "structured",
+      "filename": "structured.epub",
+      "markers": [
+        "BODY_FIRST_101",
+        "TABLE_HEADER_102",
+        "TABLE_SPAN_103",
+        "TABLE_LINK_104",
+        "TABLE_LAST_105",
+        "CODE_HASH_106",
+        "BODY_SUB_107",
+        "BODY_CONTINUATION_110",
+        "BODY_SECOND_108",
+        "FOOTNOTE_109"
+      ],
+      "minimum_images": 2,
+      "code_contains": "  value = \"a_b * c\"",
+      "required_titles": [
+        "第一章：图表与代码",
+        "第一节：同文件小节",
+        "第二章：同名锚点"
+      ],
+      "visual_checks": [
+        "Merged cells and image inside table survive",
+        "Code indentation and literal hash survive",
+        "Linked CSS and source color are retained for HTML/PDF",
+        "Physical continuation is not a new chapter"
+      ],
+      "allowed_differences": [
+        "Generated metadata and navigation",
+        "Asset names and export paths",
+        "Screen and print styling"
+      ],
+      "requires_ocr": false,
+      "image_pixels": [
+        "c24b766a4b9160e0c2b9de46b17ae5926100702b233052bfb684cabd7d01390d",
+        "2dcdc8df5bacc622ac25611f014794e578de3174c3eca9399247d5c3fe290811"
+      ],
+      "required_cells": [
+        {
+          "marker": "TABLE_HEADER_102",
+          "row": 0,
+          "column": 0,
+          "rowspan": 1,
+          "colspan": 2
+        },
+        {
+          "marker": "TABLE_SPAN_103",
+          "row": 1,
+          "column": 0,
+          "rowspan": 2,
+          "colspan": 1
+        },
+        {
+          "marker": "TABLE_LAST_105",
+          "row": 2,
+          "column": 1,
+          "rowspan": 1,
+          "colspan": 1
+        }
+      ],
+      "required_links": [
+        {
+          "label": "下一章",
+          "target_marker": "BODY_SECOND_108"
+        },
+        {
+          "label": "脚注一",
+          "target_marker": "FOOTNOTE_109"
+        },
+        {
+          "label": "TABLE_LINK_104",
+          "target_marker": "BODY_SECOND_108"
+        },
+        {
+          "label": "返回",
+          "target_marker": "BODY_FIRST_101"
+        }
+      ]
+    },
+    {
+      "id": "epub-no-toc",
+      "kind": "epub",
+      "variant": "no_toc",
+      "filename": "no-toc.epub",
+      "markers": [
+        "NO_TOC_FIRST_201",
+        "NO_TOC_SECOND_202"
+      ],
+      "minimum_images": 0,
+      "visual_checks": [
+        "Both spine documents appear exactly once in source order",
+        "Uncertain chapter granularity is reported"
+      ],
+      "allowed_differences": [
+        "Inferred chapter titles with diagnostics"
+      ],
+      "requires_ocr": false
+    },
+    {
+      "id": "epub-anchors",
+      "kind": "epub",
+      "variant": "anchors",
+      "filename": "anchors.epub",
+      "markers": [
+        "PREFIX_301",
+        "ANCHOR_FIRST_302",
+        "ANCHOR_SUB_303",
+        "ANCHOR_SECOND_304"
+      ],
+      "minimum_images": 0,
+      "visual_checks": [
+        "Duplicate TOC target does not duplicate body",
+        "Missing target is diagnosed",
+        "Parent introduction and cross-document link survive"
+      ],
+      "allowed_differences": [
+        "Duplicate navigation labels and explicit missing-anchor warning"
+      ],
+      "requires_ocr": false,
+      "required_links": [
+        {
+          "label": "返回子节",
+          "target_marker": "ANCHOR_SUB_303"
+        }
+      ]
+    },
+    {
+      "id": "epub-titles",
+      "kind": "epub",
+      "variant": "titles",
+      "filename": "titles.epub",
+      "markers": [
+        "TITLE_FIRST_701",
+        "TITLE_SECOND_702",
+        "TITLE_LONG_703"
+      ],
+      "minimum_images": 0,
+      "visual_checks": [
+        "Duplicate chapter titles retain distinct identities and paths",
+        "Long Chinese title yields a valid filesystem name"
+      ],
+      "allowed_differences": [
+        "Truncated display filename with stable identity; original title retained"
+      ],
+      "requires_ocr": false
+    },
+    {
+      "id": "html-rich",
+      "kind": "html",
+      "filename": "rich.html",
+      "markers": [
+        "BODY_FIRST_101",
+        "TABLE_HEADER_102",
+        "TABLE_SPAN_103",
+        "TABLE_LINK_104",
+        "TABLE_LAST_105",
+        "CODE_HASH_106",
+        "BODY_SUB_107",
+        "BODY_SECOND_108",
+        "FOOTNOTE_109"
+      ],
+      "minimum_images": 2,
+      "code_contains": "  value = \"a_b * c\"",
+      "visual_checks": [
+        "Chinese, merged cells, table image, code and source color"
+      ],
+      "allowed_differences": [
+        "Generated metadata, navigation and print pagination"
+      ],
+      "requires_ocr": false,
+      "image_pixels": [
+        "c24b766a4b9160e0c2b9de46b17ae5926100702b233052bfb684cabd7d01390d",
+        "2dcdc8df5bacc622ac25611f014794e578de3174c3eca9399247d5c3fe290811"
+      ],
+      "required_cells": [
+        {
+          "marker": "TABLE_HEADER_102",
+          "row": 0,
+          "column": 0,
+          "rowspan": 1,
+          "colspan": 2
+        },
+        {
+          "marker": "TABLE_SPAN_103",
+          "row": 1,
+          "column": 0,
+          "rowspan": 2,
+          "colspan": 1
+        },
+        {
+          "marker": "TABLE_LAST_105",
+          "row": 2,
+          "column": 1,
+          "rowspan": 1,
+          "colspan": 1
+        }
+      ],
+      "required_links": [
+        {
+          "label": "下一章",
+          "target_marker": "BODY_SECOND_108"
+        },
+        {
+          "label": "脚注一",
+          "target_marker": "FOOTNOTE_109"
+        },
+        {
+          "label": "TABLE_LINK_104",
+          "target_marker": "BODY_SECOND_108"
+        },
+        {
+          "label": "返回",
+          "target_marker": "BODY_FIRST_101"
+        }
+      ]
+    },
+    {
+      "id": "docx-rich",
+      "kind": "docx",
+      "filename": "rich.docx",
+      "markers": [
+        "DOCX_FIRST_401",
+        "DOCX_SECOND_402",
+        "DOCX_TABLE_403"
+      ],
+      "minimum_images": 1,
+      "visual_checks": [
+        "Chinese text, embedded red image and merged table cell"
+      ],
+      "allowed_differences": [
+        "Word-specific pagination and generated metadata"
+      ],
+      "requires_ocr": false,
+      "image_pixels": [
+        "c24b766a4b9160e0c2b9de46b17ae5926100702b233052bfb684cabd7d01390d"
+      ],
+      "required_cells": [
+        {
+          "marker": "DOCX_TABLE_403",
+          "row": 0,
+          "column": 0,
+          "rowspan": 1,
+          "colspan": 2
+        }
+      ]
+    },
+    {
+      "id": "url-article",
+      "kind": "url",
+      "filename": "article.html",
+      "markers": [
+        "URL_PARAGRAPH_1_501",
+        "URL_PARAGRAPH_2_501",
+        "URL_PARAGRAPH_3_501",
+        "URL_PARAGRAPH_4_501"
+      ],
+      "minimum_images": 1,
+      "visual_checks": [
+        "Article text and relative image survive with source URL"
+      ],
+      "allowed_differences": [
+        "Removed page boilerplate",
+        "Source attribution and generated title"
+      ],
+      "requires_ocr": false,
+      "image_pixels": [
+        "c24b766a4b9160e0c2b9de46b17ae5926100702b233052bfb684cabd7d01390d"
+      ]
+    },
+    {
+      "id": "pdf-native",
+      "kind": "pdf",
+      "variant": "native",
+      "filename": "native.pdf",
+      "markers": [
+        "PDF_NATIVE_PAGE_1",
+        "PDF_NATIVE_PAGE_2"
+      ],
+      "page_count": 2,
+      "minimum_images": 0,
+      "visual_checks": [
+        "Every source page is represented in order"
+      ],
+      "allowed_differences": [
+        "Reflow pagination and line breaks"
+      ],
+      "requires_ocr": false
+    },
+    {
+      "id": "pdf-scanned",
+      "kind": "pdf",
+      "variant": "scanned",
+      "filename": "scanned.pdf",
+      "markers": [
+        "PDF_SCANNED_PAGE_1",
+        "PDF_SCANNED_PAGE_2"
+      ],
+      "page_count": 2,
+      "minimum_images": 0,
+      "ocr_reference": "The visible PDF_SCANNED_PAGE_n markers and quality source sentence repeated 12 times on each page",
+      "ocr_acceptance": "All page markers once in order; report character edit distance to source; visually inspect every page and reject missing/repeated lines",
+      "visual_checks": [
+        "No missing scanned page or invented text"
+      ],
+      "allowed_differences": [
+        "Whitespace and reflow line breaks"
+      ],
+      "requires_ocr": true
+    },
+    {
+      "id": "pdf-mixed",
+      "kind": "pdf",
+      "variant": "mixed",
+      "filename": "mixed.pdf",
+      "markers": [
+        "PDF_MIXED_PAGE_1",
+        "PDF_MIXED_PAGE_2",
+        "PDF_MIXED_PAGE_3",
+        "PDF_MIXED_PAGE_4",
+        "PDF_MIXED_PAGE_5"
+      ],
+      "page_count": 5,
+      "minimum_images": 0,
+      "ocr_reference": "The visible PDF_MIXED_PAGE_n markers and quality source sentence repeated 12 times on each page",
+      "ocr_acceptance": "All five page markers once in order; report character edit distance; reject duplicate native/OCR body and missing scanned pages",
+      "visual_checks": [
+        "First three image-only pages and final two native pages are all covered"
+      ],
+      "allowed_differences": [
+        "Whitespace and reflow line breaks"
+      ],
+      "requires_ocr": true
+    },
+    {
+      "id": "image-ocr",
+      "kind": "image",
+      "filename": "scan.png",
+      "markers": [
+        "IMAGE_OCR_601"
+      ],
+      "minimum_images": 0,
+      "ocr_reference": "IMAGE_OCR_601 source text",
+      "ocr_acceptance": "Exact marker, source text preserved, character edit distance reported, no invented text",
+      "visual_checks": [
+        "Compare recognized text directly to visible image"
+      ],
+      "allowed_differences": [
+        "Whitespace"
+      ],
+      "requires_ocr": true
+    }
+  ]
+}
