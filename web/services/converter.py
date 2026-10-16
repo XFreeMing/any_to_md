@@ -126,36 +126,7 @@ class ConversionService:
         raise ValueError(f"Unsupported output format for image: {output_format}")
 
     def _markdown_to_html(self, markdown_content: str) -> str:
-        """Convert Markdown to HTML with basic styling."""
-        # Use markdownify in reverse - actually we need a markdown parser
-        # For now, use a simple approach with the markdown library if available
-        try:
-            import markdown
+        from any_to_md.content.markdown import import_markdown
+        from any_to_md.writers.html import render_document
 
-            html_body = markdown.markdown(
-                markdown_content,
-                extensions=["tables", "fenced_code"],
-            )
-        except ImportError:
-            # Fallback: wrap in pre tag
-            html_body = f"<pre>{markdown_content}</pre>"
-
-        return f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6; }}
-        pre {{ background: #f4f4f4; padding: 10px; overflow-x: auto; }}
-        code {{ background: #f4f4f4; padding: 2px 5px; }}
-        table {{ border-collapse: collapse; width: 100%; }}
-        th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-        th {{ background: #f4f4f4; }}
-        img {{ max-width: 100%; }}
-    </style>
-</head>
-<body>
-{html_body}
-</body>
-</html>"""
+        return render_document(self.job.filename, str(import_markdown(markdown_content)))

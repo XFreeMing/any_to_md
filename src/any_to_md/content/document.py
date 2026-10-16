@@ -57,6 +57,24 @@ def document_styles(soup: BeautifulSoup, path: str, source_html: str = "") -> Do
     return DocumentStyleSources(tuple(paths), tuple(ordered), source_html, tuple(inline))
 
 
+def _unsafe_link(value: str) -> bool:
+    return urlsplit(value).scheme.lower() in {'javascript', 'vbscript', 'file'}
+
+
+def sanitize_html(soup: BeautifulSoup) -> None:
+    """Shared active-markup policy, before canonical or interim DOM rendering."""
+    for node in list(soup.find_all(string=lambda value: isinstance(value, ProcessingInstruction))):
+        node.extract()
+    for node in soup.find_all(['script', 'iframe', 'object', 'embed']):
+        node.decompose()
+    for tag in soup.find_all(True):
+        for attribute in list(tag.attrs):
+            if attribute.lower().startswith('on'):
+                del tag[attribute]
+        if tag.get('href') and _unsafe_link(str(tag['href'])):
+            del tag['href']
+
+
 def prepare_html_document(
     soup: BeautifulSoup,
     path: str,
@@ -71,17 +89,11 @@ def prepare_html_document(
     resource_base = resource_base or path
     resource_state = resource_state if resource_state is not None else ResourceState()
     media = MediaFreezer(load_resource, lambda message: diagnostics.append(Diagnostic('svg_resource', message, severity='error', source_path=path)), resource_state)
-    for node in list(soup.find_all(string=lambda value: isinstance(value, ProcessingInstruction))):
-        node.extract()
-    for node in soup.find_all(["script", "iframe", "object", "embed"]):
-        node.decompose()
+    sanitize_html(soup)
     seen_anchors: set[str] = set()
     anchor_occurrences: dict[str, int] = defaultdict(int)
     anchor_map: dict[str, str] = {}
     for tag in list(soup.find_all(True)):
-        for attribute in list(tag.attrs):
-            if attribute.lower().startswith("on"):
-                del tag[attribute]
         try:
             encoded_aliases = json.loads(tag.get(SOURCE_ANCHORS_ATTRIBUTE) or "[]")
         except (ValueError, TypeError):
@@ -148,7 +160,7 @@ def prepare_html_document(
                 href = urljoin(base, href)
                 tag['href'] = href
             parsed = urlsplit(href)
-            if parsed.scheme.lower() in {"javascript", "vbscript", "file"}:
+            if _unsafe_link(href):
                 del tag["href"]
             elif document_paths is not None and resolve_path(base, href) in document_paths and 'external' not in tag.get('rel', []):
                 tag['href'] = '#' + source_anchor(resolve_path(base, href), unquote(parsed.fragment))

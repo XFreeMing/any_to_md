@@ -38,6 +38,7 @@ suite = unittest.defaultTestLoader.loadTestsFromNames([
     "tests.quality.test_url_conversion",
     "tests.quality.test_pdf_analysis",
     "tests.quality.test_ocr_provider",
+    "tests.quality.test_markdown_import",
 ])
 result = unittest.TextTestRunner(verbosity=2).run(suite)
 prefix = Path(sys.prefix)
@@ -48,7 +49,7 @@ for name, module in tuple(sys.modules.items()):
         if not origin.is_relative_to(prefix):
             raise RuntimeError(f"Production import escaped the installed environment: {name}")
         origins[name] = str(origin)
-for name in ("epub_to_md", "epub_to_html", "html_to_pdf", "html_to_md", "docx_to_md", "url_to_md"):
+for name in ("epub_to_md", "epub_to_html", "html_to_pdf", "html_to_md", "docx_to_md", "url_to_md", "md_to_any", "group_verbs", "refine_groups"):
     if importlib.util.find_spec(name) is not None:
         raise RuntimeError(f"Replaced converter still installed: {name}")
 import any_to_md

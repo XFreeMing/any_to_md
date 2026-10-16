@@ -34,9 +34,14 @@ def render_html(book: BookRevision, plan: ExportPlan) -> str:
         else:
             body.append(context.fragment(item, "book.html", "single", book.nodes[item.node_id].depth + 1))
     styles = "\n".join(context.resources(css, "book.html") for css in book.styles.values())
+    return render_document(book.metadata.title, '\n'.join(body), styles)
+
+
+def render_document(title: str, body_html: str, styles: str = '') -> str:
+    """The shared page shell, including remaining pre-Reader Markdown callers."""
     # A style closing sequence is source text, never markup in the generated head.
     styles = styles.replace("</", "<\\/")
-    return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + escape(book.metadata.title) + '</title><style>' + BASE_CSS + '\n' + styles + '</style></head><body>' + '\n'.join(body) + '</body></html>'
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + escape(title) + '</title><style>' + BASE_CSS + '\n' + styles + '</style></head><body>' + body_html + '</body></html>'
 
 
 def write_html(book: BookRevision, plan: ExportPlan, root: Path) -> Path:

@@ -18,6 +18,8 @@
 
 `test_pdf_analysis.py` 覆盖超过前五页的分类、短原生、图文/白页/矢量、旋转坐标、损坏/加密及实际原生 Web 三种输出；`test_ocr_provider.py` 只验证注入传输、上传协议、ZIP 路径/配额/冲突、符号链接、响应保留与状态失败，不能证明真实识别质量或单页能力。两者也纳入源码外安装验证。
 
+`test_markdown_import.py` 以独立上游 Markdown 样本验证共同 DOM/Writer 的中文、顺序、代码空白、表格跨度、脚注、锚点、图片像素及执行标记清理；也检查现存 Web 的共同解析/页面骨架。它不能验证真实 OCR 质量，亦不证明 PDF/图片 Reader 已完成切换。
+
 `test_jobs.py`、`test_publication.py`、`test_catalog_migration.py` 检查持久任务、执行权、重启、并发、发布失败、历史导出保持、校验和和旧 schema 副本重建。它们不代替格式解析效果检查。
 
 ```bash
