@@ -298,13 +298,18 @@ class SQLiteCatalog:
             self._owned(connection, job_id, token)
             connection.execute('UPDATE jobs SET progress=?, message=? WHERE job_id=?', (max(0, min(progress, 99)), message, job_id))
 
-    def register_source(self, *, job_id: str, source_id: str, book_id: str, edition_id: str, format_name: str, sha256: str, storage_key: str, filename: str) -> None:
+    def register_source(self, *, job_id: str, source_id: str, book_id: str, edition_id: str, format_name: str, sha256: str, storage_key: str, filename: str, token: str | None = None) -> None:
         now = _now()
         with self._transaction() as connection:
+            if token is not None:
+                self._owned(connection, job_id, token)
             connection.execute('INSERT OR IGNORE INTO books VALUES(?, ?, ?, ?)', (book_id, Path(filename).stem, '[]', now))
             connection.execute('INSERT OR IGNORE INTO editions VALUES(?, ?, ?, ?)', (edition_id, book_id, sha256, now))
             connection.execute('INSERT OR IGNORE INTO sources VALUES(?, ?, ?, ?, ?, ?, ?)', (source_id, edition_id, format_name, sha256, storage_key, filename, now))
-            connection.execute('UPDATE jobs SET source_id=? WHERE job_id=? AND status=\'pending\'', (source_id, job_id))
+            if token is None:
+                connection.execute('UPDATE jobs SET source_id=? WHERE job_id=? AND status=\'pending\'', (source_id, job_id))
+            else:
+                connection.execute('UPDATE jobs SET source_id=? WHERE job_id=?', (source_id, job_id))
 
     def start_export(self, job_id: str, token: str, export_id: str, targets: tuple[str, ...]) -> None:
         with self._transaction() as connection:

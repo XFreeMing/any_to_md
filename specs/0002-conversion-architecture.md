@@ -30,7 +30,9 @@
 
 ## 2. 现有代码的取舍依据
 
-当前工作区的 `src/any_to_md` 已有章节树、spine 顺序、常见物理分片合并、稳定节点、资源哈希、导出计划和 SQLite。`BookRevision` 使用 schema 2 的有序 HTML 片段，节点引用片段；`content_markdown` 已移除。`application/convert.py` 经能力表加载 EPUB/HTML/DOCX Reader，共用 MD/HTML/PDF Writer；对应旧业务源码及独立批处理已删除。共同任务、存储和发布直接复用，接入状态不等于效果验收。当前进度只在专题 TODO 维护；[取舍依据](../docs/conversion/evidence.md) 保留样本结论与适用范围，历史验证不能替代当前版本验收。
+当前工作区的 `src/any_to_md` 已有章节树、spine 顺序、常见物理分片合并、稳定节点、资源哈希、导出计划和 SQLite。`BookRevision` 使用 schema 2 的有序 HTML 片段，节点引用片段；`content_markdown` 已移除。`application/convert.py` 经能力表加载 EPUB/HTML/DOCX/URL Reader，共用 MD/HTML/PDF Writer；对应旧业务源码及独立批处理已删除。共同任务、存储和发布直接复用，接入状态不等于效果验收。当前进度只在专题 TODO 维护；[取舍依据](../docs/conversion/evidence.md) 保留样本结论与适用范围，历史验证不能替代当前版本验收。
+
+URL 在持久任务执行权下获取不可变原响应及资源快照，原 URL 文本另行保留；已捕获来源不重新联网。正文提取保留 main/article 的源 DOM 和祖先样式/资源基准，去掉导航与侧栏但保留语义脚注；外壳转为可分页阅读流。共享规范化只从快照读取资源，图片/CSS/SVG 使用最终重定向地址解析。缺少文章标记时明确告警；原来源作为展示元数据与外部链接保留。HTTP 获取只有同步实现，异步入口在线程中调用共同应用服务，不维护另一套获取/提取业务。旧 URL 源码及提取引擎已删除，样本选择依据见研究文档。
 
 DOCX Reader 在内存准备 OOXML 部件、Strict 命名空间、符号、编号及资源关系后，以 Mammoth 语义 HTML 进入共同正文，保留原件身份；不另建私有 MD 清洗或 MD→HTML/PDF 管线。
 

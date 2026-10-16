@@ -26,6 +26,8 @@ def scope_id(path: str) -> str:
 
 def resolve_path(document_path: str, target: str) -> str:
     parsed = urlsplit(target.replace("\\", "/"))
+    if urlsplit(document_path).scheme in {'http', 'https'}:
+        return urljoin(document_path, target).split('#', 1)[0]
     if parsed.scheme or parsed.netloc:
         return ""
     if urlsplit(document_path).scheme or urlsplit(document_path).netloc:
@@ -38,7 +40,7 @@ def resolve_path(document_path: str, target: str) -> str:
 
 def register_asset(assets: dict[str, AssetRef], path: str, data: bytes, media_type: str | None) -> str:
     digest = hashlib.sha256(data).hexdigest()
-    suffix = re.sub(r"[^a-z0-9.]", "", PurePosixPath(path).suffix.lower())
+    suffix = re.sub(r"[^a-z0-9.]", "", PurePosixPath(urlsplit(path).path).suffix.lower())
     assets.setdefault(digest, AssetRef(digest, path, f"{digest}{suffix}", media_type, data))
     return asset_token(digest)
 

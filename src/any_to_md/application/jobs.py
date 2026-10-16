@@ -13,6 +13,7 @@ from pathlib import Path
 
 from ..adapters.persistence.sqlite import SQLiteCatalog
 from ..adapters.html_source import capture_html_source, pack_html_source
+from ..adapters.url_source import capture_url_source
 from ..adapters.storage import LocalStorage, sha256_file
 from ..domain.artifacts import ArtifactRecord, ExportPlan
 from ..domain.book import BookRevision
@@ -47,9 +48,9 @@ class JobRuntime:
     def get(self, job_id: str) -> Job | None:
         return self.catalog.get_job(job_id)
 
-    def _register(self, job: Job, key: str, digest: str) -> Job:
+    def _register(self, job: Job, key: str, digest: str, token: str | None = None) -> Job:
         source_id, book_id, edition_id = source_ids(job.input_format, digest)
-        self.catalog.register_source(job_id=job.job_id, source_id=source_id, book_id=book_id, edition_id=edition_id, format_name=job.input_format, sha256=digest, storage_key=key, filename=job.filename)
+        self.catalog.register_source(job_id=job.job_id, source_id=source_id, book_id=book_id, edition_id=edition_id, format_name=job.input_format, sha256=digest, storage_key=key, filename=job.filename, token=token)
         return self.get(job.job_id)
 
     def _ingestion_failed(self, job: Job, error: Exception) -> None:
@@ -74,15 +75,19 @@ class JobRuntime:
             self._ingestion_failed(job, error)
 
     def file_job(self, path: Path | str, targets: tuple[str, ...]) -> Job:
-        source = Path(path).expanduser().absolute()
-        format_name = input_format(source.name) or 'unknown'
+        is_url = isinstance(path, str) and path.startswith(('http://', 'https://'))
+        source = Path('webpage.url') if is_url else Path(path).expanduser().absolute()
+        format_name = 'url' if is_url else input_format(source.name) or 'unknown'
         output = 'md_single' if 'markdown' in targets else 'pdf' if 'pdf' in targets else 'html'
         job = self.catalog.create_job(str(uuid.uuid4()), source.name, format_name, targets, output)
         try:
             validate_outputs(format_name, targets, output)
-            if not source.is_file():
+            if format_name == 'url':
+                content = path.encode('utf-8') if is_url else source.read_bytes()
+                _, key, digest = self.storage.store_bytes(content, '.url')
+            elif not source.is_file():
                 raise FileNotFoundError(f'输入文件不存在：{source}')
-            if format_name == 'html' and source.suffix.lower() != '.zip':
+            elif format_name == 'html' and source.suffix.lower() != '.zip':
                 _, key, digest = self.storage.store_bytes(capture_html_source(source), '.zip')
             else:
                 digest = sha256_file(source)
@@ -111,6 +116,19 @@ class JobRuntime:
         if not path.is_file() or sha256_file(path) != path.stem:
             raise ValueError('原件不存在或校验和不一致')
         return path
+
+    def capture_source(self, job: Job, token: str) -> Path:
+        """Capture URL originals only while holding the conversion job lease.
+
+        Prior URL-only jobs follow the same path; their originals and older
+        terminal jobs remain intact. A captured source replays without HTTP.
+        """
+        source = self.source_path(job)
+        if job.input_format == 'url' and source.suffix == '.url':
+            snapshot = capture_url_source(source.read_text(encoding='utf-8').strip())
+            _, key, digest = self.storage.store_bytes(snapshot, '.zip')
+            return self.source_path(self._register(job, key, digest, token))
+        return source
 
     def execute(self, job_id: str) -> JobExecution:
         return JobExecution(self, job_id)

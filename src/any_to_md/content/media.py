@@ -138,7 +138,7 @@ class MediaFreezer:
             return value
         if parsed.scheme.lower() == 'data':
             return self.data_svg(value, base, active)
-        if parsed.scheme or parsed.netloc:
+        if (parsed.scheme or parsed.netloc) and urlsplit(base).scheme not in {'http', 'https'}:
             self.report(f'SVG 资源不能离线读取：{value}')
             return ''
         target = resolve_path(base, value)

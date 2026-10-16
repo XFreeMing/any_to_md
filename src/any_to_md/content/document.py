@@ -89,7 +89,7 @@ def prepare_html_document(
         aliases = {value for value in encoded_aliases if isinstance(value, str)} if isinstance(encoded_aliases, list) else set()
         if tag.get("id"):
             tag["data-source-original-id"] = str(tag["id"])
-        own = [str(tag[key]) for key in ("id", "name") if tag.get(key)]
+        own = [str(tag[key]) for key in (("id", "name") if tag.name == 'a' else ("id",)) if tag.get(key)]
         for index, original in enumerate(dict.fromkeys(own)):
             anchor_occurrences[original] += 1
             canonical = source_anchor(path, original)
@@ -120,7 +120,7 @@ def prepare_html_document(
         if not parsed.scheme and not parsed.netloc and not parsed.path and parsed.fragment:
             return "#" + source_anchor(base, unquote(parsed.fragment))
         target = resolve_path(base, value)
-        asset = load_resource(target) if not parsed.scheme and not parsed.netloc else None
+        asset = load_resource(target) if target else None
         if asset is None:
             diagnostics.append(Diagnostic("missing_resource", f"资源无法离线获取：{value}", severity="error", source_path=base))
             return ""
@@ -150,6 +150,8 @@ def prepare_html_document(
             parsed = urlsplit(href)
             if parsed.scheme.lower() in {"javascript", "vbscript", "file"}:
                 del tag["href"]
+            elif document_paths is not None and resolve_path(base, href) in document_paths and 'external' not in tag.get('rel', []):
+                tag['href'] = '#' + source_anchor(resolve_path(base, href), unquote(parsed.fragment))
             elif not parsed.scheme and not parsed.netloc:
                 target = resolve_path(base, href)
                 candidate = load_resource(target)
@@ -172,7 +174,7 @@ def prepare_html_document(
     def add_css(css: str, base: str, active: tuple[str, ...]) -> str:
         def load_import(value: str) -> str:
             parsed = urlsplit(value)
-            target = resolve_path(base, value) if not parsed.scheme and not parsed.netloc else ""
+            target = resolve_path(base, value)
             if target in active:
                 style_diagnostic(f"跳过循环样式导入：{target}")
                 return ""

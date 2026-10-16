@@ -27,7 +27,7 @@ CAPABILITIES = {
     "docx": Capability((".docx",), ("md_single", "md_chapters", "html", "pdf"), 'any_to_md.readers.docx:read_docx_document'),
     "pdf": Capability((".pdf",), ("md_single", "html", "pdf")),
     "image": Capability((".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"), ("md_single", "html", "pdf")),
-    "url": Capability((), ("md_single", "html", "pdf")),
+    "url": Capability((".url",), ("md_single", "html", "pdf"), 'any_to_md.readers.url:read_url_document'),
 }
 OUTPUT_TARGET = {"md_single": "markdown", "md_chapters": "markdown", "html": "html", "pdf": "pdf"}
 

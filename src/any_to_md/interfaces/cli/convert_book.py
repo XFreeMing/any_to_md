@@ -21,6 +21,7 @@ def build_parser() -> argparse.ArgumentParser:
     inputs = parser.add_mutually_exclusive_group(required=True)
     inputs.add_argument("--input", nargs="+", type=Path, help="一个或多个 EPUB、HTML、HTML 资源 ZIP 或 DOCX")
     inputs.add_argument("--input-dir", type=Path, help="批量读取目录中已接入共同 Reader 的输入")
+    inputs.add_argument("--url", nargs="+", help="一个或多个网页 URL；保存响应与资源快照后转换")
     parser.add_argument(
         "--data-dir",
         type=Path,
@@ -45,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         sources = sorted(path for path in args.input_dir.iterdir() if path.is_file() and input_format(path.name) is not None and CAPABILITIES[input_format(path.name)].reader is not None)
     else:
-        sources = args.input
+        sources = args.url or args.input
     if not sources:
         print("未找到支持的输入。", file=sys.stderr)
         return 1

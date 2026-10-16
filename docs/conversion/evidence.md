@@ -12,6 +12,14 @@
 | DOCX 独立结构对照 `var/quality/docx-before/checks.json` | 旧实现有 13 项失败，支持保留 Mammoth 语义 HTML 后进入共同正文、避免私有 MD 往返的取舍；不证明所有 Word 无损或库永久最优 |
 | 上游 DOCX `var/quality/docx-upstream-source-v1/provenance.json`、`checks-v3.json` | 6 个固定提交与 SHA256 的文件，元数据为 Microsoft Office Word，覆盖 Strict、列表、无表头表格、脚注、文本框和图片关系；属于测试素材，不是用户业务样本 |
 
+## URL 取舍与边界
+
+固定源预期见 `tests/quality/url_fixtures.py`。`var/quality/url-phase02/candidate-comparison.json` 对本机 Trafilatura 2.0.0 的 Markdown / HTML 输出作对照：两者均重复部分正文、丢表格跨度和图片候选；Markdown 另丢代码缩进。保留语义文章 DOM，经共同正文及 Writer 输出的同一固定样本通过独立正文/像素/单元格/链接断言。选择基于此结构保真要求，不宣称统计正文提取在所有网页上更差。
+
+唯一 URL 提取规则优先 main/article，清理导航/侧栏并保留语义脚注；无标记页面保留清理后的正文并告警。标记不规范、未声明广告、JS/登录内容不保证提取。保留页面外壳的选择器和资源基准，但将其转换成 block 阅读流，避免原站浮动/flex 导致 PDF 空白；不是原站像素复刻。
+
+真实来源为 Python 官方公开教程 `https://docs.python.org/3/tutorial/introduction.html`；原响应及 7 个资源快照保留在 `real-data/`，`real-fetch.json` 记录获取时间与标识，`real-replay.json` 对源文章 108 个段落/代码/表格块作全数核对，无漏/重及断裂内部链接。12 页 PDF 无空白，前两页和中文固定样本已视觉检查，不代表所有页排版均已验收。离线重放与历史 URL-only 来源共用同一捕获/读取流程，旧原件不改写。
+
 ## 样本解释边界
 
 - 真实 EPUB 的 64 个历史段落探针中 37 个精确匹配，另 27 个按源编号/字体证据分类；抽样不能推出整书丢失率。73 次图片引用、70 个不同图像的核对不替代表格结构检查。

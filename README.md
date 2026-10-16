@@ -6,7 +6,7 @@
 
 项目目标已重新规划：**同一职责只保留一套正式实现，所有 Web、CLI 和批处理入口调用同一个应用服务，以实际转换质量决定保留和整合的实现。** 不因代码较新或旧文档要求而优先保留某条路线，也不把重复实现包装成长期兼容层。
 
-EPUB、HTML 和 DOCX 已接入同一应用服务，使用规范 HTML 正文和共享 MD/HTML/PDF Writer；旧 EPUB、HTML、DOCX 转换源码及独立批处理源码已删除。Web 全格式及当前 CLI/批处理共用持久任务、存储和发布，URL、PDF、图片仍有私有转换业务。接入不等于效果验收通过，当前实现同样接受样本比较。
+EPUB、HTML、DOCX 和 URL 已接入同一应用服务，使用规范 HTML 正文和共享 MD/HTML/PDF Writer；旧 EPUB、HTML、DOCX、URL 转换源码及独立批处理源码已删除。Web 全格式及当前 CLI/批处理共用持久任务、存储和发布，PDF、图片仍有私有转换业务。接入不等于效果验收通过，当前实现同样接受样本比较。
 
 新会话从 [项目 TODO](TODO.md) 导航至 [转换收敛 TODO](docs/conversion/TODO.md)，查看当前状态、验证结果和下一步。协作规则见 [AGEMTS.md](AGEMTS.md)，取舍依据见 [转换证据](docs/conversion/evidence.md)，验证操作见 [质量检查](tests/quality/README.md)。
 
@@ -24,9 +24,9 @@ EPUB、HTML 和 DOCX 已接入同一应用服务，使用规范 HTML 正文和�
 
 | 位置 | 当前职责与限制 |
 | --- | --- |
-| `src/any_to_md/` | EPUB/HTML/DOCX Reader、schema 2 的规范 HTML 片段、共享 MD/HTML/PDF Writer、导出包、SQLite 及共同应用服务 |
-| `web/` | FastAPI、上传/下载、任务及格式调度；EPUB/HTML/DOCX 已接入应用服务，PDF/图片/URL 仍调用根包；任务、存储、发布和下载已共用核心运行时 |
-| 根目录各格式转换包 | PDF、图片、URL 等待逐项切换；旧 EPUB、HTML 和 DOCX 业务源码已删除 |
+| `src/any_to_md/` | EPUB/HTML/DOCX/URL Reader、schema 2 的规范 HTML 片段、共享 MD/HTML/PDF Writer、导出包、SQLite 及共同应用服务 |
+| `web/` | FastAPI、上传/下载、任务及格式调度；EPUB/HTML/DOCX/URL 已接入应用服务，PDF/图片仍调用根包；任务、存储、发布和下载已共用核心运行时 |
+| 根目录各格式转换包 | PDF、图片等待逐项切换；旧 EPUB、HTML、DOCX 和 URL 业务源码已删除 |
 | `scripts/run/convert_book.py` | 书籍 CLI 的薄启动脚本 |
 | `any-to-md-book --input-dir` | 批处理复用相同应用服务；旧 `convert_books.py` 已删除 |
 | `md_to_any/` | Java 历史实现及资源，待清理；正式 PDF Writer 使用包内字体，不再从此目录加载 |
@@ -91,11 +91,19 @@ uv run python scripts/run/convert_book.py \
   --view both
 ```
 
-当前代码接受 EPUB、HTML/HTM、HTML 资源 ZIP 和 DOCX；当前质量缺口与验收范围见 TODO。`--input` 可传多个文件，或使用 `--input-dir` 读取目录。`--target` 可选 `markdown html pdf`，默认 `markdown`；选择 Markdown 时固定生成整体及分章视图，保留的 `--view` 参数只接受 `both`。
+当前代码接受 EPUB、HTML/HTM、HTML 资源 ZIP、DOCX 和保存 URL 文本的 `.url` 文件；当前质量缺口与验收范围见 TODO。`--input` 可传多个文件，或使用 `--input-dir` 读取目录。`--target` 可选 `markdown html pdf`，默认 `markdown`；选择 Markdown 时固定生成整体及分章视图，保留的 `--view` 参数只接受 `both`。
 
 ```bash
 uv run any-to-md-book --input-dir "./books" --data-dir "./var" --target markdown html pdf
 ```
+
+网页可直接传一个或多个 URL，或在目录中保存 UTF-8 `.url` 文本参与同一批处理：
+
+```bash
+uv run any-to-md-book --url "https://example.com/article" --data-dir "./var" --target markdown html pdf
+```
+
+URL 首次转换保存原响应、重定向地址及必要资源快照；同一持久任务再次选择输出时只读快照。仅接受 HTTP/HTTPS，不执行网页 JavaScript。正文优先使用 `main` / `article`，缺少语义标记时报告边界告警；页面外壳按阅读流排版，正文内部结构与资源进入共享规范化。网页标题用于展示，产物使用固定安全名称。
 
 这条路径从一份规范正文和导出计划生成所选输出，发布到新的 `var/exports/<export_id>/` 目录，保留早期导出，并在 `var/catalog.sqlite` 记录身份、修订和导出状态。产物按所选格式包含 `book.md`、`chapters/`、`TOC.md`、`book.html`、`book.pdf`、下载包，以及 `toc.json`、`locations.json`、`book.json`、`report.json`、`manifest.json` 和 `assets/`。PDF 需要可用的 WeasyPrint 原生渲染依赖。
 

@@ -14,6 +14,8 @@
 
 `test_canonical_epub.py`、`test_html_conversion.py`、`test_docx_conversion.py` 覆盖各唯一 Reader 与共享视图；`test_epub_entries.py` 及格式测试中的实际 CLI/HTTP 流程覆盖上传、状态、下载、单/多文件和目录批处理，以及搬移和来源重放。
 
+`test_url_conversion.py` / `url_fixtures.py` 覆盖文章/未标记正文、中文、表格跨度、代码缩进、图片像素、来源与链接、重定向/CSS/字符集/脚注、gzip 配额、故障/中断、长文分页和快照离线重放；临时本机 HTTP 服务验证 Web、CLI 多 URL 与目录批处理。运行环境须允许监听回环端口；没有监听权限是环境阻塞，不能改成通过。源码外安装检查也运行这组测试并验证 `url_to_md` 缺席。
+
 `test_jobs.py`、`test_publication.py`、`test_catalog_migration.py` 检查持久任务、执行权、重启、并发、发布失败、历史导出保持、校验和和旧 schema 副本重建。它们不代替格式解析效果检查。
 
 ```bash

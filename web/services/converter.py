@@ -34,7 +34,7 @@ class ConversionService:
             self.execution = execution
             execution.begin()
             input_path = self.runtime.source_path(self.job)
-            handlers = {'pdf': self._convert_pdf, 'image': self._convert_image, 'url': self._convert_url}
+            handlers = {'pdf': self._convert_pdf, 'image': self._convert_image}
             handler = handlers.get(self.job.input_format)
             if handler is None:
                 raise ValueError(f'Unsupported input format: {self.job.input_format}')
@@ -124,46 +124,6 @@ class ConversionService:
             return pdf_path
 
         raise ValueError(f"Unsupported output format for image: {output_format}")
-
-    async def _convert_url(self, input_path: Path, output_format: str) -> Path:
-        """Convert URL content to target format."""
-        # input_path contains the URL as text
-        url = input_path.read_text(encoding="utf-8").strip()
-        self.update_progress(20, "Fetching URL content...")
-
-        from url_to_md import fetch_url_to_markdown
-
-        md_content, title = await fetch_url_to_markdown(url)
-        filename = title or "webpage"
-        md_path = self.output_path(f"{filename}.md")
-        md_path.write_text(md_content, encoding="utf-8")
-        self.update_progress(60, "Content extracted")
-
-        if output_format == "md_single":
-            return md_path
-
-        elif output_format == "html":
-            self.update_progress(80, "Converting to HTML...")
-            html_content = self._markdown_to_html(md_content)
-            html_path = self.output_path(f"{filename}.html")
-            html_path.write_text(html_content, encoding="utf-8")
-            return html_path
-
-        elif output_format == "pdf":
-            self.update_progress(80, "Converting to PDF...")
-            html_content = self._markdown_to_html(md_content)
-            html_path = self.output_path(f"{filename}_temp.html")
-            html_path.write_text(html_content, encoding="utf-8")
-
-            from any_to_md.writers.pdf import render_pdf
-
-            pdf_path = render_pdf(
-                html_path,
-                output_path=self.output_path(f"{filename}.pdf"),
-            )
-            return pdf_path
-
-        raise ValueError(f"Unsupported output format for URL: {output_format}")
 
     def _markdown_to_html(self, markdown_content: str) -> str:
         """Convert Markdown to HTML with basic styling."""

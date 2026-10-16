@@ -58,7 +58,7 @@ def convert(request: ConversionRequest) -> ConversionResult:
         job = runtime.file_job(request.input_path, request.targets)
     with runtime.execute(job.job_id) as execution:
         reader, pipeline_version = CAPABILITIES[job.input_format].load_reader()
-        source = runtime.source_path(job)
+        source = runtime.capture_source(job, execution.token)
         source_id, book_id, edition_id = source_ids(job.input_format, source.stem)
         execution.progress(15, 'Reading source')
         reader_options = {'original_filename': job.filename} if job.input_format == 'html' else {}
