@@ -1,6 +1,6 @@
 # any_to_md
 
-**最后更新：2026-10-15**
+**最后更新：2026-10-16**
 
 文档转换工具，当前包含 Web 服务、EPUB 书籍转换核心和多组格式转换脚本。
 
@@ -8,17 +8,17 @@
 
 EPUB、HTML 和 DOCX 已接入同一应用服务，使用规范 HTML 正文和共享 MD/HTML/PDF Writer；旧 EPUB、HTML、DOCX 转换源码及独立批处理源码已删除。Web 全格式及当前 CLI/批处理共用持久任务、存储和发布，URL、PDF、图片仍有私有转换业务。接入不等于效果验收通过，当前实现同样接受样本比较。
 
-新会话从 [agent.md](agent.md) 和 [TODO.md 的接管摘要](TODO.md#接管摘要) 开始；当前状态、验证结果和下一步只维护在 TODO，阶段实现总结按需查阅 [归档索引](docs/archive/README.md)。质量检查方法见 [tests/quality/README.md](tests/quality/README.md)，历史通过不能替代当前版本验收。
+新会话从 [项目 TODO](TODO.md) 导航至 [转换收敛 TODO](docs/conversion/TODO.md)，查看当前状态、验证结果和下一步。协作规则见 [AGEMTS.md](AGEMTS.md)，取舍依据见 [转换证据](docs/conversion/evidence.md)，验证操作见 [质量检查](tests/quality/README.md)。
 
 ## 规划与契约
 
-- [代理执行规则](agent.md)：阶段状态更新、验收、总结归档与待办精简的统一规则。
+- [项目协作约定](AGEMTS.md)：唯一来源、文档职责与任务维护规则。
 - [转换架构与实现收敛方案](specs/0002-conversion-architecture.md)：目标架构、实现选择和退出规则。
-- [执行清单](TODO.md)：后续实施与验收任务。
+- [项目导航](TODO.md) / [专题清单](docs/conversion/TODO.md)：文档入口与实施、验收任务。
 - [书籍结构与导航契约](specs/0003-book-structure-and-navigation.md)：章节树、整体/分章视图和定位索引的补充约束。
 - [SQLite 持久化契约](specs/0004-sqlite-persistence.md)：身份、修订、产物和任务持久化的补充约束。
 
-目标以当前用户要求为准，实际能力以源码及当前版本产物核对，执行状态维护在 `TODO.md`。设计文档提供补充约束，不决定保留哪套实现；文档中的目标能力不代表当前已经实现。
+目标以当前用户要求为准，实际能力以源码及当前版本产物核对，执行状态维护在专题 TODO。设计文档提供补充约束，不决定保留哪套实现；文档中的目标能力不代表当前已经实现。
 
 ## 当前代码结构
 
@@ -35,7 +35,7 @@ EPUB、HTML 和 DOCX 已接入同一应用服务，使用规范 HTML 正文和�
 
 ## 当前可用入口
 
-以下命令根据当前代码和配置列出。实现接入、源码验证与独立安装验收分别判断，详细状态与限制只在 [TODO](TODO.md) 维护，历史结果见对应阶段归档。
+以下命令根据当前代码和配置列出。实现接入、源码验证与独立安装验收分别判断，详细状态与限制只在 [专题 TODO](docs/conversion/TODO.md) 维护。
 
 ### 环境准备
 

@@ -1,10 +1,10 @@
 # 唯一转换实现与效果优先架构
 
-更新日期：2026-10-15。状态：按当前工作区重新核对；本文描述目标，实际进度只在 TODO 记录。
+更新日期：2026-10-16。本文维护目标架构与机制；实际进度见专题 TODO。
 
 本方案依据当前代码审计与用户最新要求重新制定：同一功能只维护一套正式实现，按实际转换效果取舍。它替代旧方案中的双轨迁移、Legacy Adapter、运行时回退开关及 M01–M17 顺序。旧文档和目录新旧不能作为保留某套实现的理由。
 
-本文负责架构与取舍，[TODO](../TODO.md) 是唯一执行进度记录；[书籍与内容契约](0003-book-structure-and-navigation.md)、[存储契约](0004-sqlite-persistence.md) 是补充细则。历史方案通过 Git 查看，不再保留另一份可执行路线图。
+本文负责架构与取舍，[专题 TODO](../docs/conversion/TODO.md) 维护执行进度；[书籍与内容契约](0003-book-structure-and-navigation.md)、[存储契约](0004-sqlite-persistence.md) 是补充细则。历史方案通过 Git 查看，不再保留另一份可执行路线图。
 
 ## 1. 目标与边界
 
@@ -30,7 +30,9 @@
 
 ## 2. 现有代码的取舍依据
 
-当前工作区的 `src/any_to_md` 已有章节树、spine 顺序、常见物理分片合并、稳定节点、资源哈希、导出计划和 SQLite。`BookRevision` 使用 schema 2 的有序 HTML 片段，节点引用片段；`content_markdown` 已移除。`application/convert.py` 经能力表加载 EPUB/HTML/DOCX Reader，共用 MD/HTML/PDF Writer；对应旧业务源码及独立批处理已删除。共同任务、存储和发布直接复用，接入状态不等于效果验收。当前进度只在 TODO 维护，阶段总结按 agent.md 归档；历史验证仅属于对应版本，不能据此宣布全部格式收敛完成。
+当前工作区的 `src/any_to_md` 已有章节树、spine 顺序、常见物理分片合并、稳定节点、资源哈希、导出计划和 SQLite。`BookRevision` 使用 schema 2 的有序 HTML 片段，节点引用片段；`content_markdown` 已移除。`application/convert.py` 经能力表加载 EPUB/HTML/DOCX Reader，共用 MD/HTML/PDF Writer；对应旧业务源码及独立批处理已删除。共同任务、存储和发布直接复用，接入状态不等于效果验收。当前进度只在专题 TODO 维护；[取舍依据](../docs/conversion/evidence.md) 保留样本结论与适用范围，历史验证不能替代当前版本验收。
+
+DOCX Reader 在内存准备 OOXML 部件、Strict 命名空间、符号、编号及资源关系后，以 Mammoth 语义 HTML 进入共同正文，保留原件身份；不另建私有 MD 清洗或 MD→HTML/PDF 管线。
 
 旧 `epub_to_html` 的图片候选、锚点与跨文档引用等有效规则已在唯一 Reader 中承接，并补充了作用域样式、CSS 资源和条件导入；旧源码从正式运行路径移除，只在 Git 对照版本中保留。旧 EPUB MD 的重复正文和无目录异常不作为兼容要求。
 
