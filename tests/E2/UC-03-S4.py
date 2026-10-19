@@ -9,8 +9,8 @@ if __name__ == "__main__" and not __package__:
 import shutil
 from pathlib import Path
 
-from any_to_md.application.convert import ConversionRequest, convert
-from any_to_md.application.jobs import JobRuntime
+from src.application.convert import ConversionRequest, convert
+from src.application.jobs import JobRuntime
 from tests.common.inspection import inspect_output
 from tests.common.delivery_support import extract_download, fixture_cases, source_server
 

@@ -6,8 +6,8 @@ import logging
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
-from any_to_md.application.jobs import ConversionFailure, JobRuntime
-from any_to_md.domain.jobs import Job, JobConflict
+from src.application.jobs import ConversionFailure, JobRuntime
+from src.domain.jobs import Job, JobConflict
 from ..runtime import get_runtime
 from ..services.converter import ConversionService
 

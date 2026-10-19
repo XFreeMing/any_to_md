@@ -1,6 +1,6 @@
 """Resolve the common application runtime from Web configuration."""
 
-from any_to_md.application.jobs import JobRuntime
+from src.application.jobs import JobRuntime
 
 from .config import settings
 

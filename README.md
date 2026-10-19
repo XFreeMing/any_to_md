@@ -22,7 +22,7 @@ uv run any-to-md-book --input "/path/to/book.epub" --data-dir "./var" --target m
 uv run any-to-md-book --help
 ```
 
-CLI 的 `--data-dir` 与 Web 的 `DATA_DIR` 需要显式指向同一位置才共享资料。输入与输出定义见 [能力表源码](src/any_to_md/application/capabilities.py)，参数定义见 [CLI 源码](src/any_to_md/interfaces/cli/convert_book.py)；此处不再维护一份格式或参数清单。
+CLI 的 `--data-dir` 与 Web 的 `DATA_DIR` 需要显式指向同一位置才共享资料。输入与输出定义见 [能力表源码](src/application/capabilities.py)，参数定义见 [CLI 源码](src/interfaces/cli/convert_book.py)；此处不再维护一份格式或参数清单。
 
 ## 代码结构
 
@@ -30,7 +30,7 @@ CLI 的 `--data-dir` 与 Web 的 `DATA_DIR` 需要显式指向同一位置才共
 any_to_md/
 ├── AGENTS.md / TODO.md       # 协作边界 / 未完成需求
 ├── pyproject.toml / uv.lock  # 命令、分发与依赖
-├── src/any_to_md/
+├── src/
 │   ├── application/         # 转换用例、能力与任务
 │   ├── domain/              # 正文、任务和产物模型
 │   ├── readers/             # 输入读取；PDF 当前只有分析模块

@@ -12,8 +12,8 @@ import shutil
 import sqlite3
 from pathlib import Path
 
-from any_to_md.application.convert import ConversionRequest, convert
-from any_to_md.application.jobs import JobRuntime
+from src.application.convert import ConversionRequest, convert
+from src.application.jobs import JobRuntime
 from tests.common.delivery_support import digest, tree_hashes, web_client
 from tests.common.support import Blocked
 

@@ -3,8 +3,8 @@
 import asyncio
 from pathlib import Path
 
-from any_to_md.adapters.archive import write_members
-from any_to_md.adapters.ocr import OcrConfig, recognize
+from src.adapters.archive import write_members
+from src.adapters.ocr import OcrConfig, recognize
 
 
 def _config(api_url: str | None, timeout: float | None) -> OcrConfig:

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from any_to_md.readers.pdf.analysis import analyze_pdf
+from src.readers.pdf.analysis import analyze_pdf
 
 
 def is_scanned_pdf(pdf_path: Path | str) -> bool:

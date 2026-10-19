@@ -4,7 +4,7 @@ import asyncio
 from pathlib import Path
 from typing import Callable, Optional
 
-from any_to_md.readers.pdf.analysis import analyze_pdf
+from src.readers.pdf.analysis import analyze_pdf
 
 
 async def convert_pdf_to_markdown(

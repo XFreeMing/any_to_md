@@ -3,11 +3,11 @@
 import asyncio
 from pathlib import Path
 
-from any_to_md.application.convert import ConversionRequest, convert
-from any_to_md.application.capabilities import CAPABILITIES
-from any_to_md.application.jobs import JobExecution, JobRuntime
-from any_to_md.domain.jobs import Job
-from any_to_md.export.bundle import finalize_bundle
+from src.application.convert import ConversionRequest, convert
+from src.application.capabilities import CAPABILITIES
+from src.application.jobs import JobExecution, JobRuntime
+from src.domain.jobs import Job
+from src.export.bundle import finalize_bundle
 
 
 class ConversionService:
@@ -75,7 +75,7 @@ class ConversionService:
             html_path = self.output_path(f"{input_path.stem}_temp.html")
             html_path.write_text(html_content, encoding="utf-8")
 
-            from any_to_md.writers.pdf import render_pdf
+            from src.writers.pdf import render_pdf
 
             pdf_path = render_pdf(
                 html_path,
@@ -115,7 +115,7 @@ class ConversionService:
             html_path = self.output_path(f"{input_path.stem}_temp.html")
             html_path.write_text(html_content, encoding="utf-8")
 
-            from any_to_md.writers.pdf import render_pdf
+            from src.writers.pdf import render_pdf
 
             pdf_path = render_pdf(
                 html_path,
@@ -126,7 +126,7 @@ class ConversionService:
         raise ValueError(f"Unsupported output format for image: {output_format}")
 
     def _markdown_to_html(self, markdown_content: str) -> str:
-        from any_to_md.content.markdown import import_markdown
-        from any_to_md.writers.html import render_document
+        from src.content.markdown import import_markdown
+        from src.writers.html import render_document
 
         return render_document(self.job.filename, str(import_markdown(markdown_content)))

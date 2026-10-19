@@ -22,12 +22,12 @@ class Capability:
 
 
 CAPABILITIES = {
-    "epub": Capability((".epub",), ("md_single", "md_chapters", "html", "pdf"), 'any_to_md.readers.epub:read_epub_book'),
-    "html": Capability((".html", ".htm", ".zip"), ("md_single", "md_chapters", "html", "pdf"), 'any_to_md.readers.html:read_html_document'),
-    "docx": Capability((".docx",), ("md_single", "md_chapters", "html", "pdf"), 'any_to_md.readers.docx:read_docx_document'),
+    "epub": Capability((".epub",), ("md_single", "md_chapters", "html", "pdf"), 'src.readers.epub:read_epub_book'),
+    "html": Capability((".html", ".htm", ".zip"), ("md_single", "md_chapters", "html", "pdf"), 'src.readers.html:read_html_document'),
+    "docx": Capability((".docx",), ("md_single", "md_chapters", "html", "pdf"), 'src.readers.docx:read_docx_document'),
     "pdf": Capability((".pdf",), ("md_single", "html", "pdf")),
     "image": Capability((".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"), ("md_single", "html", "pdf")),
-    "url": Capability((".url",), ("md_single", "html", "pdf"), 'any_to_md.readers.url:read_url_document'),
+    "url": Capability((".url",), ("md_single", "html", "pdf"), 'src.readers.url:read_url_document'),
 }
 OUTPUT_TARGET = {"md_single": "markdown", "md_chapters": "markdown", "html": "html", "pdf": "pdf"}
 

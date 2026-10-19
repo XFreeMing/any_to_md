@@ -10,7 +10,7 @@
 
 剩余范围包括现役代码的场景回补、入口验证、业务迁移和遗留清理。缺测试仍是未完成需求；场景按下文所属 Epic 建立，不增加占位测试。每轮只推进选定故事的范围及必要依赖。
 
-产品边界是使[现有能力表](src/any_to_md/application/capabilities.py)声明的格式、Web / CLI / 批处理和保留资料按下文约定可靠工作；未列明的新格式、入口、外部服务或产品能力需要另行明确需求，不因整理架构自动纳入。
+产品边界是使[现有能力表](src/application/capabilities.py)声明的格式、Web / CLI / 批处理和保留资料按下文约定可靠工作；未列明的新格式、入口、外部服务或产品能力需要另行明确需求，不因整理架构自动纳入。
 
 | 顺序 | 关联故事与剩余工作 | 进入下一步的条件 |
 | --- | --- | --- |
@@ -25,7 +25,7 @@ A 可与不依赖真实 OCR 的 B / C 开发并行；C 的切换必须等待真�
 
 | 入口 | 实际执行方式 | 补验范围 |
 | --- | --- | --- |
-| 正式 CLI | 子进程执行 `any-to-md-book` 与 `python -m any_to_md.interfaces.cli.convert_book` | UC-05：参数、文件 / 目录 / URL、多输入、报告、退出码及产物；不能只调用 `main()` |
+| 正式 CLI | 子进程执行 `any-to-md-book` 与 `python -m src.interfaces.cli.convert_book` | UC-05：参数、文件 / 目录 / URL、多输入、报告、退出码及产物；不能只调用 `main()` |
 | 源码薄脚本 | 子进程执行 `scripts/run/convert_book.py` | UC-05-S1：与正式 CLI 的相同样本、输出和失败行为一致；脚本保留，不因尚无测试就删除，不要求进入 wheel |
 | Web 页面 | 启动实际服务并用 Playwright 操作浏览器 | UC-04：上传、选择、查询、下载、重转、partial 与查询断连；保存截图、trace、日志和实际产物 |
 | HTTP 边界与任务调度 | 对实际服务发请求，在执行边界暂停任务以稳定制造并发窗口 | UC-03-S7 / UC-04-S5 / UC-08-S4：重复请求、无效值、损坏下载；请求测试不冒充浏览器验收 |
@@ -136,7 +136,7 @@ Feature: F1 PDF 与图片共同转换
 - 成功结果：识别结果进入持久共同正文，发布所选文档；原响应、资源、来源和损失诊断可追溯。
 - 场景测试：[UC-02-S1](tests/E1/UC-02-S1.py)、[UC-02-S2](tests/E1/UC-02-S2.py)、[UC-02-S3](tests/E1/UC-02-S3.py)、[UC-02-S4](tests/E1/UC-02-S4.py)、[UC-02-S5](tests/E1/UC-02-S5.py)。
 - 当前缺口：CLI / 批处理尚未接入图片 Reader，Web 识别结果尚未进入共同修订；UC-02-S2 还需实现并验证拒绝提示中的支持范围，UC-02-S3 还需承接新增 Examples。协议异常场景不能替代真实 OCR 质量验收。
-- 主流程与扩展：以下场景逐项覆盖 [能力表](src/any_to_md/application/capabilities.py) 声明的图片类型、三个入口及 Markdown / HTML / PDF 输出。
+- 主流程与扩展：以下场景逐项覆盖 [能力表](src/application/capabilities.py) 声明的图片类型、三个入口及 Markdown / HTML / PDF 输出。
 
 ```gherkin
 Feature: F1 PDF 与图片共同转换
@@ -214,9 +214,9 @@ Feature: F1 PDF 与图片共同转换
 - 剩余 Tasks：
   - T-04-1：删除 `pdf_to_md/detector.py` 及 `pdf_to_md/__init__.py` 对它的导出；正式消费者已直接使用 `readers/pdf/analysis.py`，不再保留转发兼容层。
   - T-04-2：删除 `pdf_to_md/converter.py` 中未调用的 `convert_pdf_to_markdown_sync`；现役异步入口及其原生提取逻辑保留至 F1 切换。
-  - T-04-3：删除 `src/any_to_md/readers/epub/reader.py` 中未调用的 `_resolve_package_path`、`_normalized_heading_text`，保留仍被调用的代码识别、资源解析和正文逻辑；用 UC-06-S1 与 EPUB 入口场景保护清理。
+  - T-04-3：删除 `src/readers/epub/reader.py` 中未调用的 `_resolve_package_path`、`_normalized_heading_text`，保留仍被调用的代码识别、资源解析和正文逻辑；用 UC-06-S1 与 EPUB 入口场景保护清理。
   - T-04-4：F1 切换时删除 `web/services/converter.py` 的 `_convert_pdf`、`_convert_image`、`_markdown_to_html` 及私有报告 / 发布分支；各格式交给同一应用服务，不保留第二套模板和状态判定。
-  - T-04-5：将 Web 的 app、routes、配置、runtime、调度边界和 static 收入 `src/any_to_md/interfaces/web/`；同步命令入口、导入、启动文档、静态资源打包和安装检查，删除根 `web/` 源码而不留占位转发包。
+  - T-04-5：将 Web 的 app、routes、配置、runtime、调度边界和 static 收入 `src/interfaces/web/`；同步命令入口、导入、启动文档、静态资源打包和安装检查，删除根 `web/` 源码而不留占位转发包。
   - T-04-6：收紧 wheel 为唯一命名空间与必要资源，检查加载来源及旧模块不可导入；清理确无消费者的依赖，保护用户资料、历史产物及旧库升级逻辑。
 
 清理边界：`tests/common/capture.py` 的旧 detector 引用属于隔离 Git 历史版本对照，通过历史源码加载器执行，应保留历史语义；基线中的旧名称、安装测试中的“禁止旧包”断言也不属于生产遗留。不能要求所有文字引用归零而破坏这些检查。旧 SQLite 结构升级仍服务于 UC-03-S2，不能当死代码删。其他格式目录中的素材和输出也不在源码删除范围。
@@ -297,7 +297,7 @@ UC-03-S7 测试文件待实现；“已排队”验证重复请求，活跃租�
 
 **F2 剩余交付约束**
 
-- US-04：将 Web 收入 `src/any_to_md/interfaces/web/`，仅负责请求、调度和呈现；全部入口共用能力表、应用服务、任务与发布逻辑。
+- US-04：将 Web 收入 `src/interfaces/web/`，仅负责请求、调度和呈现；全部入口共用能力表、应用服务、任务与发布逻辑。
 - US-04：wheel 仅分发唯一核心、接口及必要资源；清查旧导入、命令、重复依赖、目录耦合、备用转换器及私有输出模板，用户资料不进入正式包。
 - US-05：核对最终源码、wheel、安装文件和产物身份，补足内容、阅读效果及必要性能证据，不继承旧 wheel 的通过结论。
 - US-05：副本升级不代表原库已升级，也不证明仅剩 Markdown 的数据迁移；缺失原件、环境或证据的范围继续保留待验收。

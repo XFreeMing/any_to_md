@@ -28,7 +28,7 @@ if condition == 'pdf':
                 raise ModuleNotFoundError("PDF rendering dependency weasyprint is unavailable")
     sys.meta_path.insert(0,MissingRenderer())
 from tests.common.delivery_support import web_client
-from any_to_md.application.jobs import JobRuntime
+from src.application.jobs import JobRuntime
 settings={}
 guard=None
 if condition == 'ocr':

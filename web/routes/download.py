@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
-from any_to_md.export.naming import title_slug
+from src.export.naming import title_slug
 from ..runtime import get_runtime
 
 router = APIRouter()

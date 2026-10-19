@@ -14,7 +14,7 @@ from tests.common.conversion_support import body_text, export_matrix, image_sour
 
 
 def run(workdir: Path) -> dict:
-    from any_to_md.application.capabilities import CAPABILITIES
+    from src.application.capabilities import CAPABILITIES
 
     url = real_ocr_url()
     original = image_source(workdir / "source.png")

@@ -38,11 +38,11 @@ def _installation_details() -> dict:
     prefix = Path(sys.prefix).resolve()
     if prefix == Path(sys.base_prefix).resolve():
         raise RuntimeError("An independent virtualenv is required")
-    import any_to_md
+    import src
 
     origins = {}
     for name, module in tuple(sys.modules.items()):
-        if name.split(".")[0] in {"any_to_md", "web", "pdf_to_md", "ocr_to_md"} and getattr(module, "__file__", None):
+        if name.split(".")[0] in {"src", "web", "pdf_to_md", "ocr_to_md"} and getattr(module, "__file__", None):
             origin = Path(module.__file__).resolve()
             if not origin.is_relative_to(prefix):
                 raise RuntimeError(f"Production import escaped the installed environment: {name}")
@@ -50,7 +50,7 @@ def _installation_details() -> dict:
     for name in ("epub_to_md", "epub_to_html", "html_to_pdf", "html_to_md", "docx_to_md", "url_to_md", "md_to_any", "group_verbs", "refine_groups"):
         if importlib.util.find_spec(name) is not None:
             raise RuntimeError(f"Replaced converter still installed: {name}")
-    font_dir = Path(any_to_md.__file__).parent / "resources" / "fonts"
+    font_dir = Path(src.__file__).parent / "resources" / "fonts"
     fonts = [font_dir / name for name in ("NotoSansCJK.ttc", "NotoEmoji-Regular.ttf")]
     if not all(font.is_file() for font in fonts):
         raise RuntimeError("Packaged fonts missing")

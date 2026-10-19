@@ -188,36 +188,36 @@ def source_server(directory: Path, port: int = 0):
 
 
 def subprocess_environment() -> dict[str, str]:
-    import any_to_md
+    import src
 
     environment = dict(os.environ)
     if environment.get('ANY_TO_MD_SCENARIO_OCR_URL'):
         environment['OCR_API_URL'] = environment['ANY_TO_MD_SCENARIO_OCR_URL']
     environment.pop('PYTHONHOME', None)
     environment.pop('PYTHONOPTIMIZE', None)
-    if not Path(any_to_md.__file__).resolve().is_relative_to(Path(sys.prefix).resolve()):
+    if not Path(src.__file__).resolve().is_relative_to(Path(sys.prefix).resolve()):
         project = Path(__file__).resolve().parents[2]
-        environment['PYTHONPATH'] = os.pathsep.join((str(project / 'src'), str(project)))
+        environment['PYTHONPATH'] = str(project)
     else:
         environment.pop('PYTHONPATH', None)
     return environment
 
 
 def cli(arguments: list[str], cwd: Path) -> subprocess.CompletedProcess:
-    return subprocess.run([sys.executable, '-m', 'any_to_md.interfaces.cli.convert_book', *arguments],
+    return subprocess.run([sys.executable, '-m', 'src.interfaces.cli.convert_book', *arguments],
                           cwd=cwd, env=subprocess_environment(), capture_output=True, text=True, timeout=180)
 
 
 def installed_matrix(workdir: Path, wheel: Path, source_root: Path) -> dict:
     """Called only by an isolated interpreter; never re-enters the scenario runner."""
-    from any_to_md.application.capabilities import CAPABILITIES, OUTPUT_TARGET
-    from any_to_md.application.jobs import JobRuntime
-    import any_to_md
+    from src.application.capabilities import CAPABILITIES, OUTPUT_TARGET
+    from src.application.jobs import JobRuntime
+    import src
 
     prefix = Path(sys.prefix).resolve()
-    package = Path(any_to_md.__file__).resolve().parent
+    package = Path(src.__file__).resolve().parent
     assert package.is_relative_to(prefix), '运行的核心不来自独立安装环境'
-    source_dirs = {'any_to_md': source_root / 'src/any_to_md',
+    source_dirs = {'src': source_root / 'src',
                    **{name: source_root / name for name in ('web', 'pdf_to_md', 'ocr_to_md')}}
     site_packages = package.parent
     with ZipFile(wheel) as archive:

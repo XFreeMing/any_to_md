@@ -24,7 +24,7 @@ def run(workdir: Path) -> dict:
         assert snapshot_path.is_file(), "PDF 尚未发布可复用的共同正文"
         snapshot = json.loads(snapshot_path.read_text())
         before = file_hashes(old_export)
-        from any_to_md.application.capabilities import CAPABILITIES
+        from src.application.capabilities import CAPABILITIES
         reader, _ = CAPABILITIES["pdf"].load_reader()
         with patch.object(importlib.import_module(reader.__module__), reader.__name__,
                           side_effect=AssertionError("再次导出不应重跑 PDF Reader")):

@@ -5,8 +5,8 @@ import asyncio
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel, HttpUrl
 
-from any_to_md.application.capabilities import CAPABILITIES, input_format
-from any_to_md.application.jobs import ConversionFailure
+from src.application.capabilities import CAPABILITIES, input_format
+from src.application.jobs import ConversionFailure
 from ..config import settings
 from ..runtime import get_runtime
 

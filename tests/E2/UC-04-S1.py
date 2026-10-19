@@ -24,7 +24,7 @@ def run(workdir: Path) -> dict:
     except (ImportError, OSError) as error:
         raise Blocked(f"PDF 输出的运行依赖不可用：{error}") from error
     from PIL import Image
-    from any_to_md.application.capabilities import CAPABILITIES
+    from src.application.capabilities import CAPABILITIES
     from tests.common.inspection import inspect_output, inspect_pdf
 
     labels = {"md_single": "Markdown (Single File)", "md_chapters": "Markdown (Chapters)",

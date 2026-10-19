@@ -17,8 +17,8 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from any_to_md.application.convert import ConversionRequest, convert
-from any_to_md.application.jobs import JobRuntime
+from src.application.convert import ConversionRequest, convert
+from src.application.jobs import JobRuntime
 from tests.common.delivery_support import assert_export, fixture_cases, tree_hashes
 
 

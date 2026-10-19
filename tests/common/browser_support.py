@@ -39,9 +39,9 @@ def browser_session(workdir: Path, *, upload_limit: int = 1024 * 1024) -> Iterat
     if environment.get("ANY_TO_MD_SCENARIO_OCR_URL"):
         environment["OCR_API_URL"] = environment["ANY_TO_MD_SCENARIO_OCR_URL"]
     root = Path(__file__).resolve().parents[2]
-    import any_to_md
+    import src
 
-    installed = Path(any_to_md.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
+    installed = Path(src.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
     if installed:
         environment.pop("PYTHONPATH", None)
         environment.pop("PYTHONHOME", None)
@@ -56,7 +56,7 @@ import web.app
 def record_modules():
     origins = {name: str(Path(module.__file__).resolve())
                for name, module in tuple(sys.modules.items())
-               if name.split('.')[0] in {'any_to_md', 'web', 'pdf_to_md', 'ocr_to_md'}
+               if name.split('.')[0] in {'src', 'web', 'pdf_to_md', 'ocr_to_md'}
                and getattr(module, '__file__', None)}
     Path(sys.argv[2]).write_text(json.dumps(origins, indent=2) + '\\n')
     if sys.argv[3] == 'installed':

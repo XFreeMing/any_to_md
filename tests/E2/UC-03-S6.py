@@ -12,7 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from any_to_md.application.convert import ConversionRequest, convert
+from src.application.convert import ConversionRequest, convert
 from tests.common.delivery_support import fixture_cases, subprocess_environment, tree_hashes, web_client
 
 
@@ -23,8 +23,8 @@ def run(workdir: Path) -> dict:
     previous = convert(ConversionRequest(source, data, ('markdown', 'html')))
     old_hashes = tree_hashes(previous.output_dir)
     script = '''import os,sys
-from any_to_md.adapters.persistence.sqlite import SQLiteCatalog
-from any_to_md.application.convert import ConversionRequest,convert
+from src.adapters.persistence.sqlite import SQLiteCatalog
+from src.application.convert import ConversionRequest,convert
 def crash_before_success_commit(self,**kwargs):
     os._exit(73)
 SQLiteCatalog.publish_export=crash_before_success_commit

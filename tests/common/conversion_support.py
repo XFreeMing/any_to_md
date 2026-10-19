@@ -77,7 +77,7 @@ def submit(client, source: Path, output: str = "md_single") -> dict:
 
 
 def published(data_dir: Path, task_id: str) -> Path:
-    from any_to_md.application.jobs import JobRuntime
+    from src.application.jobs import JobRuntime
 
     runtime = JobRuntime(data_dir)
     job = runtime.get(task_id)
@@ -86,7 +86,7 @@ def published(data_dir: Path, task_id: str) -> Path:
 
 
 def diagnostic(data_dir: Path, task_id: str) -> dict:
-    from any_to_md.application.jobs import JobRuntime
+    from src.application.jobs import JobRuntime
 
     runtime = JobRuntime(data_dir)
     job = runtime.get(task_id)
@@ -151,10 +151,10 @@ def real_ocr_url() -> str:
 
 def export_matrix(workdir: Path, source: Path, ocr_url: str):
     """Run each public transport/output combination; assertions stay in the scenario."""
-    import any_to_md
+    import src
 
     workdir.mkdir(parents=True, exist_ok=True)
-    installed = Path(any_to_md.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
+    installed = Path(src.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
     for entry in ("web", "cli", "batch"):
         for target, output in (("markdown", "md_single"), ("html", "html"), ("pdf", "pdf")):
             data_dir = workdir / entry / target
@@ -171,8 +171,8 @@ def export_matrix(workdir: Path, source: Path, ocr_url: str):
                     command.append("-I")
                     environment.pop("PYTHONPATH", None)
                 else:
-                    environment["PYTHONPATH"] = str(Path(any_to_md.__file__).resolve().parents[1])
-                command += ["-m", "any_to_md.interfaces.cli.convert_book"]
+                    environment["PYTHONPATH"] = str(Path(src.__file__).resolve().parents[1])
+                command += ["-m", "src.interfaces.cli.convert_book"]
                 if entry == "batch":
                     inputs = data_dir.parent / f"{target}-input"
                     inputs.mkdir(parents=True)
@@ -191,15 +191,15 @@ def export_matrix(workdir: Path, source: Path, ocr_url: str):
 
 def rejected_cli(source: Path, workdir: Path, ocr_url: str, expected: tuple[str, ...]) -> None:
     """A rejected request must explain the same input/service failure in both CLI forms."""
-    import any_to_md
+    import src
 
-    installed = Path(any_to_md.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
+    installed = Path(src.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
     environment = dict(os.environ, OCR_API_URL=ocr_url, OCR_TIMEOUT="10")
-    command = [sys.executable, *(["-I"] if installed else []), "-m", "any_to_md.interfaces.cli.convert_book"]
+    command = [sys.executable, *(["-I"] if installed else []), "-m", "src.interfaces.cli.convert_book"]
     if installed:
         environment.pop("PYTHONPATH", None)
     else:
-        environment["PYTHONPATH"] = str(Path(any_to_md.__file__).resolve().parents[1])
+        environment["PYTHONPATH"] = str(Path(src.__file__).resolve().parents[1])
     inputs = workdir / "input"
     inputs.mkdir(parents=True)
     shutil.copy2(source, inputs / source.name)
@@ -216,16 +216,16 @@ def rejected_cli(source: Path, workdir: Path, ocr_url: str, expected: tuple[str,
 
 def failure_matrix(workdir: Path, source: Path, ocr_url: str):
     """Observe failed/partial jobs from each entry, without mocking application logic."""
-    import any_to_md
-    from any_to_md.application.jobs import JobRuntime
+    import src
+    from src.application.jobs import JobRuntime
 
-    installed = Path(any_to_md.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
-    command = [sys.executable, *(["-I"] if installed else []), "-m", "any_to_md.interfaces.cli.convert_book"]
+    installed = Path(src.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
+    command = [sys.executable, *(["-I"] if installed else []), "-m", "src.interfaces.cli.convert_book"]
     environment = dict(os.environ, OCR_API_URL=ocr_url, OCR_TIMEOUT="10")
     if installed:
         environment.pop("PYTHONPATH", None)
     else:
-        environment["PYTHONPATH"] = str(Path(any_to_md.__file__).resolve().parents[1])
+        environment["PYTHONPATH"] = str(Path(src.__file__).resolve().parents[1])
     inputs = workdir / "inputs"
     inputs.mkdir(parents=True)
     shutil.copy2(source, inputs / source.name)
