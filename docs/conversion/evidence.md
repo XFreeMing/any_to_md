@@ -2,7 +2,7 @@
 
 更新日期：2026-10-19。
 
-本文维护实现取舍、样本适用范围及报告定位；当前能力与验证边界见 [README](../../README.md)，未完成工作见 [TODO](../../TODO.md)，操作见 [质量检查](../../tests/quality/README.md)，机制见 [转换架构](../../specs/0002-conversion-architecture.md)。本地报告位于不随 Git 分发的 `var/quality/`，缺失时需按质量检查说明准备原件和环境重建。
+本文维护实现取舍、样本适用范围及报告定位；当前能力与验证边界见 [README](../../README.md)，未完成工作见 [TODO](../../TODO.md)，操作见 [质量检查](../../tests/common/README.md)，机制见 [转换架构](../../specs/0002-conversion-architecture.md)。本地报告位于不随 Git 分发的 `var/quality/`，缺失时需按质量检查说明准备原件和环境重建。
 
 ## 报告定位与适用范围
 
@@ -20,13 +20,13 @@
 
 | 依据 | 支持的结论与限制 |
 | --- | --- |
-| 旧实现基线 `fc5b9a6193d25fb2f3f1efc7321bd7dfc7a124b4`；[公开报告](../../tests/quality/baselines/fc5b9a6.json)，完整报告 `var/quality/baseline-final/` | 58 个组合中 43 个完成转换、6 个异常、9 个 OCR 组合未运行。复现无目录 EPUB 异常、章界重复、导航断链、表格跨度/图片丢失、HTML 下载路径、URL 来源路径及混合 PDF 检测问题；没有全格式赢家证据 |
+| 旧实现基线 `fc5b9a6193d25fb2f3f1efc7321bd7dfc7a124b4`；[公开报告](../../tests/common/baselines/fc5b9a6.json)，完整报告 `var/quality/baseline-final/` | 58 个组合中 43 个完成转换、6 个异常、9 个 OCR 组合未运行。复现无目录 EPUB 异常、章界重复、导航断链、表格跨度/图片丢失、HTML 下载路径、URL 来源路径及混合 PDF 检测问题；没有全格式赢家证据 |
 | DOCX 独立结构对照 `var/quality/docx-before/checks.json` | 旧实现有 13 项失败，支持保留 Mammoth 语义 HTML 后进入共同正文、避免私有 MD 往返的取舍；不证明所有 Word 无损或库永久最优 |
 | 上游 DOCX `var/quality/docx-upstream-source-v1/provenance.json`、`checks-v3.json` | 6 个固定提交与 SHA256 的文件，元数据为 Microsoft Office Word，覆盖 Strict、列表、无表头表格、脚注、文本框和图片关系；属于测试素材，不是用户业务样本 |
 
 ## URL 取舍与边界
 
-固定源预期见 `tests/quality/url_fixtures.py`。`var/quality/url-phase02/candidate-comparison.json` 对本机 Trafilatura 2.0.0 的 Markdown / HTML 输出作对照：两者均重复部分正文、丢表格跨度和图片候选；Markdown 另丢代码缩进。保留语义文章 DOM，经共同正文及 Writer 输出的同一固定样本通过独立正文/像素/单元格/链接断言。选择基于此结构保真要求，不宣称统计正文提取在所有网页上更差。
+固定源预期见 `tests/common/url_fixtures.py`。`var/quality/url-phase02/candidate-comparison.json` 对本机 Trafilatura 2.0.0 的 Markdown / HTML 输出作对照：两者均重复部分正文、丢表格跨度和图片候选；Markdown 另丢代码缩进。保留语义文章 DOM，经共同正文及 Writer 输出的同一固定样本通过独立正文/像素/单元格/链接断言。选择基于此结构保真要求，不宣称统计正文提取在所有网页上更差。
 
 唯一 URL 提取规则优先 main/article，清理导航/侧栏并保留语义脚注；无标记页面保留清理后的正文并告警。标记不规范、未声明广告、JS/登录内容不保证提取。保留页面外壳的选择器和资源基准，但将其转换成 block 阅读流，避免原站浮动/flex 导致 PDF 空白；不是原站像素复刻。
 

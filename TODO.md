@@ -1,14 +1,14 @@
 # 项目 TODO
 
-本文件是全仓唯一待办，只保留未完成或未验收的需求；完成后删除相关条目，并覆盖更新 [README](README.md)。组织与维护规则见 [AGENTS.md](AGENTS.md)，技术契约见 [转换架构](specs/0002-conversion-architecture.md)，证据与操作见 [转换依据](docs/conversion/evidence.md) / [质量检查](tests/quality/README.md)。
+本文件是全仓唯一待办，只保留未完成或未验收的需求；完成后删除相关条目，并覆盖更新 [README](README.md)。组织与维护规则见 [AGENTS.md](AGENTS.md)，技术契约见 [转换架构](specs/0002-conversion-architecture.md)，证据与操作见 [转换依据](docs/conversion/evidence.md) / [质量检查](tests/common/README.md)。
 
-Epic 表达整体用户目标；Feature 由相关 Story 驱动，完整行为在 Use Case 中描述。每个场景对应 `tests/scenarios/` 下同名测试文件，例如 `UC-01-S1.py`；用例里的已有步骤提供完整流程上下文，不重复列为开发任务。
+Epic 表达整体用户目标；Feature 由相关 Story 驱动，完整行为在 Use Case 中描述。每个场景对应所属 Epic 目录下的同名测试文件，例如 `tests/E1/UC-01-S1.py`；通用辅助和执行器统一放在 `tests/common/`，用例里的已有步骤提供完整流程上下文，不重复列为开发任务。
 
-**完成判定：** 关联场景的全部 Examples、入口与输出组合通过，并满足交付约束，故事才可从本文件删除；失败、阻塞、缺环境或证据均不算通过。测试只覆盖用户场景，不维护单元测试；操作命令与证据格式见 [场景测试方法](tests/quality/README.md)。
+**完成判定：** 关联场景的全部 Examples、入口与输出组合通过，并满足交付约束，故事才可从本文件删除；失败、阻塞、缺环境或证据均不算通过。测试只覆盖用户场景，不维护单元测试；操作命令与证据格式见 [场景测试方法](tests/common/README.md)。
 
 ## 一致性计划：范围、顺序与验证入口
 
-本计划覆盖现役代码的场景回补、真实入口验证、仍在使用的业务迁移和迁移遗留清理。当前保留原有 20 个场景编号，新增 24 个待实现的场景规格，共 44 个；另扩充 UC-02-S3 的 Examples。新增编号目前没有测试文件，执行器会报告缺失，不能算开发完成；已有文件也不表示已覆盖扩充后的范围。每个新增文件按对应编号命名，不建立空测试或恢复单元测试套件。
+本计划覆盖现役代码的场景回补、真实入口验证、仍在使用的业务迁移和迁移遗留清理。当前保留原有 20 个场景编号，新增 24 个待实现的场景规格，共 44 个；另扩充 UC-02-S3 的 Examples。新增编号目前没有测试文件，执行器会报告缺失，不能算开发完成；已有文件也不表示已覆盖扩充后的范围。每个新增文件放在所属 Epic 目录并按对应编号命名：UC-01 / UC-02 属于 `tests/E1/`，UC-03 / UC-04 属于 `tests/E2/`，UC-05～UC-08 属于待实施时建立的 `tests/E3/`；不建立空目录、空测试或恢复单元测试套件。
 
 | 顺序 | 关联故事与剩余工作 | 进入下一步的条件 |
 | --- | --- | --- |
@@ -105,7 +105,7 @@ A 可与不依赖真实 OCR 的 B / C 开发并行；C 的切换必须等待真�
 - 触发：用户通过 Web、CLI 或目录批处理提交 PDF 并选择输出。
 - 前置条件：输入文件已提供，数据目录可用；输出选择和文件有效性在流程中校验，需要识别的页面另检查 OCR 可用性。
 - 成功结果：按原页序生成持久共同正文及所选产物，覆盖与损失可核对；原件、旧修订和历史产物保留。
-- 场景测试：[UC-01-S1](tests/scenarios/UC-01-S1.py)、[UC-01-S2](tests/scenarios/UC-01-S2.py)、[UC-01-S3](tests/scenarios/UC-01-S3.py)、[UC-01-S4](tests/scenarios/UC-01-S4.py)、[UC-01-S5](tests/scenarios/UC-01-S5.py)。
+- 场景测试：[UC-01-S1](tests/E1/UC-01-S1.py)、[UC-01-S2](tests/E1/UC-01-S2.py)、[UC-01-S3](tests/E1/UC-01-S3.py)、[UC-01-S4](tests/E1/UC-01-S4.py)、[UC-01-S5](tests/E1/UC-01-S5.py)。
 - 当前缺口：CLI / 批处理尚未接入 PDF Reader，Web 尚未生成可复用的共同正文及可核对的逐页失败诊断；真实 OCR 和阅读证据缺失的场景保持阻塞。
 - 主流程与扩展：以下 Gherkin 场景分别描述正常转换、条件分支和失败结果；转换场景逐项覆盖三个入口及 Markdown / HTML / PDF 输出。
 
@@ -159,7 +159,7 @@ Feature: F1 PDF 与图片共同转换
 - 触发：用户提交图片并选择输出。
 - 前置条件：输入已提供，数据目录可用；图片类型、OCR 可用性和输出选择在流程中校验。
 - 成功结果：识别结果进入持久共同正文，发布所选文档；原响应、资源、来源和损失诊断可追溯。
-- 场景测试：[UC-02-S1](tests/scenarios/UC-02-S1.py)、[UC-02-S2](tests/scenarios/UC-02-S2.py)、[UC-02-S3](tests/scenarios/UC-02-S3.py)、[UC-02-S4](tests/scenarios/UC-02-S4.py)、[UC-02-S5](tests/scenarios/UC-02-S5.py)。
+- 场景测试：[UC-02-S1](tests/E1/UC-02-S1.py)、[UC-02-S2](tests/E1/UC-02-S2.py)、[UC-02-S3](tests/E1/UC-02-S3.py)、[UC-02-S4](tests/E1/UC-02-S4.py)、[UC-02-S5](tests/E1/UC-02-S5.py)。
 - 当前缺口：CLI / 批处理尚未接入图片 Reader，Web 识别结果尚未进入共同修订；协议异常场景不能替代真实 OCR 质量验收。
 - 主流程与扩展：以下场景逐项覆盖 [能力表](src/any_to_md/application/capabilities.py) 声明的图片类型、三个入口及 Markdown / HTML / PDF 输出。
 
@@ -244,7 +244,7 @@ Feature: F1 PDF 与图片共同转换
   - T-04-5：将 Web 的 app、routes、配置、runtime、调度边界和 static 收入 `src/any_to_md/interfaces/web/`；同步命令入口、导入、启动文档、静态资源打包和安装检查，删除根 `web/` 源码而不留占位转发包。
   - T-04-6：收紧 wheel 为唯一命名空间与必要资源，检查加载来源及旧模块不可导入；清理确无消费者的依赖，保护用户资料、历史产物及旧库升级逻辑。
 
-清理边界：`tests/quality/capture.py` 的旧 detector 引用属于隔离 Git 历史版本对照，通过历史源码加载器执行，应保留历史语义；基线中的旧名称、安装测试中的“禁止旧包”断言也不属于生产遗留。不能要求所有文字引用归零而破坏这些检查。旧 SQLite 结构升级仍服务于 UC-03-S2，不能当死代码删。其他格式目录中的素材和输出也不在源码删除范围。
+清理边界：`tests/common/capture.py` 的旧 detector 引用属于隔离 Git 历史版本对照，通过历史源码加载器执行，应保留历史语义；基线中的旧名称、安装测试中的“禁止旧包”断言也不属于生产遗留。不能要求所有文字引用归零而破坏这些检查。旧 SQLite 结构升级仍服务于 UC-03-S2，不能当死代码删。其他格式目录中的素材和输出也不在源码删除范围。
 
 #### US-05 — 安装或升级后继续访问转换结果
 
@@ -262,7 +262,7 @@ Feature: F1 PDF 与图片共同转换
 - 触发：用户安装交付包或将已有数据交给新版工具使用。
 - 前置条件：有待交付的 wheel 和明确的运行环境；旧数据验收在真实数据副本上执行，原库与原件不改写。
 - 成功结果：源码目录外的全部入口可用，新产物可访问，已有原件、修订和历史产物仍保持完整。
-- 场景测试：[UC-03-S1](tests/scenarios/UC-03-S1.py)、[UC-03-S2](tests/scenarios/UC-03-S2.py)、[UC-03-S3](tests/scenarios/UC-03-S3.py)、[UC-03-S4](tests/scenarios/UC-03-S4.py)、[UC-03-S5](tests/scenarios/UC-03-S5.py)、[UC-03-S6](tests/scenarios/UC-03-S6.py)。
+- 场景测试：[UC-03-S1](tests/E2/UC-03-S1.py)、[UC-03-S2](tests/E2/UC-03-S2.py)、[UC-03-S3](tests/E2/UC-03-S3.py)、[UC-03-S4](tests/E2/UC-03-S4.py)、[UC-03-S5](tests/E2/UC-03-S5.py)、[UC-03-S6](tests/E2/UC-03-S6.py)。
 - 当前缺口：需提供最终 wheel 的独立安装环境与真实旧数据副本；OCR 连接超时的提示尚不能明确指出缺失的识别服务条件。
 - 主流程与扩展：
 
@@ -352,7 +352,7 @@ US-06 驱动实际浏览器使用；PDF 和图片部分同时关联 F1 的 US-02
 - 触发：用户打开可访问的 Web 服务并提交文档。
 - 前置条件：服务可访问，样本允许用于本次验证；上传条件、输出支持与运行依赖在流程中校验。
 - 成功结果：用户能查询实际任务状态并下载正确产物；失败可理解，重新转换不会破坏历史结果。
-- 场景测试：[UC-04-S1](tests/scenarios/UC-04-S1.py)、[UC-04-S2](tests/scenarios/UC-04-S2.py)、[UC-04-S3](tests/scenarios/UC-04-S3.py)、[UC-04-S4](tests/scenarios/UC-04-S4.py)。
+- 场景测试：[UC-04-S1](tests/E2/UC-04-S1.py)、[UC-04-S2](tests/E2/UC-04-S2.py)、[UC-04-S3](tests/E2/UC-04-S3.py)、[UC-04-S4](tests/E2/UC-04-S4.py)。
 - 当前缺口：页面缺少对已结束任务重新转换的操作入口；支持类型的完整流程仍缺真实 OCR 和当前产物的人工阅读证据。
 - 主流程与扩展：
 

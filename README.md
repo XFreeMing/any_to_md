@@ -43,8 +43,9 @@ any_to_md/
 ├── ocr_to_md/               # 当前仍在使用的图片转换入口
 ├── scripts/run/             # CLI 薄启动脚本
 ├── tests/
-│   ├── scenarios/          # UC-01-S1.py 等场景测试、执行器与流程辅助
-│   └── quality/            # 独立样本、产物检查器、安装与历史对照工具
+│   ├── common/             # 通用样本、检查器、执行器、安装与历史对照工具
+│   ├── E1/                 # PDF / 图片：UC-01、UC-02 场景
+│   └── E2/                 # 安装 / 浏览器：UC-03、UC-04 场景
 ├── specs/                   # 转换、正文导航与存储契约
 ├── docs/conversion/         # 实现取舍与验证依据
 ├── input/、output/          # 本地素材与输出
@@ -70,7 +71,7 @@ uv run any-to-md
 uv run uvicorn web.app:app --reload --host 0.0.0.0 --port 8888
 ```
 
-PDF 输出需要可用的 WeasyPrint 原生依赖；扫描 PDF 和图片识别需要另行提供 OCR 服务。环境与验证命令见 [质量检查](tests/quality/README.md)。
+PDF 输出需要可用的 WeasyPrint 原生依赖；扫描 PDF 和图片识别需要另行提供 OCR 服务。环境与验证命令见 [质量检查](tests/common/README.md)。
 
 Web 配置来自环境变量或 `.env`，定义见 [web/config.py](web/config.py)：
 
@@ -117,7 +118,7 @@ CLI 使用 `--data-dir`（默认 `./var`），需要与 Web 共享数据时显�
 
 ## 能力与验证边界
 
-测试只按用户场景组织，`tests/scenarios/UC-01-S1.py` 对应 TODO 的 `UC-01-S1`；相关场景全部通过才算开发完成，失败或阻塞继续留在 TODO。完成故事的场景仍保留回归，执行方式与环境要求见 [场景测试方法](tests/quality/README.md)。
+测试按所属 Epic 组织，`tests/` 一级只有 `common/` 和 Epic 目录，通用辅助统一放在 `common/`；例如 `tests/E1/UC-01-S1.py` 对应 TODO 的 `UC-01-S1`，编号保持一致。相关场景全部通过才算开发完成，失败或阻塞继续留在 TODO。完成故事的场景仍保留回归，执行方式与环境要求见 [场景测试方法](tests/common/README.md)。
 
 - DOCX 页眉页脚、未知符号和自定义编号等未完整保留时报告 `partial`；固定样本通过不代表所有业务文件无损。
 - HTML/SVG `foreignObject` 尚不能安全跨格式保留；PDF 输出采用重排版，EPUB 标题和封面有已知排版限制，代表页检查不等于逐页布局验收。
@@ -134,4 +135,4 @@ CLI 使用 `--data-dir`（默认 `./var`），需要与 Web 共享数据时显�
 - [转换架构](specs/0002-conversion-architecture.md)：职责、调用链与实现取舍。
 - [内容与导航契约](specs/0003-book-structure-and-navigation.md)：正文、章节和多视图。
 - [存储契约](specs/0004-sqlite-persistence.md)：任务、修订、发布和数据保留。
-- [质量检查](tests/quality/README.md)：源码、独立安装和真实样本复验。
+- [质量检查](tests/common/README.md)：源码、独立安装和真实样本复验。
