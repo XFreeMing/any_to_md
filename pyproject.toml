@@ -43,3 +43,8 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/any_to_md", "web", "pdf_to_md", "ocr_to_md"]
+
+[dependency-groups]
+test = [
+    "playwright>=1.64.0",
+]

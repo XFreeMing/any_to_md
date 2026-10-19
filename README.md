@@ -1,6 +1,6 @@
 # any_to_md
 
-**当前概况（2026-10-19）：** any_to_md 通过 Web、CLI 和目录批处理将 EPUB、HTML、DOCX 与网页 URL 经共同正文和导出流程转换为 Markdown、HTML、PDF，提供持久任务、原件保存和产物校验，PDF 与图片目前通过 Web 转换，其共同 Reader、页级 OCR 组合及完整交付验收仍见 [TODO.md](TODO.md)。
+**当前概况：** any_to_md 通过 Web、CLI 和目录批处理将 EPUB、HTML、DOCX 与网页 URL 转换为 Markdown、HTML、PDF，提供持久任务、原件保存和产物校验，以用例场景测试判定开发完成，PDF 与图片目前通过 Web 转换，其共同 Reader、页级 OCR 组合及完整交付验收仍见 [TODO.md](TODO.md)。
 
 ## 已具备的功能
 
@@ -42,7 +42,9 @@ any_to_md/
 ├── pdf_to_md/               # 当前仍在使用的 PDF 转换入口
 ├── ocr_to_md/               # 当前仍在使用的图片转换入口
 ├── scripts/run/             # CLI 薄启动脚本
-├── tests/quality/           # 独立样本、检查器、回归与安装验证
+├── tests/
+│   ├── scenarios/          # UC-01-S1.py 等场景测试、执行器与流程辅助
+│   └── quality/            # 独立样本、产物检查器、安装与历史对照工具
 ├── specs/                   # 转换、正文导航与存储契约
 ├── docs/conversion/         # 实现取舍与验证依据
 ├── input/、output/          # 本地素材与输出
@@ -115,6 +117,8 @@ CLI 使用 `--data-dir`（默认 `./var`），需要与 Web 共享数据时显�
 共同链路按所选格式生成 `book.md`、`chapters/`、`TOC.md`、`book.html`、`book.pdf` 和下载包，并提供 `toc.json`、`locations.json`、`book.json`、`report.json`、`manifest.json` 与 `assets/`；具体产物以对应导出清单为准，PDF/图片现有路径不能据此视为已具备共同修订。使用结果前查看 `report.json` 的诊断和损失说明。
 
 ## 能力与验证边界
+
+测试只按用户场景组织，`tests/scenarios/UC-01-S1.py` 对应 TODO 的 `UC-01-S1`；相关场景全部通过才算开发完成，失败或阻塞继续留在 TODO。完成故事的场景仍保留回归，执行方式与环境要求见 [场景测试方法](tests/quality/README.md)。
 
 - DOCX 页眉页脚、未知符号和自定义编号等未完整保留时报告 `partial`；固定样本通过不代表所有业务文件无损。
 - HTML/SVG `foreignObject` 尚不能安全跨格式保留；PDF 输出采用重排版，EPUB 标题和封面有已知排版限制，代表页检查不等于逐页布局验收。
