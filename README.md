@@ -24,6 +24,8 @@ uv run any-to-md-book --help
 
 CLI 的 `--data-dir` 与 Web 的 `DATA_DIR` 需要显式指向同一位置才共享资料。输入与输出定义见 [能力表源码](src/application/capabilities.py)，参数定义见 [CLI 源码](src/interfaces/cli/convert_book.py)；此处不再维护一份格式或参数清单。
 
+准备 [TV-01](TODO-TECH.md#tv-01) 实验模型：`uv run mineru4 download`（参数见 `uv run mineru4 download --help`）。此命令仅在源码检出使用，模型保存到 `var/mineru4/`；推理环境与实验命令仍待实现。
+
 ## 代码结构
 
 ```text
@@ -43,6 +45,7 @@ any_to_md/
 ├── web/                     # 当前 Web 入口
 ├── pdf_to_md/ / ocr_to_md/   # 仍在使用的过渡转换路径
 ├── scripts/run/             # CLI 薄启动脚本
+├── scripts/mineru4/         # TV-01 独立模型下载依赖与协议检查
 ├── tests/
 │   ├── common/             # 执行器、样本、检查工具与运行说明
 │   ├── E1/                 # 书籍与长篇资料结构化

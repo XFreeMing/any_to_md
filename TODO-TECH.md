@@ -10,9 +10,9 @@
 
 ## TV-01 — 在当前机器验证 MinerU 4 与本地小 LLM
 
-- 状态：待开始。
+- 状态：进行中。
 - 关联需求：[US-02](TODO.md#us-02--从任一入口完整转换-pdf)；技术验证结果供选型使用，不计为需求交付。
-- 当前边界：研发计划与样本预检已明确，命令实现、环境安装、模型下载及真实推理仍待执行。
+- 当前边界：本轮仅实现独立模型下载命令，模型由用户运行命令准备；`init`、`dev`、`hello`、完整权重实下载与真实推理的核验仍待执行。
 
 目标是回答：两份真实 PDF 能否完整转换；扫描目录的文字、条目、层级和页码能否恢复；增加小 LLM 后，交付 Markdown 的标题关系改善多少、付出多少时间与内存。输出可复查的原始产物及结论，不接生产 Reader / Web / 旧 OCR，不实现分块、自研目录修复、多模型平台或正式安装包支持。实现尽量使用跨平台 Python 与 llama.cpp，当前验证只针对本机，Windows / Linux 不宣称通过。
 
@@ -27,7 +27,11 @@
 
 当前书籍 SHA-256 为 `a8f99123b93c237af7a43cbe53a7416ef0ec4aa2c6f270e4890e3fb14cc584c6`，专栏为 `b6507899e6ccac0d3031d1b615820f540886a66b7a1989fa528b4d4fa4a17a27`。下一轮先复核文件身份，样本原件保持不变；命令每次运行均检查原件存在、可读、页数大于零及代表页可渲染，预检失败保存诊断并停止提交。源参考以实际渲染页为准，不直接把既有 OCR 文字层当作正确答案。
 
-**命令约定（待实现）**
+**命令约定**
+
+本轮准备入口为 `uv run mineru4 download`（别名 `downlod`），可先用 `--dry-run` 固定清单并显示大小，用 `--check` 离线核对全部文件；参数以 `--help` 为准。模型、续传缓存、固定 revision 清单与校验记录存放在 `var/mineru4/`；逐文件来源与续传尝试追加保留在 `download-provenance.jsonl`，离线检查不会覆盖来源历史。下载失败或中断后重复执行同一命令继续；显式 `--source hf-mirror` 使用同一 Hugging Face 仓库与固定 revision，不自动切源。
+
+为允许先准备模型，下载直接使用独立锁定的 Hugging Face SDK，不依赖尚未实施的 `init`，不安装 MinerU / Torch / llama.cpp。文件清单取固定版本注册表中的必要路径，第一次查询固定 MinerU 仓库实际 revision，标题模型沿用下文固定 revision 与 SHA-256；逐文件校验远端 LFS SHA-256 或 Git blob SHA-1，同时记录本地 SHA-256。SDK 管理临时文件与续传，不自行制造 `.mineru_complete` 标记；下载校验通过只表示权重完整，MinerU 官方 CLI 的下载 / verify 和运行环境复核仍须在后续准备阶段执行。`scripts/mineru4/pyproject.toml` 与 `uv.lock` 当前只锁下载依赖，推理依赖待加入。协议检查入口为 `UV_PROJECT_ENVIRONMENT="$PWD/var/mineru4/downloader" uv run --project scripts/mineru4 --locked python scripts/mineru4/verify.py --real-metadata`，证据在 `var/quality/mineru4/download/`；受控 HTTP 样本不代替真实权重下载或 TV-01-C1 / C2。
 
 用户输入的第二个 `hello-1` 按第二份样本命名为 `hello-2`；保留 `downlod` 拼写作为 `download` 的同实现别名。所有命令从源码检出使用，默认无需用户手写模型路径、环境变量或启动另一个推理服务。
 
@@ -39,11 +43,11 @@
 | `uv run mineru4 hello-1` | 对绑定书籍进行全部 409 页解析，保存 A 原始结果，再在其副本上进行 B 小 LLM 标题分级，输出两组产物与证据位置；输入无效时返回明确输入错误。 |
 | `uv run mineru4 hello-2` | 对绑定专栏执行与 `hello-1` 完全相同的流程，覆盖全部 15 页；两个命令只在样本绑定和独立质量参考上不同。 |
 
-顺序为 `init → download → dev`；保留 `dev` 终端，在另一终端执行两个 `hello`，可先验证可读的专栏。初始化或下载部分失败时保留已成功准备的内容，下一次核验后继续；`dev` / `hello` 不隐式安装、下载或自动更换后端。退出 `0` 仅表示该命令的技术工作与产物完整性通过；参数错误为 `2`，运行失败为 `1`，客户端中断为 `130`。`hello` 必须 A 完整且 B 全部分组有效应用才记 A / B 执行成功；A 为 partial / failed / canceled、产物不全，或 B 请求 / 校验 / 上下文失败时退出 `1` 并保留可取得的产物。唯一无须 B 调用的正常情况是没有标题候选：记录 `not_applicable`，A 完整时允许退出 `0`，但不计为 LLM 分级成功。样本质量是否达标由 TV-01-C1 / TV-01-C2 和对应人工证据独立判定，不能由 `hello` 的退出码推导。
+本轮允许先执行 `download` 准备权重；后续完整实验顺序为 `init → download → dev`，第二次下载须复用并复核已有权重；保留 `dev` 终端，在另一终端执行两个 `hello`，可先验证可读的专栏。初始化或下载部分失败时保留已成功准备的内容，下一次核验后继续；`dev` / `hello` 不隐式安装、下载或自动更换后端。退出 `0` 仅表示该命令的技术工作与产物完整性通过；参数错误为 `2`，运行失败为 `1`，客户端中断为 `130`。`hello` 必须 A 完整且 B 全部分组有效应用才记 A / B 执行成功；A 为 partial / failed / canceled、产物不全，或 B 请求 / 校验 / 上下文失败时退出 `1` 并保留可取得的产物。唯一无须 B 调用的正常情况是没有标题候选：记录 `not_applicable`，A 完整时允许退出 `0`，但不计为 LLM 分级成功。样本质量是否达标由 TV-01-C1 / TV-01-C2 和对应人工证据独立判定，不能由 `hello` 的退出码推导。
 
 **运行时与模型选择**
 
-- 根项目仅注册轻量 `mineru4` console-script，入口放在 `src/interfaces/cli/mineru4.py`，HTTP 复用已有 httpx。新增 `scripts/mineru4/pyproject.toml` 与独立 `uv.lock`，固定 Python 3.13、`mineru==4.0.12`、`mineru-llama-cpp==0.1.3`，不将 Torch / MinerU 加入根项目依赖。`init` 使用 `uv sync --project <绝对路径> --locked --python 3.13 --no-dev`，子进程的 `UV_PROJECT_ENVIRONMENT` 指向 `var/mineru4/runtime`；后续直接调用该环境，不重复解析依赖。根 console-script 会进入 wheel，但本实验入口须检查源码与独立 manifest，离开检出目录明确提示研发环境不受支持，不冒充正式分发能力。
+- 根项目仅注册轻量 `mineru4` console-script，入口放在 `src/interfaces/cli/mineru4.py`，后续服务 HTTP 复用已有 httpx。后续在 `scripts/mineru4/pyproject.toml` 与独立 `uv.lock` 补齐推理依赖，固定 Python 3.13、`mineru==4.0.12`、`mineru-llama-cpp==0.1.3`，不将 Torch / MinerU 加入根项目依赖。`init` 使用 `uv sync --project <绝对路径> --locked --python 3.13 --no-dev`，子进程的 `UV_PROJECT_ENVIRONMENT` 指向 `var/mineru4/runtime`；后续直接调用该环境，不重复解析依赖。根 console-script 会进入 wheel，但本实验入口须检查源码与独立 manifest，离开检出目录明确提示研发环境不受支持，不冒充正式分发能力。
 - 配置、模型、服务数据与二进制分别放在 `var/mineru4/` 下；子进程设置独立 `MINERU_HOME`、`MINERU_CONFIG` 和模型目录。清除继承的冲突 `MINERU_*` 后显式指定 `MINERU_MODEL_SOURCE=local`、`MINERU_MODEL_SMALL_BACKEND=torch`、`MINERU_MODEL_VLM_ENGINE=llama-cpp`、`MINERU_LLAMA_CPP_BACKEND=metal`，不使用全局 `~/.mineru` 或远端 VLM。记录小模型实际设备与 VLM Metal 后端；正常的 CPU 解码 / 预处理不算降级，但不能悄悄改成 CPU 模型或其他推理引擎。
 - MinerU 使用 `standard` 档，下载官方注册表指定的 `opendatalab/MinerU-4_models_torch` 与 `jinzhenj/MinerU2.5-Pro-2605-1.2B-GGUF` 中的 Q8_0 主权重和同名 mmproj；两份 GGUF 合计约 1.24 GB，另有小模型和依赖。调用 `mineru-kit models download --tier standard --small-backend torch --vlm-engine llama-cpp --source huggingface`，再执行同参数的 `models verify`。`models show` 仅展示状态，不能代替校验；官方 CLI 未提供 revision 锁定参数，首次下载须记录实际权重身份，不因 Python 包已锁定就宣称模型版本已锁定。
 - 标题 LLM 首选官方 `Qwen/Qwen3-4B-GGUF` 的 `Qwen3-4B-Q4_K_M.gguf`，约 2.50 GB，Apache-2.0，仅文本输入；使用独立 llama.cpp server 与 Metal，不复用 MinerU 专用 VLM 作为通用聊天模型。固定 revision `bc640142c66e1fdd12af0bd68f40445458f3869b`、文件 SHA-256 `7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5`。不下载视觉投影文件、不调用云 API；先测 4B，只有实测资源或速度不合适才另评估 Qwen3-1.7B，不默认下载备选模型。
@@ -68,7 +72,7 @@ API 与内部扩展点依据：[HTTP API](https://opendatalab.github.io/MinerU/u
 - 先确定下列 TV-01-C1～C3 的独立参考、操作与判定，再实现命令；用 `scripts/mineru4/verify.py` 承接实验检查，复用真实服务和模型缓存，不为每项重新下载。实验报告独立绑定 `TODO-TECH.md`、实验入口与 helper、`scripts/mineru4/pyproject.toml`、独立 `uv.lock`、模型、配置、输入及产物身份；运行时 manifest 作为证据核对，不纳入运行前代码指纹。可复用 `tests/common` 的纯检查工具与人工证据身份校验方法，但不建立 `tests/E*/UC-*.py`，不写入产品验收报告或通过计数。
 - 完成条件：TV-01-C1～C3 的必要实验与人工复核均有可追溯证据，并明确建议与适用边界；模型质量不达标可以形成“不适合”的结论，但报告不得改写为质量通过。缺实验、缺资料或缺复核仍保留待办。结论复核后仅将必要取舍与报告定位写入 [转换依据](specs/evidence.md)，不归档整份研发计划。
 - 实施顺序：命令生命周期 → 专栏全量 A / B → 书籍全量及扫描目录 A / B → 目录、正文、资源与性能复核。按本轮报告给出“可采用 / 需要补目录结构能力 / 不适合”的有证据结论，保留失败与阻塞范围。缺真实推理、缺人工证据或只跑部分页都不能宣布两份样本验证完成；实验结论也不代表 US-02 正式入口已交付。
-- 剩余准备：建立两份样本的独立参考；实施环境初始化、模型下载与真实推理，核验标题 LLM 兼容性及两组效果。2026-10-19 的文件预检只证明当前样本可进入实验，不证明模型效果或全书内容完整。
+- 剩余准备：建立两份样本的独立参考；由用户准备完整权重并复核实下载；实施环境初始化与真实推理，核验标题 LLM 兼容性及两组效果。2026-10-19 的文件预检只证明当前样本可进入实验，不证明模型效果或全书内容完整。
 
 ### TV-01-C1 — 真实书籍的扫描目录与标题分级效果可核对
 

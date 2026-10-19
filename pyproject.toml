@@ -36,6 +36,7 @@ dependencies = [
 [project.scripts]
 any-to-md = "web.app:main"
 any-to-md-book = "src.interfaces.cli.convert_book:main"
+mineru4 = "src.interfaces.cli.mineru4:main"
 
 [build-system]
 requires = ["hatchling"]
