@@ -2,7 +2,7 @@
 
 any_to_md 提供 Web、CLI 和目录批处理，将 EPUB、HTML、DOCX 与网页转换为 Markdown、HTML、PDF，保存原件、任务和产物；PDF 与图片目前通过 Web 转换，其共同 Reader 和完整交付验收仍在 [TODO](TODO.md) 中。
 
-**行为文档入口：[场景代码与运行说明](tests/common/README.md)。** 已验收行为由 `tests/E*/UC-*.py` 的条件、操作和断言维护；其中也包含开发中的测试，是否通过以相应版本的运行报告为准。剩余需求只看 [TODO](TODO.md)，协作和开发边界见 [AGENTS](AGENTS.md)。
+**行为文档入口：[场景代码与运行说明](tests/common/README.md)。** 已验收行为由 `tests/E*/UC-*.py` 的条件、操作和断言维护；其中也包含开发中的测试，是否通过以相应版本的运行报告为准。未交付能力看 [需求 TODO](TODO.md)，选型与实验看 [技术验证 TODO](TODO-TECH.md)；两类分别维护，技术结论不代表产品已交付。协作和开发边界见 [AGENTS](AGENTS.md)。
 
 ## 开始使用
 
@@ -28,7 +28,8 @@ CLI 的 `--data-dir` 与 Web 的 `DATA_DIR` 需要显式指向同一位置才共
 
 ```text
 any_to_md/
-├── AGENTS.md / TODO.md       # 协作边界 / 未完成需求
+├── AGENTS.md                # 协作边界
+├── TODO.md / TODO-TECH.md    # 产品需求 / 技术验证（各自唯一待办）
 ├── pyproject.toml / uv.lock  # 命令、分发与依赖
 ├── src/
 │   ├── application/         # 转换用例、能力与任务
