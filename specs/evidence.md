@@ -27,7 +27,7 @@
 
 ## 真实旧数据副本
 
-`var/quality/storage-migration-copy/report.json` 保留真实源库盘点、schema 1 修订在副本重建、数据库升级到 schema 4 及新旧关联和文件哈希证据。原数据库和原文件未升级或改写，也未验证仅剩 Markdown 的迁移。该报告的价值是记录真实资料来源与副本边界；当前升级行为见 [UC-03-S2](../tests/E2/UC-03-S2.py)。
+`var/quality/storage-migration-copy/report.json` 保留真实源库盘点、schema 1 修订在副本重建、数据库升级到 schema 4 及新旧关联和文件哈希证据。原数据库和原文件未升级或改写，也未验证仅剩 Markdown 的迁移。该报告的价值是记录真实资料来源与副本边界；当前升级行为见 [UC-03-S2](../tests/E5/UC-03-S2.py)。
 
 ## 环境依据
 

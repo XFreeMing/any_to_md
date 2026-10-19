@@ -1,4 +1,4 @@
-"""UC-03-S1：安装后在源码目录外转换资料（E2 / US-04、US-05）。
+"""UC-03-S1：安装后在源码目录外转换资料（E4 / US-04、US-05）。
 
 作为安装使用者，我希望交付包独立运行，以便不依赖开发目录取得正确产物。
 Given 最终源码构建的 wheel、独立安装解释器、能力表样本和所需运行依赖。
@@ -182,7 +182,7 @@ def run(workdir: Path) -> dict:
 from pathlib import Path
 runpy.run_path(str(Path(sys.argv[1]) / "common" / "bootstrap.py"))
 scenario = runpy.run_path(
-    str(Path(sys.argv[1]) / "E2" / "UC-03-S1.py"), run_name="installed_uc_03_s1",
+    str(Path(sys.argv[1]) / "E4" / "UC-03-S1.py"), run_name="installed_uc_03_s1",
 )
 from tests.common.support import Blocked
 try:

@@ -1,4 +1,4 @@
-"""UC-02-S2 · Epic E1 · US-01 / US-03：让图片使用者及时知道输入类型不受支持。
+"""UC-02-S2 · Epic E2 · US-01 / US-03：让图片使用者及时知道输入类型不受支持。
 
 Given 一个不受支持的 TIFF 输入与可记录调用的 OCR 端点。
 When 经 Web API TestClient 上传，并通过模块 CLI / 目录批处理请求三种输出。

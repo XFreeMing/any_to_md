@@ -2,11 +2,11 @@
 
 ## 从代码了解行为
 
-进入 [E1：PDF / 图片](../E1/) 或 [E2：安装 / 数据 / 浏览器](../E2/)，选择 `UC-*.py`。先读文件开头的用户意图与场景条件，再读 `run()` 中的样本、操作、断言及 `checks`；公共驱动和独立检查器位于 [common](./)。用下文的 `--list` 从实际文件和 TODO 获取清单，不另维护完成索引。
+按用户目标进入 [E1：书籍与长篇资料结构化](../E1/)、[E2：办公与扫描文档结构化](../E2/)、[E4：可靠完成转换](../E4/) 或 [E5：长期保留与复用资料](../E5/)，选择 `UC-*.py`。先读文件开头的用户意图与场景条件，再读 `run()` 中的样本、操作、断言及 `checks`；公共驱动和独立检查器位于 [common](./)。用下文的 `--list` 从实际文件和 TODO 获取清单，不另维护完成索引。
 
 场景代码表达约定，运行报告证明具体版本与范围的执行结果。查看报告的 `scope`、`results`、`checks`、阻塞原因及证据，不能仅凭文件存在或一项通过判断整个功能已验收。需求进入测试和移出 TODO 的规则见 [AGENTS](../../AGENTS.md)，剩余范围见 [TODO](../../TODO.md)。
 
-例如，[并发转换](../E2/UC-03-S3.py) 描述多个任务如何保留各自产物，[上传拒绝](../E2/UC-04-S2.py) 用 `cases` 表表达两种拒绝条件；不在本说明中重复它们的验收步骤或维护通过状态。
+例如，[并发转换](../E4/UC-03-S3.py) 描述多个任务如何保留各自产物，[上传拒绝](../E4/UC-04-S2.py) 用 `cases` 表表达两种拒绝条件；不在本说明中重复它们的验收步骤或维护通过状态。
 
 ## 环境与运行
 
@@ -18,7 +18,7 @@ uv sync --group test
 .venv/bin/python tests/common/run.py --report var/quality/scenarios.json
 .venv/bin/python tests/common/run.py UC-03-S3 UC-03-S4 \
   --report var/quality/selected-scenarios.json
-.venv/bin/python tests/E1/UC-02-S2.py \
+.venv/bin/python tests/E2/UC-02-S2.py \
   --report var/quality/single-scenario.json
 ```
 

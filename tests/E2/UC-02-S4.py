@@ -1,4 +1,4 @@
-"""UC-02-S4 · Epic E1 · US-01 / US-03：让使用者知道 OCR 只返回 Markdown 时的结构损失。
+"""UC-02-S4 · Epic E2 · US-01 / US-03：让使用者知道 OCR 只返回 Markdown 时的结构损失。
 
 Given PNG 输入，OCR HTTP 响应仅提供带固定正文标记的 Markdown。
 When 经 Web API TestClient、模块 CLI、目录批处理分别导出 Markdown / HTML / PDF。

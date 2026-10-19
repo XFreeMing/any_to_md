@@ -1,4 +1,4 @@
-"""UC-02-S5 · Epic E1 · US-01 / US-03：让图片使用者在 OCR 故障后查到失败原因。
+"""UC-02-S5 · Epic E2 · US-01 / US-03：让图片使用者在 OCR 故障后查到失败原因。
 
 Given PNG 输入和返回 HTTP 503 的受控 OCR 服务。
 When Web API TestClient 转 Markdown，模块 CLI / 目录批处理请求三种输出，再重新打开 TestClient。

@@ -1,4 +1,4 @@
-"""UC-02-S1 · Epic E1 · US-01 / US-03：将支持的图片识别为可追溯阅读文档。
+"""UC-02-S1 · Epic E2 · US-01 / US-03：将支持的图片识别为可追溯阅读文档。
 
 Given 能力表声明的每种图片后缀、真实 OCR 服务和对应人工参考。
 When 经 Web API TestClient、模块 CLI、目录批处理分别导出 Markdown / HTML / PDF。

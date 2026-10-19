@@ -1,4 +1,4 @@
-"""UC-01-S5 · Epic E1 · US-01 / US-02，依赖 US-12：复用 PDF 正文且保留早期下载。
+"""UC-01-S5 · Epic E5 · US-01 / US-02，依赖 US-12：复用 PDF 正文且保留早期下载。
 
 Given 原生文字 PDF 已通过 Web API TestClient 导出 Markdown。
 When 从该任务再次导出 HTML，并禁止再次调用 PDF Reader。

@@ -1,4 +1,4 @@
-"""UC-02-S3 · Epic E1 · US-01 / US-03：拒绝不安全的 OCR 资源，保护使用者的文件。
+"""UC-02-S3 · Epic E2 · US-01 / US-03：拒绝不安全的 OCR 资源，保护使用者的文件。
 
 Given PNG 输入，受控 OCR HTTP 响应分别含越界路径或超过配额的资源包。
 When Web API TestClient 转 Markdown，模块 CLI / 目录批处理请求三种输出。
