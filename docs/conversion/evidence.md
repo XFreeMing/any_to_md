@@ -1,49 +1,47 @@
-# 转换取舍与验证依据
+# 转换取舍与外部证据
 
 更新日期：2026-10-19。
 
-本文维护实现取舍、样本适用范围及报告定位；当前能力与验证边界见 [README](../../README.md)，未完成工作见 [TODO](../../TODO.md)，操作见 [质量检查](../../tests/common/README.md)，机制见 [转换架构](../../specs/0002-conversion-architecture.md)。本地报告位于不随 Git 分发的 `var/quality/`，缺失时需按质量检查说明准备原件和环境重建。
+本文只保存验收代码不能代替的选择理由、样本来源、人工观察和历史报告定位。行为细节看场景代码，统一入口见 [README](../../README.md)；未验收事项见 [TODO](../../TODO.md)，执行与证据格式见 [测试说明](../../tests/common/README.md)。
 
 ## 报告定位与适用范围
 
-报告中的源码、检查器、样本和产物哈希用于确认验证对象；报告只支持对应版本与样本的结论，不能直接继承为当前版本验收。具体环境、命令和验证时间保留在报告内。
+本地报告在不随 Git 分发的 `var/quality/`；缺失时需按测试说明准备原件与环境复验，不从本页推断通过。报告中的源码、检查器、样本与产物标识只支持对应版本及范围，不能自动继承为当前验收。环境、命令和时间留在报告内，不在本文追加运行日志。
 
-| 证据目录（相对 `var/quality/`） | 报告与适用范围 |
+| 证据目录（相对 `var/quality/`） | 保留原因与限制 |
 | --- | --- |
-| `checkpoints/phase-01-2026-10-16-final/` | `checkpoint.json`、`installed-source-hashes.json`、`artifacts.json` 定位 EPUB / HTML / DOCX 的源码、安装与产物；`real-epub/full-book.json` 和 `visual-review.json` 记录整书源对照及代表页观察，不能代表所有文件与逐页布局 |
-| `url-phase02/` | `checkpoint.json`、`fixture-export.json`、`real-replay.json` 定位固定网页、入口/输出与离线重放；`real-fetch.json` 保留来源快照身份，候选取舍及真实样本边界见下文 |
-| `pdf-phase03/` | `checkpoint.json`、`classification.json`、`installed-report.json` 支持逐页分类与 OCR 协议检查；`ocr-environment.json` 记录服务连通性依据，不证明真实识别质量或页级组合 |
-| `markdown-import/` | `checkpoint.json` 核对源码、wheel 与源码外安装；`visual-review.json` 记录独立 Markdown 输入经共同正文/Writer 的代表页结果，不证明真实 OCR 效果或 PDF/图片 Reader 完整切换 |
-| `resource-cleanup/` | `report.json` 保存已删除旧资源清单及保留字体哈希，用于核对删除边界，不替代后续完整打包与安装检查 |
+| `checkpoints/phase-01-2026-10-16-final/` | `checkpoint.json`、`installed-source-hashes.json`、`artifacts.json` 定位 EPUB / HTML / DOCX 的验证对象；`real-epub/full-book.json`、`visual-review.json` 保留整书源对照与代表页观察，不代表所有文件或逐页布局 |
+| `url-phase02/` | `candidate-comparison.json` 记录提取方案取舍；`checkpoint.json`、`fixture-export.json`、`real-fetch.json`、`real-replay.json` 定位固定样本、真实捕获及离线重放 |
+| `pdf-phase03/` | `checkpoint.json`、`classification.json`、`installed-report.json` 记录逐页分类与协议检查；`ocr-environment.json` 仅证明当时的连通性检查，不能证明识别质量 |
+| `markdown-import/` | `checkpoint.json`、`visual-review.json` 保留独立 Markdown 经共同正文 / Writer 的安装与代表页证据，不证明真实 OCR 或 PDF / 图片迁移完成 |
+| `resource-cleanup/` | `report.json` 保存旧资源删除边界与保留字体哈希，不替代当前打包检查 |
 
 ## 实现取舍
 
-| 依据 | 支持的结论与限制 |
+| 依据 | 决策理由及边界 |
 | --- | --- |
-| 旧实现基线 `fc5b9a6193d25fb2f3f1efc7321bd7dfc7a124b4`；[公开报告](../../tests/common/baselines/fc5b9a6.json)，完整报告 `var/quality/baseline-final/` | 58 个组合中 43 个完成转换、6 个异常、9 个 OCR 组合未运行。复现无目录 EPUB 异常、章界重复、导航断链、表格跨度/图片丢失、HTML 下载路径、URL 来源路径及混合 PDF 检测问题；没有全格式赢家证据 |
-| DOCX 独立结构对照 `var/quality/docx-before/checks.json` | 旧实现有 13 项失败，支持保留 Mammoth 语义 HTML 后进入共同正文、避免私有 MD 往返的取舍；不证明所有 Word 无损或库永久最优 |
-| 上游 DOCX `var/quality/docx-upstream-source-v1/provenance.json`、`checks-v3.json` | 6 个固定提交与 SHA256 的文件，元数据为 Microsoft Office Word，覆盖 Strict、列表、无表头表格、脚注、文本框和图片关系；属于测试素材，不是用户业务样本 |
+| 旧实现 `fc5b9a6193d25fb2f3f1efc7321bd7dfc7a124b4` 的 [基线报告](../../tests/common/baselines/fc5b9a6.json)，完整报告 `var/quality/baseline-final/` | 58 个组合中 43 个完成转换、6 个异常、9 个 OCR 组合未运行；暴露无目录 EPUB、重复正文、引用、表格与图片丢失等问题，支持按样本承接规则，不能按代码新旧选定全格式赢家 |
+| DOCX `var/quality/docx-before/checks.json` | 旧实现 13 项失败支持保留 Mammoth 语义 HTML 后进入共同正文，避免私有 Markdown 往返；不证明所有 Word 无损或库永久最优 |
+| DOCX `var/quality/docx-upstream-source-v1/provenance.json`、`checks-v3.json` | 6 个固定提交与 SHA256 的文件覆盖 Strict、列表、表格、脚注、文本框和图片关系；元数据为 Microsoft Office Word，属于测试素材，不是用户业务样本 |
 
 ## URL 取舍与边界
 
-固定源预期见 `tests/common/url_fixtures.py`。`var/quality/url-phase02/candidate-comparison.json` 对本机 Trafilatura 2.0.0 的 Markdown / HTML 输出作对照：两者均重复部分正文、丢表格跨度和图片候选；Markdown 另丢代码缩进。保留语义文章 DOM，经共同正文及 Writer 输出的同一固定样本通过独立正文/像素/单元格/链接断言。选择基于此结构保真要求，不宣称统计正文提取在所有网页上更差。
+固定比较样本保留在 [url_fixtures.py](../../tests/common/url_fixtures.py)，仅用于追溯既有证据，不代表已接入当前场景。`url-phase02/candidate-comparison.json` 对本机 Trafilatura 2.0.0 的 Markdown / HTML 输出作对照：该样本有正文重复、表格跨度和图片候选丢失，Markdown 另丢代码缩进。保留语义文章 DOM 再走共同 Writer 的选择基于这些结构保真要求，不意味着统计提取对所有网页更差。页面外壳转换为 block 阅读流源于原站浮动 / flex 导致 PDF 空白的观察，不承诺像素复刻。
 
-唯一 URL 提取规则优先 main/article，清理导航/侧栏并保留语义脚注；无标记页面保留清理后的正文并告警。标记不规范、未声明广告、JS/登录内容不保证提取。保留页面外壳的选择器和资源基准，但将其转换成 block 阅读流，避免原站浮动/flex 导致 PDF 空白；不是原站像素复刻。
-
-真实来源为 Python 官方公开教程 `https://docs.python.org/3/tutorial/introduction.html`；原响应及 7 个资源快照保留在 `real-data/`，`real-fetch.json` 记录获取时间与标识，`real-replay.json` 对源文章 108 个段落/代码/表格块作全数核对，无漏/重及断裂内部链接。12 页 PDF 无空白，前两页和中文固定样本已视觉检查，不代表所有页排版均已验收。离线重放与历史 URL-only 来源共用同一捕获/读取流程，旧原件不改写。
+真实来源为 [Python 官方教程](https://docs.python.org/3/tutorial/introduction.html) 的一次捕获：原响应与 7 个资源保留在 `url-phase02/real-data/`，`real-fetch.json` 定位身份，`real-replay.json` 核对 108 个正文块的漏重与链接。12 页 PDF 无空白，只有前两页和中文固定样本做过视觉检查；不代表全部页布局已验收。此处记录捕获证据，不维护产品提取规则副本。
 
 ## 样本解释边界
 
-- 真实 EPUB 的 64 个历史段落探针中 37 个精确匹配，另 27 个按源编号/字体证据分类；抽样不能推出整书丢失率。73 次图片引用、70 个不同图像的核对不替代表格结构检查。
-- 整书审计检查源单元、导航、图片和正文顺序；HTML/PDF 字符一致不证明布局、代码空白或分页全部正确。样本与代表页报告见上方定位，当前验证边界由 README 概述。
-- 旧安装包及旧产物曾早于共享分节修复；通过计数必须关联源码/检查器哈希，不由目录名称或版本号推断等价。
+- 真实 EPUB 的 64 个历史段落探针中 37 个精确匹配，另 27 个按源编号 / 字体证据分类，不能据此推算整书丢失率；73 次图片引用、70 个不同图像的核对不替代表格检查。
+- 整书审计与 HTML / PDF 文本一致不能证明布局、代码空白和分页正确；人工观察只覆盖报告标明的代表页。
+- 旧安装包及产物曾早于共享分节修复，必须核对源码 / 检查器哈希，不能凭目录名、版本号或旧通过计数宣称等价。
 
 ## 真实旧数据副本
 
-证据：`var/quality/storage-migration-copy/report.json`。源库只读盘点为 1 个来源、6 个 schema 1 修订、6 次导出、548 条产物记录，原件与快照哈希有效。
+`var/quality/storage-migration-copy/report.json` 记录源库只读盘点：1 个来源、6 个 schema 1 修订、6 次导出、548 条产物记录，原件与快照哈希有效。仅在副本升级到 SQLite schema 4，并从保留原件生成新修订及 6 个旧→新关系；977 个历史文件哈希保持，外键与下载检查通过。
 
-只在副本升级到 SQLite schema 4；从保留原件生成新修订/导出，保存 6 个旧→新关系，977 个历史文件哈希保持，外键检查无错且下载可用。原数据库与原文件未升级或改写；没有验证不存在的 MD-only 迁移。该证据不能替代后续存储改动复验或格式质量验收。
+原数据库和原文件未升级或改写，也未验证不存在的 MD-only 迁移。该报告保留真实资料与副本边界，不能替代当前 [UC-03-S2](../../tests/E2/UC-03-S2.py) 的执行或格式质量验收。
 
 ## 环境依据
 
-离线依赖来源见 `var/quality/cached-wheels/provenance.json`；本机缓存安装不证明在线下载或远程 wheel 字节身份。OCR 服务曾连接失败，模拟响应只证明协议；真实识别质量仍需服务与人工参考。当前验证边界见 README，待验收工作见 TODO。
+离线依赖来源见 `var/quality/cached-wheels/provenance.json`；本机缓存安装不证明在线下载或远程 wheel 字节身份。OCR 曾连接失败，模拟响应只证明协议；真实识别须使用可用服务及人工参考，并由相应场景关联证据，不能以历史连通记录解除当前阻塞。

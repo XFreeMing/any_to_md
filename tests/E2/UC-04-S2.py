@@ -1,4 +1,11 @@
-"""UC-04-S2: browser feedback for unsupported and oversized uploads."""
+"""UC-04-S2：浏览器使用者能理解上传被拒绝的原因（E2 / US-06）。
+
+Given 文件类型不受支持，或文件超过配置的上传大小限制。
+When 用户在真实浏览器上传文件。
+Then 页面解释具体原因，不提供下载，响应不返回转换任务。
+
+两个 Examples 及其预期由 run() 的 cases 表维护；本场景只验证上传拒绝。
+"""
 
 if __name__ == "__main__" and not __package__:
     import runpy
