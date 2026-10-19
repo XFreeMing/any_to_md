@@ -2,7 +2,7 @@
 
 更新日期：2026-10-19。
 
-本文只保存验收代码不能代替的选择理由、样本来源、人工观察和历史报告定位。行为细节看场景代码，统一入口见 [README](../../README.md)；未验收事项见 [TODO](../../TODO.md)，执行与证据格式见 [测试说明](../../tests/common/README.md)。
+本文只保存验收代码不能代替的选择理由、样本来源、人工观察和历史报告定位。行为细节看场景代码，统一入口见 [README](../README.md)；未验收事项见 [TODO](../TODO.md)，执行与证据格式见 [测试说明](../tests/common/README.md)。
 
 ## 报告定位与适用范围
 
@@ -20,13 +20,13 @@
 
 | 依据 | 决策理由及边界 |
 | --- | --- |
-| 旧实现 `fc5b9a6193d25fb2f3f1efc7321bd7dfc7a124b4` 的 [基线报告](../../tests/common/baselines/fc5b9a6.json)，完整报告 `var/quality/baseline-final/` | 58 个组合中 43 个完成转换、6 个异常、9 个 OCR 组合未运行；暴露无目录 EPUB、重复正文、引用、表格与图片丢失等问题，支持按样本承接规则，不能按代码新旧选定全格式赢家 |
+| 旧实现 `fc5b9a6193d25fb2f3f1efc7321bd7dfc7a124b4` 的 [基线报告](../tests/common/baselines/fc5b9a6.json)，完整报告 `var/quality/baseline-final/` | 58 个组合中 43 个完成转换、6 个异常、9 个 OCR 组合未运行；暴露无目录 EPUB、重复正文、引用、表格与图片丢失等问题，支持按样本承接规则，不能按代码新旧选定全格式赢家 |
 | DOCX `var/quality/docx-before/checks.json` | 旧实现 13 项失败支持保留 Mammoth 语义 HTML 后进入共同正文，避免私有 Markdown 往返；不证明所有 Word 无损或库永久最优 |
 | DOCX `var/quality/docx-upstream-source-v1/provenance.json`、`checks-v3.json` | 6 个固定提交与 SHA256 的文件覆盖 Strict、列表、表格、脚注、文本框和图片关系；元数据为 Microsoft Office Word，属于测试素材，不是用户业务样本 |
 
 ## URL 取舍与边界
 
-固定比较样本保留在 [url_fixtures.py](../../tests/common/url_fixtures.py)，仅用于追溯既有证据，不代表已接入当前场景。`url-phase02/candidate-comparison.json` 对本机 Trafilatura 2.0.0 的 Markdown / HTML 输出作对照：该样本有正文重复、表格跨度和图片候选丢失，Markdown 另丢代码缩进。保留语义文章 DOM 再走共同 Writer 的选择基于这些结构保真要求，不意味着统计提取对所有网页更差。页面外壳转换为 block 阅读流源于原站浮动 / flex 导致 PDF 空白的观察，不承诺像素复刻。
+固定比较样本保留在 [url_fixtures.py](../tests/common/url_fixtures.py)，仅用于追溯既有证据，不代表已接入当前场景。`url-phase02/candidate-comparison.json` 对本机 Trafilatura 2.0.0 的 Markdown / HTML 输出作对照：该样本有正文重复、表格跨度和图片候选丢失，Markdown 另丢代码缩进。保留语义文章 DOM 再走共同 Writer 的选择基于这些结构保真要求，不意味着统计提取对所有网页更差。页面外壳转换为 block 阅读流源于原站浮动 / flex 导致 PDF 空白的观察，不承诺像素复刻。
 
 真实来源为 [Python 官方教程](https://docs.python.org/3/tutorial/introduction.html) 的一次捕获：原响应与 7 个资源保留在 `url-phase02/real-data/`，`real-fetch.json` 定位身份，`real-replay.json` 核对 108 个正文块的漏重与链接。12 页 PDF 无空白，只有前两页和中文固定样本做过视觉检查；不代表全部页布局已验收。此处记录捕获证据，不维护产品提取规则副本。
 
@@ -40,7 +40,7 @@
 
 `var/quality/storage-migration-copy/report.json` 记录源库只读盘点：1 个来源、6 个 schema 1 修订、6 次导出、548 条产物记录，原件与快照哈希有效。仅在副本升级到 SQLite schema 4，并从保留原件生成新修订及 6 个旧→新关系；977 个历史文件哈希保持，外键与下载检查通过。
 
-原数据库和原文件未升级或改写，也未验证不存在的 MD-only 迁移。该报告保留真实资料与副本边界，不能替代当前 [UC-03-S2](../../tests/E2/UC-03-S2.py) 的执行或格式质量验收。
+原数据库和原文件未升级或改写，也未验证不存在的 MD-only 迁移。该报告保留真实资料与副本边界，不能替代当前 [UC-03-S2](../tests/E2/UC-03-S2.py) 的执行或格式质量验收。
 
 ## 环境依据
 

@@ -29,7 +29,7 @@ Web / CLI / 批处理
 
 ## 正文与转换取舍
 
-规范内容使用可序列化 HTML 片段，保留结构与必要样式；Markdown 是派生输出。这样表格跨度、脚注和资源不会因先转 Markdown 再回转而提前丢失。DOCX 的语义 HTML、HTML/网页的源 DOM 与 EPUB 的章节内容都进入这一条路径，取舍样本见 [转换依据](../docs/conversion/evidence.md#实现取舍)。
+规范内容使用可序列化 HTML 片段，保留结构与必要样式；Markdown 是派生输出。这样表格跨度、脚注和资源不会因先转 Markdown 再回转而提前丢失。DOCX 的语义 HTML、HTML/网页的源 DOM 与 EPUB 的章节内容都进入这一条路径，取舍样本见 [转换依据](evidence.md#实现取舍)。
 
 上游 PDF/OCR 只有 Markdown 时，由 [共享 Markdown 导入](../src/any_to_md/content/markdown.py) 转成 DOM 后规范化；这不是独立的 `.md` 用户输入承诺。上游已丢失的信息不能恢复，必须保留原响应与损失说明。HTML 骨架、Markdown 序列化和 PDF 打印规则分别由唯一 Writer 维护，不回流到各 Reader。
 
