@@ -19,7 +19,7 @@ from pathlib import Path
 
 from src.application.convert import ConversionRequest, convert
 from src.application.jobs import JobRuntime
-from tests.common.delivery_support import assert_export, fixture_cases, tree_hashes
+from tests.common.delivery_support import fixture_cases, inspect_export, tree_hashes
 
 
 def run(workdir: Path) -> dict:
@@ -47,7 +47,14 @@ def run(workdir: Path) -> dict:
         job = runtime.get(result.job_id)
         assert job and job.status.downloadable and job.export_id == result.export_id
         assert runtime.download(job.job_id).is_file()
-        assert_export(result.output_dir, case)
+        # 共用检查器只观察产物；各并发任务的正文、资源预期由本场景验收。
+        views = inspect_export(result.output_dir, case, ('markdown', 'html'))
+        assert views, '并发任务没有可检查的阅读视图'
+        for view in views:
+            inspection = view['inspection']
+            assert inspection['passed'], {
+                'case': case['id'], 'view': view['view'], 'failures': inspection['failures'],
+            }
         assert tree_hashes(result.output_dir) == snapshots[result.job_id]
     return {'checks': ['四个并发真实转换各有独立任务、导出目录和正确正文资源',
                        '相同原件复用修订但导出互不覆盖，恢复后下载及哈希保持一致']}

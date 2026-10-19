@@ -150,8 +150,9 @@ def real_ocr_url() -> str:
 
 
 def export_matrix(workdir: Path, source: Path, ocr_url: str):
-    """Run each public transport/output combination; assertions stay in the scenario."""
+    """Observe TestClient/module-CLI/batch outputs; UC files decide success."""
     import src
+    from src.application.jobs import JobRuntime
 
     workdir.mkdir(parents=True, exist_ok=True)
     installed = Path(src.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
@@ -161,9 +162,12 @@ def export_matrix(workdir: Path, source: Path, ocr_url: str):
             if entry == "web":
                 with api(data_dir, ocr_url) as client:
                     state = submit(client, source, output)
-                    assert state["status"] in {"completed", "completed_with_warnings"}, state
-                    assert client.get(state["download_url"]).status_code == 200
-                    export = published(data_dir, state["task_id"])
+                    download_status = (client.get(state["download_url"]).status_code
+                                       if state.get("download_url") else None)
+                    runtime = JobRuntime(data_dir)
+                    job = runtime.get(state["task_id"])
+                    exports = [runtime.storage.resolve(job.storage_key)] if job and job.storage_key else []
+                    observation = {"state": state, "download_status": download_status, "exports": exports}
             else:
                 environment = dict(os.environ, OCR_API_URL=ocr_url, OCR_TIMEOUT="10")
                 command = [sys.executable]
@@ -182,15 +186,12 @@ def export_matrix(workdir: Path, source: Path, ocr_url: str):
                     command += ["--input", str(source)]
                 result = subprocess.run(command + ["--target", target, "--data-dir", str(data_dir)],
                                         cwd=workdir, env=environment, capture_output=True, text=True, timeout=120)
-                assert result.returncode == 0, f"{entry}/{target}: {result.stdout}\n{result.stderr}"
-                exports = list((data_dir / "exports").iterdir())
-                assert len(exports) == 1, exports
-                export = exports[0]
-            yield entry, target, export
+                observation = {"process": result, "exports": list((data_dir / "exports").glob("*"))}
+            yield entry, target, observation
 
 
-def rejected_cli(source: Path, workdir: Path, ocr_url: str, expected: tuple[str, ...]) -> None:
-    """A rejected request must explain the same input/service failure in both CLI forms."""
+def cli_attempts(source: Path, workdir: Path, ocr_url: str):
+    """Run each module-CLI/batch target and expose its result without judging it."""
     import src
 
     installed = Path(src.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
@@ -208,14 +209,11 @@ def rejected_cli(source: Path, workdir: Path, ocr_url: str, expected: tuple[str,
             data = workdir / entry / target
             result = subprocess.run(command + arguments + ["--target", target, "--data-dir", str(data)],
                                     cwd=workdir, env=environment, capture_output=True, text=True, timeout=60)
-            message = result.stdout + result.stderr
-            assert result.returncode == 1, (entry, target, message)
-            assert any(value.lower() in message.lower() for value in expected), (entry, target, message)
-            assert not list((data / "exports").glob("*"))
+            yield entry, target, result, list((data / "exports").glob("*"))
 
 
 def failure_matrix(workdir: Path, source: Path, ocr_url: str):
-    """Observe failed/partial jobs from each entry, without mocking application logic."""
+    """Observe TestClient/module-CLI/batch states and diagnostics without judging them."""
     import src
     from src.application.jobs import JobRuntime
 
@@ -235,21 +233,19 @@ def failure_matrix(workdir: Path, source: Path, ocr_url: str):
             if entry == "web":
                 with api(data, ocr_url) as client:
                     state = submit(client, source, output)
-                    assert state["status"] in {"failed", "partial"}, state
                     report = diagnostic(data, state["task_id"])
-                    if state["status"] == "failed":
-                        assert state["download_url"] is None
+                    observation = {"state": state, "reports": [report]}
             else:
                 arguments = ["--input", str(source)] if entry == "cli" else ["--input-dir", str(inputs)]
                 result = subprocess.run(command + arguments + ["--target", target, "--data-dir", str(data)],
                                         cwd=workdir, env=environment, capture_output=True, text=True, timeout=60)
-                assert result.returncode in {1, 2}, result.stdout + result.stderr
                 reports = list((data / "jobs").glob("*/report.json"))
-                assert len(reports) == 1, "输入被静默跳过或未保留任务诊断"
-                report = json.loads(reports[0].read_text())
-                job = JobRuntime(data).get(report["job_id"])
-                assert job and job.status.value in {"failed", "partial"}
-            yield entry, target, report
+                reports = [json.loads(path.read_text()) for path in reports]
+                runtime = JobRuntime(data)
+                jobs = [runtime.get(report["job_id"]) for report in reports]
+                observation = {"process": result, "reports": reports,
+                               "job_statuses": [job.status.value if job else None for job in jobs]}
+            yield entry, target, observation
 
 
 def body_text(export: Path, target: str) -> str:

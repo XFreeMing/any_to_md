@@ -1,4 +1,12 @@
-"""UC-04-S4: re-convert a finished task through the UI and retain its download."""
+"""UC-04-S4：浏览器重转已结束任务并保留历史下载（E2 / US-06）。
+
+作为浏览器使用者，我希望为同一份文档重新选择格式，以便保留原结果并获得新结果。
+Given HTML 文档已转换为单文件 Markdown，原下载内容的哈希已记录。
+When 用户通过页面的重转入口选择 HTML 输出，不重新上传。
+Then 页面使用新任务下载正确 HTML，原任务仍可下载且原文件哈希不变。
+
+本场景执行上述一次格式切换；操作入口、任务身份、正文与历史保留均在 run() 断言。
+"""
 
 if __name__ == "__main__" and not __package__:
     import runpy

@@ -1,4 +1,13 @@
-"""UC-04-S1: the supported browser input/output matrix, including reading review."""
+"""UC-04-S1：在浏览器完成转换并获得可阅读文件（E2 / US-06；PDF / 图片关联 US-02 / US-03）。
+
+作为浏览器使用者，我希望提交文档后下载所选格式，以便无需命令行就能阅读结果。
+Given 独立源样本覆盖能力表中的输入后缀，真实 OCR、浏览器与 PDF 依赖可用。
+When 在真实浏览器逐一提交样本、选择每种支持的输出并等待转换后下载。
+Then 页面与任务一致，下载正文和资源符合源样本预期，并有匹配产物的人工阅读结论。
+
+本场景验证本机 Web 全矩阵；源预期来自 common/cases.json，补充后缀在 run() 展开。
+PDF 表格、链接与布局依赖人工判断；部署环境不在本场景中验证。
+"""
 
 if __name__ == "__main__" and not __package__:
     import runpy
@@ -29,8 +38,9 @@ def run(workdir: Path) -> dict:
 
     labels = {"md_single": "Markdown (Single File)", "md_chapters": "Markdown (Chapters)",
               "html": "HTML", "pdf": "PDF"}
+    # 共用独立样本预期；浏览器特有的后缀覆盖、任务状态和下载契约在下文断言。
     samples = fixture_cases(workdir / "inputs")
-    # A browser upload cannot carry sibling files: rich HTML travels with its resources.
+    # 浏览器不能同时上传兄弟文件，因此富 HTML 与依赖资源打包提交。
     rich_source, _ = next((source, case) for source, case in samples if case["kind"] == "html")
     bundle = rich_source.with_suffix(".zip")
     members = {rich_source.name: rich_source.read_bytes()}
@@ -118,6 +128,8 @@ def run(workdir: Path) -> dict:
                 else:
                     paths = sorted(readable.rglob(f"*{suffix}"))
                     assert len(paths) == 1, f"{case['id']}/{view} 没有唯一主阅读文件：{paths}"
+                # 共用检查器按 case 核对正文顺序、图片及适用的表格/链接/代码预期。
+                # PDF 自动检查只覆盖正文和图片，阅读证据在全部组合执行后统一核对。
                 result = inspect_pdf(paths[0], case) if view == "pdf" else inspect_output(paths, case, readable)
                 assert result["passed"], {"sample": case["id"], "view": view, "failures": result["failures"]}
                 if view == "html":

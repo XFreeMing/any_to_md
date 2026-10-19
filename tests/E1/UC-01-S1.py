@@ -1,4 +1,10 @@
-"""UC-01-S1: 原生、扫描、混合与空白页经所有入口完整转换。"""
+"""UC-01-S1 · Epic E1 · US-01 / US-02：按源页序获得无遗漏、无重复的 PDF 正文。
+
+Given 原生、扫描、混合和空白页组成的 PDF，真实 OCR 与匹配人工参考可用。
+When 经 Web API TestClient、模块 CLI、目录批处理分别导出 Markdown / HTML / PDF。
+Then 发布可下载产物和共同正文，源文字标记各出现一次且顺序一致，并核对人工证据。
+当前编码范围为标记、正文版本及列明的人工检查项；逐页状态、空白页判定和链接样本仍见 TODO。
+"""
 
 if __name__ == "__main__" and not __package__:
     import runpy
@@ -15,7 +21,15 @@ from tests.common.conversion_support import body_text, export_matrix, pdf_source
 def run(workdir: Path) -> dict:
     source, markers = pdf_source(workdir / "all-pages.pdf", mixed=True)
     exports = []
-    for entry, target, export in export_matrix(workdir, source, real_ocr_url()):
+    for entry, target, observed in export_matrix(workdir, source, real_ocr_url()):
+        if entry == "web":
+            assert observed["state"]["status"] in {"completed", "completed_with_warnings"}, observed["state"]
+            assert observed["download_status"] == 200, observed
+        else:
+            process = observed["process"]
+            assert process.returncode == 0, (entry, target, process.stdout, process.stderr)
+        assert len(observed["exports"]) == 1, observed
+        export = observed["exports"][0]
         text = body_text(export, target)
         assert all(text.count(marker) == 1 for marker in markers), (entry, target, text)
         assert [text.index(marker) for marker in markers] == sorted(text.index(marker) for marker in markers)
@@ -24,8 +38,8 @@ def run(workdir: Path) -> dict:
         exports.append(export)
     from tests.common.delivery_support import require_visual_evidence
     require_visual_evidence("UC-01-S1", [source], exports, ["page_coverage", "blank_page", "tables_images_links", "readability"],
-                            technical_checks=["全部入口与输出的正文完整且顺序一致，持久正文存在"])
-    return {"checks": ["全部入口与输出的正文完整且顺序一致", "逐页状态、空白页及代表页人工对照通过"]}
+                            technical_checks=["API / 模块 CLI / 目录批处理的三种输出均保留唯一、顺序一致的文字标记及共同正文"])
+    return {"checks": ["API / 模块 CLI / 目录批处理的三种输出均保留唯一、顺序一致的文字标记", "页覆盖、空白页、表格图片链接与可读性的指定人工证据已核对"]}
 
 
 if __name__ == "__main__":

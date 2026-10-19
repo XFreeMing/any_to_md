@@ -1,4 +1,10 @@
-"""UC-01-S3: 损坏和加密 PDF 在受理后明确失败，不调用 OCR。"""
+"""UC-01-S3 · Epic E1 · US-01 / US-02：让无法解析 PDF 的使用者得到明确失败而非伪产物。
+
+Given 损坏、加密 PDF 两个样本与可记录调用的 OCR 端点。
+When 经 Web API TestClient、模块 CLI、目录批处理请求 Markdown / HTML / PDF。
+Then Web 任务失败且无下载、保留错误诊断；两种命令行非零退出并提示原因、无产物、无 OCR 请求。
+当前 Web 仅验证错误非空，明确解析原因的提示断言仍见 TODO。
+"""
 
 if __name__ == "__main__" and not __package__:
     import runpy
@@ -9,7 +15,7 @@ if __name__ == "__main__" and not __package__:
 from pathlib import Path
 import pymupdf
 
-from tests.common.conversion_support import api, diagnostic, ocr_endpoint, rejected_cli, submit
+from tests.common.conversion_support import api, cli_attempts, diagnostic, ocr_endpoint, submit
 
 
 def run(workdir: Path) -> dict:
@@ -27,9 +33,14 @@ def run(workdir: Path) -> dict:
                 assert state["message"] and state["download_url"] is None
                 assert diagnostic(workdir / "data", state["task_id"])["error"]
                 assert client.get(f"/api/download/{state['task_id']}").status_code == 404
-            rejected_cli(source, workdir / source.stem, url, ("损坏", "加密", "cannot open", "encrypted", "failed to open"))
+            for entry, target, process, exports in cli_attempts(source, workdir / source.stem, url):
+                message = process.stdout + process.stderr
+                assert process.returncode == 1, (entry, target, message)
+                expected = ("损坏", "加密", "cannot open", "encrypted", "failed to open")
+                assert any(value.lower() in message.lower() for value in expected), (entry, target, message)
+                assert not exports, (entry, target, exports)
         assert not requests, "无法解析的 PDF 被送往 OCR"
-    return {"checks": ["损坏和加密两个 Examples 在所有入口均明确失败", "无 OCR 请求或成功下载"]}
+    return {"checks": ["损坏和加密两例在 API / 模块 CLI / 目录批处理的三种输出请求中均失败", "无 OCR 请求或成功下载"]}
 
 
 if __name__ == "__main__":

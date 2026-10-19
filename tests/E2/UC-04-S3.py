@@ -1,4 +1,12 @@
-"""UC-04-S3: a corrupt document reaches an understandable browser failure."""
+"""UC-04-S3：浏览器解释已受理文档的转换失败（E2 / US-06）。
+
+作为浏览器使用者，我希望知道文档为何转换失败，以便修正输入而不误用无效结果。
+Given 后缀受支持、但内部内容损坏的 DOCX 已被上传入口受理。
+When 用户在真实浏览器将它转换为单文件 Markdown。
+Then 页面说明与损坏文档相关的原因，持久任务为 failed，页面和任务均不提供下载。
+
+本场景只覆盖上传之后的解析失败；上传拒绝见 UC-04-S2。
+"""
 
 if __name__ == "__main__" and not __package__:
     import runpy
