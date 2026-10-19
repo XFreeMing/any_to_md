@@ -48,8 +48,7 @@ any_to_md/
 ├── specs/                   # 转换、正文导航与存储契约
 ├── docs/conversion/         # 实现取舍与验证依据
 ├── input/、output/          # 本地素材与输出
-├── var/                     # 本地运行数据和验证产物（Git 忽略）
-└── group_verbs.py、refine_groups.py  # 独立词汇实验
+└── var/                     # 本地运行数据和验证产物（Git 忽略）
 ```
 
 `web/` 尚在根目录，`readers/pdf/` 只有分析模块，图片尚无共同 Reader；目标结构见 [转换架构](specs/0002-conversion-architecture.md)。本地残留的 `epub_to_html/`、`html_to_pdf/` 等目录可能保留用户资料或产物，已不包含正式转换源码，不能据目录名称推断当前功能。
@@ -106,7 +105,7 @@ uv run any-to-md-book --url "https://example.com/article" --data-dir "./var" --t
 
 `--input-dir` 只读取目录直属文件，不递归；接受 EPUB、HTML/HTM、HTML 资源 ZIP、DOCX 和保存 URL 的 UTF-8 `.url` 文件。`--url` 可传多个 URL；`--input`、`--input-dir`、`--url` 三选一。PDF 和图片尚不能通过此 CLI 转换。
 
-`--target` 可选 `markdown html pdf`，默认 `markdown`；Markdown 固定生成整体与分章视图，`--view` 只接受 `both`。脚本入口 `uv run python scripts/run/convert_book.py` 接受相同参数。退出码 `0` 表示成功，`2` 表示存在部分保留的结果，`1` 表示发生失败，应结合输出的报告检查。
+`--target` 可选 `markdown html pdf`，默认 `markdown`；Markdown 固定生成整体与分章视图，`--view` 只接受 `both`。模块入口 `uv run python -m any_to_md.interfaces.cli.convert_book` 和脚本入口 `uv run python scripts/run/convert_book.py` 接受相同参数。转换退出码 `0` 表示全部成功，`2` 表示有部分保留结果但无失败，`1` 表示发生失败；参数解析错误也会退出 `2`，应结合 stderr、逐项状态和报告区分。
 
 CLI 使用 `--data-dir`（默认 `./var`），需要与 Web 共享数据时显式指向相同目录，不依赖 Web 的 `DATA_DIR` 配置。
 

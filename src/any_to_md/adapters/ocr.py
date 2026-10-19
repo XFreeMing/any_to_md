@@ -66,14 +66,3 @@ def recognize(source: Path, config: OcrConfig, *, client: httpx.Client | None = 
             response.raise_for_status()
             content = read_response_body(response, MAX_OCR_RESPONSE_BYTES)
     return parse_ocr_response(content)
-
-
-def check_service(config: OcrConfig) -> dict:
-    health_url = config.api_url.rsplit('/api/', 1)[0].rstrip('/') + '/health'
-    try:
-        with httpx.Client(timeout=min(config.timeout, 5)) as client:
-            response = client.get(health_url)
-        return {'available': response.status_code == 200,
-                'status': 'healthy' if response.status_code == 200 else f'unhealthy ({response.status_code})'}
-    except httpx.HTTPError as error:
-        return {'available': False, 'status': str(error)}

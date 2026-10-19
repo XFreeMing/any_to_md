@@ -4,7 +4,7 @@ import asyncio
 from pathlib import Path
 
 from any_to_md.adapters.archive import write_members
-from any_to_md.adapters.ocr import OcrConfig, check_service, recognize
+from any_to_md.adapters.ocr import OcrConfig, recognize
 
 
 def _config(api_url: str | None, timeout: float | None) -> OcrConfig:
@@ -28,7 +28,3 @@ async def convert_with_ocr(file_path: Path | str, output_dir: Path | str,
     markdown = root/result.markdown_path
     images = markdown.parent/'images'
     return markdown, images if images.is_dir() else None
-
-
-async def check_ocr_service(api_url: str | None = None) -> dict:
-    return await asyncio.to_thread(check_service, _config(api_url, 5))
