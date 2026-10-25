@@ -2,7 +2,7 @@
 
 any_to_md 提供 Web、CLI 和目录批处理，将 EPUB、HTML、DOCX 与网页转换为 Markdown、HTML、PDF，保存原件、任务和产物；PDF 与图片目前通过 Web 转换，其共同 Reader 和完整交付验收仍在 [TODO](TODO.md) 中。
 
-**行为文档入口：[场景代码与运行说明](tests/common/README.md)。** 已验收行为由 `tests/E*/UC-*.py` 的条件、操作和断言维护；其中也包含开发中的测试，是否通过以相应版本的运行报告为准。未交付能力看 [需求 TODO](TODO.md)，选型与实验看 [技术验证 TODO](TODO-TECH.md)；两类分别维护，技术结论不代表产品已交付。协作和开发边界见 [AGENTS](AGENTS.md)。
+**研发协作统一入口：[TODO](TODO.md)。** 规划者在其中明确当前批次，执行者回写实现、验证证据、阻塞和交接；产品需求与[技术验证](TODO.md#technical-validation)在同一文件分区维护。协作和开发边界见 [AGENTS](AGENTS.md)。已验收行为由 `tests/E*/UC-*.py` 的条件、操作和断言维护，阅读与运行方法见[场景说明](tests/common/README.md)；其中也包含开发中的测试，是否通过以相应版本的运行报告为准，技术结论不代表产品已交付。
 
 ## 开始使用
 
@@ -26,14 +26,14 @@ uv run e2m "/path/to/book.epub" --data-dir "./var"
 
 CLI 的 `--data-dir` 与 Web 的 `DATA_DIR` 需要显式指向同一位置才共享资料。输入与输出定义见 [能力表源码](src/application/capabilities.py)，参数定义见 [CLI 源码](src/interfaces/cli/convert_book.py)；此处不再维护一份格式或参数清单。
 
-准备 [TV-01](TODO-TECH.md#tv-01) 实验模型：`uv run mineru4 download`（参数见 `uv run mineru4 download --help`）。此命令仅在源码检出使用，模型保存到 `var/mineru4/`；推理环境与实验命令仍待实现。
+准备 [TV-01](TODO.md#tv-01) 实验模型：`uv run mineru4 download`（参数见 `uv run mineru4 download --help`）。此命令仅在源码检出使用，模型保存到 `var/mineru4/`；推理环境与实验命令仍待实现。
 
 ## 代码结构
 
 ```text
 any_to_md/
 ├── AGENTS.md                # 协作边界
-├── TODO.md / TODO-TECH.md    # 产品需求 / 技术验证（各自唯一待办）
+├── TODO.md                  # 规划、执行交接、产品需求与技术验证
 ├── pyproject.toml / uv.lock  # 命令、分发与依赖
 ├── src/
 │   ├── application/         # 转换用例、能力与任务

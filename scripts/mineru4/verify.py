@@ -266,7 +266,7 @@ def main() -> int:
         "technical_item": "TV-01-C3", "scope": "controlled HTTP download protocol; no real weights or inference",
         "huggingface_hub": importlib.metadata.version("huggingface-hub"),
         "sources": {str(path): hashlib.sha256((ROOT / path).read_bytes()).hexdigest() for path in (
-            Path("TODO-TECH.md"), Path("pyproject.toml"), Path("uv.lock"), Path("src/interfaces/cli/mineru4.py"),
+            Path("TODO.md"), Path("pyproject.toml"), Path("uv.lock"), Path("src/interfaces/cli/mineru4.py"),
             Path("scripts/mineru4/download.py"), Path("scripts/mineru4/verify.py"),
             Path("scripts/mineru4/pyproject.toml"), Path("scripts/mineru4/uv.lock"),
         )},
