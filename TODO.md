@@ -14,10 +14,10 @@
 | --- | --- |
 | 批次状态 | 待规划复核 |
 | 关联 | E5 / US-05 / `UC-03-S6` 的两个剩余 Examples |
-| 执行者 / 接单时间 | Codex EX-02 执行会话；2026-10-25 16:20 +08:00；分支 main，起始 HEAD `fe698d99bb86a66d61220fae3b56efd7c62096af`，工作区干净；EX-02 未被他人领取 |
+| 执行者 / 接单时间 | Codex EX-02 执行会话；原接单 2026-10-25 16:20 +08:00，起始 HEAD `fe698d99bb86a66d61220fae3b56efd7c62096af`；本次复入会话 EX-02-recheck-1630，2026-10-25 16:30 +08:00，分支 main，起始 HEAD `7fdc0351386a8f3e5744688c0aa1be99d720a410`，工作区干净。实际批次已完成并待规划复核，无执行中领取；按用户重发指令复入核验，保留原回报 |
 | 规划基线 | `9b2929f`；EX-01 实现 `563abec` 已按限定范围复核接受，见下方复核 |
-| 文档更新时间 | 2026-10-25 16:29 +08:00；实现与验收回报已提交并推送，交规划复核 |
-| 实现最后核对 | 2026-10-25 16:26 +08:00；最终 S3 / S4 / S6 与逐窗口证据核验通过 |
+| 文档更新时间 | 2026-10-25 16:32 +08:00；复入回归及逐窗口证据核验完成，交规划复核 |
+| 实现最后核对 | 2026-10-25 16:32 +08:00；当前 HEAD 的 S3 / S4 / S6 与逐窗口证据核验通过，本次无需新增代码修复 |
 
 **交付目标与范围**
 
@@ -44,6 +44,10 @@ $exRunId = Get-Date -Format 'yyyyMMddTHHmmssfff'
 
 **执行者回报（接单及取得新结论时局部更新）**
 
+- 本次复入：已核对 `56c7f4f` 实现和 `7fdc035` 推送交接均在当前 main；无未提交改动或另一执行中领取。重发任务所需两个 Examples 已在 S6，首次失败与修复后证据均保留，三份旧报告的源码快照指纹再次核验匹配，首次失败仍为主诊断已写窗口。当前源码和场景无需新增修复，本次只更新本 TODO 的 EX-02 接单及核验回报。
+- 复入验证：2026-10-25 16:31–16:32 +08:00，仓库根目录、CPython 3.13.12 / Windows 11 10.0.26340、`PYTHONUTF8=1` / `PYTHONIOENCODING=utf-8`，执行 `.venv/Scripts/python.exe tests/common/run.py UC-03-S3 UC-03-S4 UC-03-S6 --report var/quality/ex-02/20261025T163100000/scenarios.json` 退出 0，3 passed / 0 failed / 0 blocked，selected 范围，运行期间 118 项源码指纹不变，运行时差异仅 TODO。任务标识 EX-02-recheck-1630；实测 Python PID 29052 / 33416，日志 [run.log](var/quality/ex-02/20261025T163100000/run.log)，退出码另存 `exit-code.txt`；16:32 以 `Get-CimInstance Win32_Process` 核实无此报告路径对应的 Python 进程残留。
+- 复入证据：[报告](var/quality/ex-02/20261025T163100000/scenarios.json)、[核验记录](var/quality/ex-02/20261025T163100000/verification.json)，产物根 `var/quality/ex-02/20261025T163100000/artifacts/3f71504e79944e62808371c0794f30fb/`。三个恢复窗口均真实转换退出 73、Web 恢复退出 74，核对中断位置及两次重启的数据库、两处 failed 诊断、隔离与下载 404；post-commit 核对真实提交后异常及日志、异常前后数据库和全部文件哈希一致，当前 / 历史下载 200。四窗口各 15 个历史导出文件、原件和修订保持不变，实际下载字节及 420 个产物文件哈希已核验；原 21 条不同断言、存活 owner 与提交前中断均保留并通过。
+- 复入快照及边界：回写前保存 118 项匹配源码到同目录 `source-snapshot.zip`，SHA-256 `8c9be5b4f0e285fa8f54ad10479db2b6e83d32bf3b33f96d73ce3d479c6104fd`；回写后 TODO 指纹变化，报告仅证明该快照与所选范围。`git diff --check` 及 `tests/common/run.py --list` 通过；本批无新增阻塞，保留 S6 声明 / Examples 及 US-05 其他范围，仍待规划者独立复核。产品全量、非 Windows、安装和部署未执行。提交 / 推送将在收尾记录，旧回报继续保留在下方。
 - 实现：起始 HEAD 和差异见接单栏；[S6](tests/E5/UC-03-S6.py) 已承接三个恢复中断窗口（真实失败事务已提交且隔离前、真实隔离后但主诊断未写、主诊断已写且 staging 诊断未更新）与真实成功提交后 RuntimeError 窗口；原断言、存活 owner 和历史保护保留。[jobs.py](src/application/jobs.py) 的早退分支在发现 staging 诊断缺失或与主诊断字节不同时原子补写，不改主诊断、租约、CAS、进程探测和发布成功处理。额外保留提交成功后、抛异常前的真实 SQLite 与所有资料哈希，核对异常处理也未改写结果。
 - 验证：仓库根目录，CPython 3.13.12 / MSC v.1944 64-bit AMD64，Windows 11 10.0.26340，`PYTHONUTF8=1`、`PYTHONIOENCODING=utf-8`；执行 `.venv/Scripts/python.exe tests/common/run.py UC-03-S3 UC-03-S4 UC-03-S6 --report var/quality/ex-02/20261025T162209594/scenarios.json` 退出 1，S3 / S4 通过、S6 失败。四个新增窗口均实际运行：转换中断退出 73、恢复中断退出 74；只有主诊断已写窗口在两次真实 Web 重启后仍保留 completed 的 staging 诊断，与 failed 主诊断不一致。其他两个恢复窗口及 post-commit（真实提交后抛出有标识异常，转换退出 0）首次通过。逐窗口证据、日志及下载见报告产物 `examples/*/evidence.json`；完整指纹匹配且运行期间不变，失败源码快照保留到同目录 `source-snapshot.zip`，回写后只证明该快照。
 - 中间验证：修复后同命令新报告 `var/quality/ex-02/20261025T162331618/scenarios.json` 退出 0，S3 / S4 / S6 全通过，全部四窗口均运行且重复启动稳定；匹配源码快照保留在同目录。之后仅补强成功提交后、抛异常前的取证及原提交前场景快照，并令恢复子进程直接启动真实 Web 应用以减少测试包环境依赖；最终回归见下一条。
