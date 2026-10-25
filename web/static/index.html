@@ -24,9 +24,10 @@
                             <line x1="12" y1="3" x2="12" y2="15"/>
                         </svg>
                         <p>Drag and drop file here, or click to select</p>
-                        <p class="supported-formats">Supported: EPUB, PDF, DOCX, PNG, JPG, GIF, BMP, WEBP</p>
+                        <p class="supported-formats" id="supportedFormats">Loading supported formats…</p>
+                        <p class="supported-formats">HTML with local images or styles: upload the HTML and its resources together in a ZIP. Include one HTML file or a root index.html.</p>
                     </div>
-                    <input type="file" id="fileInput" hidden accept=".epub,.pdf,.docx,.doc,.png,.jpg,.jpeg,.gif,.bmp,.webp,.html,.htm">
+                    <input type="file" id="fileInput" hidden disabled>
                 </div>
 
                 <div class="divider">

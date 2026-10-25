@@ -10,18 +10,14 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import settings
 from .routes import convert, download, upload
-from .services.file_manager import cleanup_expired_files
+from .runtime import get_runtime
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
-    # Startup: ensure directories exist
-    settings.uploads_path.mkdir(parents=True, exist_ok=True)
-    settings.outputs_path.mkdir(parents=True, exist_ok=True)
-
-    # Start background cleanup task
-    cleanup_task = asyncio.create_task(periodic_cleanup())
+    await asyncio.to_thread(get_runtime().recover)
+    cleanup_task = asyncio.create_task(periodic_recovery())
 
     yield
 
@@ -33,11 +29,11 @@ async def lifespan(app: FastAPI):
         pass
 
 
-async def periodic_cleanup():
-    """Periodically clean up expired files."""
+async def periodic_recovery():
+    """Recover abandoned work without aging out originals or published exports."""
     while True:
-        await asyncio.sleep(300)  # Run every 5 minutes
-        cleanup_expired_files()
+        await asyncio.sleep(15)
+        await asyncio.to_thread(get_runtime().recover)
 
 
 app = FastAPI(

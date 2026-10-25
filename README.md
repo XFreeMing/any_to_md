@@ -1,129 +1,61 @@
 # any_to_md
 
-Implementation TODO: [人机协作实现计划](TODO.md) — 按可用功能逐次交付，Codex 实现并提供脚本，用户执行、验证和反馈；M01 当前待用户验证。
+any_to_md 提供 Web、CLI 和目录批处理，将 EPUB、HTML、DOCX 与网页转换为 Markdown、HTML、PDF，保存原件、任务和产物；PDF 与图片目前通过 Web 转换，其共同 Reader 和完整交付验收仍在 [TODO](TODO.md) 中。
 
-Architecture proposal: [文档转换架构演进方案](specs/0002-conversion-architecture.md) — 多格式互转、统一 Markdown 输出、PDF 分页/图片/表格与未来本地小模型 OCR 的设计及迁移计划（尚未实现）。
+**行为文档入口：[场景代码与运行说明](tests/common/README.md)。** 已验收行为由 `tests/E*/UC-*.py` 的条件、操作和断言维护；其中也包含开发中的测试，是否通过以相应版本的运行报告为准。未交付能力看 [需求 TODO](TODO.md)，选型与实验看 [技术验证 TODO](TODO-TECH.md)；两类分别维护，技术结论不代表产品已交付。协作和开发边界见 [AGENTS](AGENTS.md)。
 
-Book structure proposal: [书籍结构、双版本 Markdown 与目录重组](specs/0003-book-structure-and-navigation.md) — 完整章节树、整体/分章定位、索引、文件命名与目标源码目录（尚未实现）。
+## 开始使用
 
-Persistence proposal: [SQLite 持久化设计](specs/0004-sqlite-persistence.md) — 书籍身份、章节修订、任务恢复和导出地址映射（尚未实现）。
-
-Utility scripts that turn EPUB books (and their exported HTML) into Markdown/PDF. Available workflows:
-
-- `epub_to_md_cli.py`: splits every EPUB into chapter-level Markdown files.
-- `epub_to_md_single_cli.py`: produces one Markdown file per EPUB, keeping images under an `assets/` directory.
-- `html_to_md_cli.py`: converts HTML exports (for example, the output of `epub_to_html.py`) into Markdown, generating both chapter-per-file and single-file variants.
-- `html_to_pdf_cli.py`: renders HTML exports to PDF with Chinese, emoji, images, and tables preserved.
-
-## M01: Book-oriented EPUB conversion
-
-快捷命令（在项目根目录执行，路径含空格时加引号）：
-
-```bash
-uv run e2m "/absolute/path/to/book.epub"
-# 可选：指定数据和导出目录
-uv run e2m "/absolute/path/to/book.epub" --data-dir "./var"
-uv run e2m --help
-```
-
-默认同时生成整本 `book.md`、分章节 `chapters/`、目录 `TOC.md` 和图片 `assets/`。
-终端会打印完整输出路径；每次转换保留独立版本，原 EPUB 不变。
-
-The new book conversion path generates the whole-book and split Markdown views from one chapter tree and one export plan:
+Python 3.13+，使用 `uv` 安装并启动 Web：
 
 ```bash
 uv sync
-uv run python scripts/run/convert_book.py \
-  --input "/absolute/path/to/book.epub" \
-  --data-dir "./var" \
-  --view both
-```
-
-Each run creates an immutable `var/exports/<export_id>/` directory containing `book.md`, `chapters/`, `TOC.md`, `toc.json`, `locations.json`, `book.json`, `report.json`, `manifest.json`, and `assets/`. Book identity, revision, chapter identity, export state, and view locations are stored in `var/catalog.sqlite`. Repeating the command keeps earlier exports.
-
-M01 is intended for EPUB files with a usable navigation structure. It includes basic images and simple tables. Complex chapter-boundary recovery is planned for M02; complex tables, footnotes, and source cross-chapter links are planned for M03. See `report.json` for warnings and partial results.
-
-## Requirements
-
-- Python 3.13+ (uses [uv](https://github.com/astral-sh/uv) for dependency management)
-- Dependencies listed in `pyproject.toml`
-
-## Quick Start (Web Interface)
-
-```bash
-# Install dependencies
-uv sync
-
-# Start the web server
 uv run any-to-md
 ```
 
-Open http://localhost:8888 to access the web interface. API documentation is available at http://localhost:8888/docs.
+默认访问 [Web](http://localhost:8888) 或 [API 说明](http://localhost:8888/docs)。配置项与默认值见 [Web 配置](web/config.py)。图片和扫描 PDF 需要外部 OCR；PDF 输出需要 WeasyPrint 原生依赖，准备方法见上方行为文档入口。
 
-### Configuration
-
-Set via environment variables or `.env` file:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `HOST` | `0.0.0.0` | Server bind address |
-| `PORT` | `8888` | Server port |
-| `TEMP_DIR` | `temp` | Temporary file storage |
-| `MAX_UPLOAD_SIZE` | `104857600` | Max upload size (100MB) |
-| `FILE_EXPIRE_SECONDS` | `3600` | File expiration time (1 hour) |
-
-### Alternative Start Methods
+CLI 示例与参数查询：
 
 ```bash
-# Using uvicorn directly
-uv run uvicorn web.app:app --reload --host 0.0.0.0 --port 8888
-
-# Using Python module
-uv run python -m web.app
+uv run any-to-md-book --input "/path/to/book.epub" --data-dir "./var" --target markdown html pdf
+uv run any-to-md-book --help
+# EPUB 快捷命令（复用同一转换流程）
+uv run e2m "/path/to/book.epub" --data-dir "./var"
 ```
 
-## CLI Tools
+CLI 的 `--data-dir` 与 Web 的 `DATA_DIR` 需要显式指向同一位置才共享资料。输入与输出定义见 [能力表源码](src/application/capabilities.py)，参数定义见 [CLI 源码](src/interfaces/cli/convert_book.py)；此处不再维护一份格式或参数清单。
 
-### Batch chapter conversion
+准备 [TV-01](TODO-TECH.md#tv-01) 实验模型：`uv run mineru4 download`（参数见 `uv run mineru4 download --help`）。此命令仅在源码检出使用，模型保存到 `var/mineru4/`；推理环境与实验命令仍待实现。
 
-```bash
-cd epub_to_md
-python epub_to_md_cli.py
+## 代码结构
+
+```text
+any_to_md/
+├── AGENTS.md                # 协作边界
+├── TODO.md / TODO-TECH.md    # 产品需求 / 技术验证（各自唯一待办）
+├── pyproject.toml / uv.lock  # 命令、分发与依赖
+├── src/
+│   ├── application/         # 转换用例、能力与任务
+│   ├── domain/              # 正文、任务和产物模型
+│   ├── readers/             # 输入读取；PDF 当前只有分析模块
+│   ├── content/             # 共同正文、资源、样式及引用
+│   ├── writers/ / export/   # 输出、导航与打包
+│   ├── adapters/            # 存储、HTTP、OCR 等外部接口
+│   ├── interfaces/cli/      # 命令行入口
+│   └── resources/           # 渲染资源
+├── web/                     # 当前 Web 入口
+├── pdf_to_md/ / ocr_to_md/   # 仍在使用的过渡转换路径
+├── scripts/run/             # CLI 薄启动脚本
+├── scripts/mineru4/         # TV-01 独立模型下载依赖与协议检查
+├── tests/
+│   ├── common/             # 执行器、样本、检查工具与运行说明
+│   ├── E1/                 # 书籍与长篇资料结构化
+│   ├── E2/                 # 办公与扫描文档结构化
+│   ├── E4/                 # 可靠完成转换
+│   └── E5/                 # 长期保留与复用资料
+├── specs/                   # 架构约束、设计理由与独立证据
+└── var/                     # 本地数据、运行报告与产物（Git 忽略）
 ```
 
-All `.epub` files next to the script are converted into `markdown_output/<book>/<chapter>.md` directories.
-
-### Single-file conversion
-
-```bash
-cd epub_to_md
-python epub_to_md_single_cli.py --output-dir ./single_output
-```
-
-Each EPUB becomes `single_output/<book>/<book>.md`. Images are exported to `single_output/<book>/assets/`. Useful flags:
-
-- `--no-metadata`: omit per-chapter YAML front matter.
-- `--separator "\\n\\n***\\n\\n"`: customize the text inserted between chapters (escape sequences are supported).
-
-### HTML exports to Markdown
-
-```bash
-cd html_to_md
-python html_to_md_cli.py --mode both --input-dir ../epub_to_html/output
-```
-
-For every `.html` file in `--input-dir`, the script creates `<book>_md/chapters/*.md` (one Markdown file per section) and `<book>_md/single/<book>.md` (a combined document). Referenced assets (for example `*_assets/...`) are copied into `<book>_md/assets/`, and image/link URLs are rewritten so the Markdown files continue to point to the exported resources.
-
-### HTML exports to PDF
-
-```bash
-cd html_to_pdf
-python html_to_pdf_cli.py --input-dir ../epub_to_html/output --output-dir ../pdf_output
-```
-
-Key details:
-
-- Uses [WeasyPrint](https://weasyprint.org/) for standards-compliant rendering; install system packages noted in their docs if required.
-- On macOS, install the GTK stack before running conversions (for example `brew install cairo pango gdk-pixbuf libffi`).
-- Built-in styles embed the CJK fonts under `md_to_any/fonts` so Chinese text renders crisply. Emoji fall back to system fonts (`Apple Color Emoji`, `Segoe UI Emoji`, `Noto Color Emoji`).
-- Images, tables, and code blocks inherit the HTML semantics. Pass `--css extra.css` to append project-specific tweaks (for example, page headers).
+原件、修订和历史导出属于长期资料，不按临时文件清理。`input/`、`output/` 及部分旧格式目录也可能保留本地素材和产物；目录存在不代表仍有正式转换源码。

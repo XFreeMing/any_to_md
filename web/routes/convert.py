@@ -1,34 +1,31 @@
-"""Conversion API endpoints."""
+"""Conversion endpoints backed by the common durable job repository."""
 
 import asyncio
+import logging
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
+from src.application.jobs import ConversionFailure, JobRuntime
+from src.domain.jobs import Job, JobConflict
+from ..runtime import get_runtime
 from ..services.converter import ConversionService
-from ..services.file_manager import FileManager, get_available_outputs
-from ..services.task_manager import Task, TaskStatus, task_manager
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 class ConvertRequest(BaseModel):
-    """Request for conversion."""
-
     task_id: str
     output_format: str
 
 
 class ConvertResponse(BaseModel):
-    """Response for conversion request."""
-
     task_id: str
     status: str
 
 
 class StatusResponse(BaseModel):
-    """Response for status query."""
-
     task_id: str
     status: str
     progress: int
@@ -36,74 +33,33 @@ class StatusResponse(BaseModel):
     download_url: str | None = None
 
 
-@router.post("/convert", response_model=ConvertResponse)
-async def start_conversion(
-    request: ConvertRequest,
-    background_tasks: BackgroundTasks,
-):
-    """Start a conversion job."""
-    task = task_manager.get_task(request.task_id)
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    if task.status == TaskStatus.PROCESSING:
-        raise HTTPException(status_code=400, detail="Conversion already in progress")
-
-    # Validate output format
-    available = get_available_outputs(task.input_format)
-    if request.output_format not in available:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid output format. Available: {available}",
-        )
-
-    # Update task with output format
-    task.output_format = request.output_format
-    task_manager.update_task(
-        request.task_id,
-        status=TaskStatus.PENDING,
-        message="Queued for conversion",
-    )
-
-    # Start conversion in background
-    background_tasks.add_task(run_conversion, task)
-
-    return ConvertResponse(
-        task_id=task.task_id,
-        status=task.status.value,
-    )
-
-
-async def run_conversion(task: Task):
-    """Run conversion in background."""
-    file_manager = FileManager(task.task_id)
-    service = ConversionService(task, file_manager)
-
+@router.post('/convert', response_model=ConvertResponse)
+async def start_conversion(request: ConvertRequest, background_tasks: BackgroundTasks):
+    runtime = get_runtime()
     try:
-        await service.convert(task.output_format)
-    except Exception as e:
-        task_manager.update_task(
-            task.task_id,
-            status=TaskStatus.FAILED,
-            message=str(e),
-        )
+        job = await asyncio.to_thread(runtime.queue, request.task_id, request.output_format)
+    except KeyError:
+        raise HTTPException(status_code=404, detail='Task not found') from None
+    except JobConflict as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    background_tasks.add_task(run_conversion, job, runtime)
+    return ConvertResponse(task_id=job.job_id, status=job.status.value)
 
 
-@router.get("/status/{task_id}", response_model=StatusResponse)
-async def get_status(task_id: str):
-    """Get conversion status."""
-    task = task_manager.get_task(task_id)
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+async def run_conversion(job: Job, runtime: JobRuntime):
+    try:
+        await ConversionService(job, runtime).convert(job.output_format)
+    except (ConversionFailure, JobConflict) as error:
+        # The runtime already recorded the terminal outcome. The HTTP layer
+        # never writes a second, competing task status.
+        logger.error('Conversion stopped: %s', error)
 
-    download_url = None
-    if task.status == TaskStatus.COMPLETED and task.download_filename:
-        download_url = f"/api/download/{task_id}"
 
-    return StatusResponse(
-        task_id=task.task_id,
-        status=task.status.value,
-        progress=task.progress,
-        message=task.message,
-        download_url=download_url,
-    )
+@router.get('/status/{task_id}', response_model=StatusResponse)
+def get_status(task_id: str):
+    job = get_runtime().get(task_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail='Task not found')
+    return StatusResponse(task_id=job.job_id, status=job.status.value, progress=job.progress, message=job.message, download_url=f'/api/download/{job.job_id}' if job.status.downloadable and job.download_relative else None)
