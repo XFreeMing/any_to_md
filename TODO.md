@@ -12,12 +12,12 @@
 
 | 字段 | 当前值 |
 | --- | --- |
-| 批次状态 | 待执行 |
+| 批次状态 | 待规划复核 |
 | 关联 | E5 / US-05 / `UC-03-S6` 的现有「发布提交前中断」路径 |
-| 执行者 / 接单时间 | 未接单；执行者启动后填会话标题或可辨认标识与时间 |
+| 执行者 / 接单时间 | Codex EX-01 执行会话 / 2026-10-25 15:45 +08:00 |
 | 规划基线 | `a6a264f`；2026-10-25 在 Windows 核对。接单时记录实际 HEAD 与已有差异 |
-| 文档更新时间 | 2026-10-25 15:40 +08:00；本轮仅调整协作入口，EX-01 尚未执行 |
-| 实现最后核对 | 2026-10-25；`recover()` 仍用 `os.kill(owner_pid, 0)`，尚未修复 |
+| 文档更新时间 | 2026-10-25 15:50 +08:00；修复、关联回归及保留产物核验完成，交规划者复核 |
+| 实现最后核对 | 2026-10-25 15:49 +08:00；S3 / S4 / S6 通过并核对代码指纹、数据库与产物 |
 
 **交付目标与范围**
 
@@ -43,12 +43,16 @@ $exRunId = Get-Date -Format 'yyyyMMddTHHmmssfff'
 
 **执行者回报（接单及取得新结论时局部更新）**
 
-- 实现：未执行。接单后记录起始提交与已有改动；完成时链接关键文件并说明实际结果。
-- 验证：未执行。本批旧失败依据见 [US-05 的 Windows 缺口](#windows-recovery-gap)，旧报告不能当作修复后的验收。
-- 运行中任务：无本批任务；如启动异步任务，填命令、工作目录、PID / 任务标识、日志及最近核实时间。
-- 未完成 / 阻塞：尚未接单；后续填本批剩余项及所需条件，长期缺口只引用所属 US / TV。
-- 下一步建议：执行者接单，先复现现有 S6；执行结束填写建议，由规划者复核后派下一批。
-- 提交 / 推送：未执行。收尾前填写实际结果；包含本检查点的提交用 `git log` 定位，最终回复给出提交号。
+- 实现：起始分支 `main`，HEAD `de62af008a7a5e8520f15592d589ed8e2cc21b3f`，接单时工作区干净；接单核实 EX-01 未被替换或领取。[jobs.py](src/application/jobs.py) 在 Windows 以 `OpenProcess(SYNCHRONIZE)` / 零超时 `WaitForSingleObject` 只观察进程，区分不存在 / 退出 / 存活 / 拒绝访问并关闭句柄；非 Windows 保留 signal 0、EPERM / ESRCH 语义。租约和 CAS 恢复条件不变。[S6](tests/E5/UC-03-S6.py) 增加真实转换在发布边界暂停、Web 恢复后原进程继续提交的保护验证，并保留恢复状态与历史哈希证据；未新增其他异常 Examples。
+- 验证：在仓库根目录以 `.venv/Scripts/python.exe tests/common/run.py UC-03-S6 --report var/quality/ex-01/20261025T154516814/scenarios.json` 复现失败（退出 1，Web lifespan → `recover()` → `os.kill` 抛 WinError 87）；失败产物及完整代码指纹保留，运行期间代码未变化。环境：CPython 3.13.12 / MSC v.1944 64-bit AMD64，Windows 11 10.0.26340；设置 `PYTHONUTF8=1`、`PYTHONIOENCODING=utf-8`。后续修复报告单独生成。
+- 补充失败：新增存活 owner 保护后、修复前运行 S6，旧 `os.kill(pid, 0)` 触发控制台中断，执行器以 `KeyboardInterrupt` 退出，`20261025T154627083` / `20261025T154652964` 只有保留产物而无完成报告，不能计为通过。测试子进程已在 finally 清理，未按数据库 PID 清理其他进程；不再对存活 PID 重跑旧探测。Windows 信号边界参见 [Python 文档](https://docs.python.org/3.13/library/os.html#os.kill)；观察式替代依据 [OpenProcess](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-openprocess) / [WaitForSingleObject](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject)。
+- 修复验证：工作目录 `C:\Users\xiaof\workspace\any_to_md`，同上 Python / Windows / UTF-8 环境，执行 `.venv/Scripts/python.exe tests/common/run.py UC-03-S3 UC-03-S4 UC-03-S6 --report var/quality/ex-01/20261025T154800267/scenarios.json`，退出 0；selected 范围 3 passed / 0 failed / 0 blocked，`code_unchanged_during_run=true`。执行时差异仅 `TODO.md`、`src/application/jobs.py`、`tests/E5/UC-03-S6.py`，起始 HEAD 未变。未运行全量产品验收、非 Windows 运行、安装或部署；非 Windows 分支按差异核对保留原逻辑。
+- 证据复核：报告在 [scenarios.json](var/quality/ex-01/20261025T154800267/scenarios.json)，产物根为同目录 `artifacts/8b404790628d47aba1b3953fd3a61b28/`；S3 四任务并发与正文资源检查、S4 四种格式的迁移后阅读检查均通过。S6 的 `recovery-evidence.json` 与 SQLite 核对：中断任务 `9e7d260d-4e82-4ba8-a4d5-9c127d39fb9e` 为 failed、无下载与租约，未提交 export 无发布路径且完整移到 staging，诊断 `rollback_error=null`；旧下载可用，15 个历史文件前后哈希相同；存活子进程启动恢复后仍 processing，随后原进程退出 0、完成提交且 HTTP 下载 200。核验记录 [verification.json](var/quality/ex-01/20261025T154800267/verification.json)；这些场景不要求视觉人工补审。
+- 快照边界：回写交接前已逐文件核对报告完整指纹与工作区一致，并将全部指纹输入原样保留到同目录 `source-snapshot.zip`（SHA-256 `833570bb8974749610c1db9ad4e1b01c2f6cd84f4bfc6ac7e503ec328e1ebe89`），可解压到独立目录复核。此后只回写 TODO，当前 TODO 指纹已不同，报告仅证明归档快照与所选三场景；原失败报告、部分失败产物及新报告均保留，不更改哈希或放宽校验。
+- 运行中任务：本批场景均已退出；2026-10-25 15:49 +08:00 核实无本批转换子进程残留。存活测试进程标识、日志在 S6 的 `live-owner-ready.json`、`live-owner.log` 和恢复证据中；未清理其他会话进程。
+- 未完成 / 阻塞：本批实现与约定关联回归完成，无阻塞，待规划者独立复核。US-05 的 S6 另外两种异常、S7 / S8、真实旧数据升级与《本草纲目》重转，以及 S3 / S4 原有其他覆盖缺口仍留在所属故事；未将故事整体交付或清理需求。
+- 下一步建议：规划者按 EX-01 diff、报告与快照接受或退回本批；如需补审使用匹配快照独立检出或新报告。后续范围由规划者选批，执行者未另行派发。
+- 提交 / 推送：收尾检查后执行，当前尚未提交 / 推送本批；仅纳入上述三文件，报告及快照留在 Git 忽略的 `var/quality/ex-01/`。提交与推送实际结果在操作后局部回写，包含检查点的提交由 `git log` 定位。
 
 <a id="latest-review"></a>
 
@@ -747,7 +751,7 @@ Scenario: UC-03-S4 [导出包离开原工作目录](tests/E5/UC-03-S4.py)
 
 <a id="windows-recovery-gap"></a>
 
-- Windows 回归缺口（2026-10-25 核实）：在仓库根目录以 `PYTHONUTF8=1`、`PYTHONIOENCODING=utf-8` 执行 `.venv/Scripts/python.exe tests/common/run.py UC-03-S3 UC-03-S4 UC-03-S6 --report var/quality/merge-resolution/utf8-scenarios.json`；S3 / S4 通过，S6 在 `src/application/jobs.py` 的 `os.kill(owner_pid, 0)` 报 WinError 87，恢复尚未通过。默认编码首轮失败另保留在同目录 `scenarios.json`；下一步处理 Windows 进程存活判断并重跑 S6。`e2m` 帮助与样本 EPUB 转换可用，产物在 `var/quality/merge-resolution/e2m-smoke/`，不替代真实原书复核。
+- Windows 恢复缺陷：原失败依据为 `var/quality/merge-resolution/utf8-scenarios.json` 的 S6 WinError 87；默认编码首轮失败另保留在同目录 `scenarios.json`。本批修复与新验证见 [EX-01 回报](#current-execution)，待规划复核，仍须保留下述未交付范围。`e2m` 帮助与样本 EPUB 转换产物在 `var/quality/merge-resolution/e2m-smoke/`，不替代真实原书复核。
 
 UC-03-S6 的[现有测试](tests/E5/UC-03-S6.py)维护“产物落盘后、成功状态提交前中断”的失败、隔离与旧下载保护。以下两种异常尚未编码，沿用同一编号：
 

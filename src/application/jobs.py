@@ -27,6 +27,49 @@ LEASE_SECONDS = 60
 logger = logging.getLogger(__name__)
 
 
+def _process_alive(pid: int) -> bool:
+    if os.name == 'nt':
+        # os.kill(pid, 0) sends a console event on Windows; it is not a probe.
+        # Waiting with zero timeout only observes the process, without signals
+        # or PROCESS_TERMINATE rights. A retained handle may outlive its process.
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+        kernel32.OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+        kernel32.OpenProcess.restype = wintypes.HANDLE
+        kernel32.WaitForSingleObject.argtypes = (wintypes.HANDLE, wintypes.DWORD)
+        kernel32.WaitForSingleObject.restype = wintypes.DWORD
+        kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+        kernel32.CloseHandle.restype = wintypes.BOOL
+        handle = kernel32.OpenProcess(0x00100000, False, pid)  # SYNCHRONIZE
+        if not handle:
+            error = ctypes.get_last_error()
+            if error == 87:  # ERROR_INVALID_PARAMETER: no such PID
+                return False
+            if error == 5:  # ERROR_ACCESS_DENIED: cannot disprove liveness
+                return True
+            raise ctypes.WinError(error)
+        try:
+            state = kernel32.WaitForSingleObject(handle, 0)
+            if state == 0:  # WAIT_OBJECT_0: process exited
+                return False
+            if state == 258:  # WAIT_TIMEOUT: process still running
+                return True
+            raise ctypes.WinError(ctypes.get_last_error())
+        finally:
+            kernel32.CloseHandle(handle)
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError as error:
+        if error.errno == errno.EPERM:
+            return True
+        if error.errno == errno.ESRCH:
+            return False
+        raise
+
+
 def source_ids(format_name: str, digest: str) -> tuple[str, str, str]:
     source_id = str(uuid.uuid5(APPLICATION_NAMESPACE, f'source:{format_name}:{digest}'))
     book_id = str(uuid.uuid5(APPLICATION_NAMESPACE, f'book:{digest}'))
@@ -163,16 +206,7 @@ class JobRuntime:
     def recover(self) -> int:
         recovered = 0
         for row in self.catalog.active_jobs():
-            alive = False
-            if row['owner_pid'] is not None:
-                try:
-                    os.kill(row['owner_pid'], 0)
-                    alive = True
-                except OSError as error:
-                    if error.errno == errno.EPERM:
-                        alive = True
-                    elif error.errno != errno.ESRCH:
-                        raise
+            alive = row['owner_pid'] is not None and _process_alive(row['owner_pid'])
             if alive and row['lease_expires'] is not None and row['lease_expires'] > time.time():
                 continue
             report = self.storage.diagnostic_path(row['job_id'])
