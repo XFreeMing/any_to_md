@@ -223,9 +223,16 @@ class JobRuntime:
     def _reconcile_failure(self, job: Job) -> None:
         report = self.storage.diagnostic_path(job.job_id)
         published = self.storage.exports_dir / job.export_id if job.export_id else None
-        if report.exists() and (published is None or not published.exists()):
-            return
         retained = self.storage.staging_dir / job.export_id if job.export_id else None
+        if report.exists() and (published is None or not published.exists()):
+            # Recovery can exit after writing the main diagnostic but before
+            # replacing the quarantined bundle's former success report.
+            if retained is not None and retained.is_dir():
+                retained_report = retained / 'report.json'
+                content = report.read_bytes()
+                if not retained_report.is_file() or retained_report.read_bytes() != content:
+                    write_json(retained_report, json.loads(content))
+            return
         rollback_error = None
         if published is not None and published.exists():
             try:
