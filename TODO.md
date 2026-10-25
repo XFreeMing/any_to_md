@@ -12,12 +12,12 @@
 
 | 字段 | 当前值 |
 | --- | --- |
-| 批次状态 | 执行中 |
+| 批次状态 | 待规划复核 |
 | 关联 | E4 / US-05 / `UC-03-S5` 的运行条件错误反馈 |
 | 执行者 / 接单时间 | Codex / EX-05-20261025-2037；2026-10-25 20:37 +08:00；起始 HEAD `41ee9032c3efd06615348fe2816f763ee313061c`，分支 `main`，工作区干净，无其他领取记录 |
 | 规划基线 | `98b2038`；EX-04 实现 `c397220` 与交接已复核接受 |
-| 文档更新时间 | 2026-10-25 20:45 +08:00；指定回归与证据核验完成，收尾提交推送中 |
-| 实现最后核对 | 2026-10-25 20:45 +08:00；S3 / S4 / S5 / S6 / S7 / S8 全部通过；报告相对当前只差 TODO 回写 |
+| 文档更新时间 | 2026-10-25 20:46 +08:00；实现已提交推送，交规划复核 |
+| 实现最后核对 | 2026-10-25 20:46 +08:00；实现 `5cd0b3f` 与最终回归匹配，仅 TODO 回写不同；S3 / S4 / S5 / S6 / S7 / S8 全部通过 |
 
 **交付目标与范围**
 
@@ -52,10 +52,10 @@ $exRunId = Get-Date -Format 'yyyyMMddTHHmmssfff'
 - 修复验证：首轮 [fixed-s5](var/quality/ex-05/20261025T204131574795-fixed-s5/scenarios.json) 退出 1，已带服务上下文，但 httpcore 隐藏的 OS context 未记录；继续修复后 [fixed-chain-s5](var/quality/ex-05/20261025T204201392511-fixed-chain-s5/scenarios.json) 退出 0，1 passed / 0 failed / 0 blocked，三个条件和保护 / 双层语义 / 完整异常链均执行。
 - 最终回归：[regression](var/quality/ex-05/20261025T204300319027-regression/scenarios.json)，仓库根目录按上方六场景命令实际执行，CPython 3.13.12 / Windows 11 10.0.26340 / UTF-8，执行器退出 0，**6 passed / 0 failed / 0 blocked**。S5 的连接链为 OcrTransportError → httpx.ConnectError → httpcore.ConnectError → ConnectionRefusedError / WinError 10061；读取链为 OcrTransportError → httpx.ReadTimeout → httpcore.ReadTimeout → TimeoutError / timed out，完整请求到达后约 1 秒发生超时；PDF 例为 ModuleNotFoundError / weasyprint。三例重新打开后仍 failed，状态和诊断双层语义、下载 404、无发布 / 索引、原件与早期成功资料全部核对。
 - 证据复核：2026-10-25 20:44 +08:00 运行 `.venv/Scripts/python.exe var/quality/ex-05/verify_evidence.py`，八轮各 122 输入快照与报告完全匹配，合计 1,433 项产物 SHA-256 一致，所有执行期间指纹稳定；[核验记录](var/quality/ex-05/evidence-review.json)。各轮目录保留实际命令 / 环境 / 起始 HEAD / 差异、退出码与日志、源码 ZIP、SQLite、资料哈希，S5 子目录另存状态 / 诊断 / 旧资料快照 / HTTP 故障证据与进程标识。回写后报告仅证明相应快照，后续补审使用其源码 ZIP 或重新运行，未改旧报告或哈希。
-- 运行中任务：本批场景及 HTTP 服务均已退出，服务停止与 handler 完成见 S5 各例 `http-fault.json`，独立子进程退出码见 `*-process.json`；20:44 [进程核对](var/quality/ex-05/process-check.json) 仅见编辑器 Python 服务与当时执行的证据检查器，未终止其他进程。
-- 未完成 / 阻塞：代码和本批自动验证已完成，待提交推送与规划复核；无本批外部阻塞。全量、真实 OCR 质量、PDF / 图片共同 Reader、完整 CLI / 浏览器矩阵、真实旧数据、非 Windows、安装及部署未验证，所属待办保持，US-05 不整体宣告交付。
+- 运行中任务：无。本批场景及 HTTP 服务均已退出，服务停止与 handler 完成见 S5 各例 `http-fault.json`，独立子进程退出码见 `*-process.json`；20:46 [进程核对](var/quality/ex-05/process-check.json) 仅见编辑器 Python 服务，无本批测试进程残留，未终止其他进程。
+- 未完成 / 阻塞：本批实现与自动验证已完成，待规划复核；无本批外部阻塞。全量、真实 OCR 质量、PDF / 图片共同 Reader、完整 CLI / 浏览器矩阵、真实旧数据、非 Windows、安装及部署未验证，所属待办保持，US-05 不整体宣告交付。
 - 下一步建议：规划者复核本批 diff、S5 三例与匹配证据后决定是否清理 S5 声明；本轮保留声明。之后由规划者另行派发 US-12 主线，不在本会话扩展范围。
-- 提交 / 推送：未执行；按 AGENTS 收尾并记录实际结果，最终回复给出提交号。
+- 提交 / 推送：实现与验证回报已提交为 `5cd0b3f`，`git push origin main` 退出 0，远端从 `41ee903` 前进到 `5cd0b3f`。本检查点随收尾文档提交，包含它的提交由 `git log` 定位；最终提交、推送退出码和远端一致性见 [交付核对](var/quality/ex-05/delivery.json)，聊天给出实际提交号，不为自记哈希追加提交。
 
 <a id="latest-review"></a>
 
