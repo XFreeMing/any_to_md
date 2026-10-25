@@ -5,8 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 from dataclasses import replace
 
-from bs4 import BeautifulSoup
-
 from ..domain.artifacts import ArtifactRecord, ExportPlan
 from ..domain.book import BookRevision
 from ..writers.html import write_html
@@ -16,27 +14,8 @@ from .downloads import write_downloads
 from .files import file_record, write_json
 
 
-def _validate(book: BookRevision) -> None:
-    ids = [fragment.fragment_id for fragment in book.content]
-    if len(ids) != len(set(ids)):
-        raise ValueError("规范正文片段重复")
-    assigned = [value for node in book.nodes.values() for value in node.content_ids]
-    if sorted(ids) != sorted(assigned):
-        raise ValueError("规范正文片段缺少或重复归属")
-    anchors = set()
-    for fragment in book.content:
-        if fragment.fragment_id not in book.nodes[fragment.node_id].content_ids:
-            raise ValueError("规范正文归属与章节不一致")
-        soup = BeautifulSoup(fragment.html, "html.parser")
-        for target in soup.find_all(id=True):
-            anchor = str(target["id"])
-            if anchor in anchors or book.anchor_owners.get(anchor) != fragment.node_id:
-                raise ValueError(f"规范锚点归属冲突：{anchor}")
-            anchors.add(anchor)
-
-
 def write_bundle(book: BookRevision, plan: ExportPlan, root: Path, targets: tuple[str, ...], *, job_id: str) -> tuple[dict, list[ArtifactRecord]]:
-    _validate(book)
+    book.validate()
     root.mkdir(parents=True, exist_ok=True)
     assets = root / "assets"
     assets.mkdir(exist_ok=True)

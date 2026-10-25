@@ -53,12 +53,12 @@ class SQLiteCatalog:
             connection.execute('BEGIN IMMEDIATE')
             # All schema decisions are made after acquiring the write lock.
             version = connection.execute('PRAGMA user_version').fetchone()[0]
-            if version > 4:
+            if version > 5:
                 raise ValueError(f'不支持的数据库版本：{version}')
-            if version == 4:
+            if version == 5:
                 return
             if connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='jobs'").fetchone():
-                backup = self.database_path.with_name(f'{self.database_path.stem}.before-v4.{uuid.uuid4().hex}.sqlite')
+                backup = self.database_path.with_name(f'{self.database_path.stem}.before-v5.{uuid.uuid4().hex}.sqlite')
                 with closing(sqlite3.connect(backup)) as destination:
                     # A separate reader can back up the committed database while
                     # this connection holds the migration's reserved write lock.
@@ -202,7 +202,10 @@ class SQLiteCatalog:
             )
             self._upgrade_jobs(connection)
             connection.execute('INSERT OR IGNORE INTO schema_migrations VALUES(4, ?)', (_now(),))
-            connection.execute('PRAGMA user_version = 4')
+            if 'selected_revision_id' not in {row['name'] for row in connection.execute('PRAGMA table_info(jobs)')}:
+                connection.execute('ALTER TABLE jobs ADD COLUMN selected_revision_id TEXT REFERENCES revisions(revision_id)')
+            connection.execute('INSERT OR IGNORE INTO schema_migrations VALUES(5, ?)', (_now(),))
+            connection.execute('PRAGMA user_version = 5')
             if connection.execute('PRAGMA foreign_key_check').fetchone():
                 raise ValueError('数据库升级后的外键检查失败')
             connection.commit()
@@ -265,9 +268,44 @@ class SQLiteCatalog:
                 ORDER BY e.created_at DESC LIMIT 1''', (job_id,)).fetchone()
             if row is None:
                 return None
-            return Job(**{name: row[name] for name in ('job_id', 'filename', 'input_format', 'output_format', 'source_id', 'input_key', 'progress', 'message', 'created_at', 'finished_at', 'report_key', 'export_id', 'download_relative', 'storage_key')}, status=JobStatus(row['status']), targets=tuple(json.loads(row['targets_json'])))
+            return Job(**{name: row[name] for name in ('job_id', 'filename', 'input_format', 'output_format', 'source_id', 'input_key', 'progress', 'message', 'created_at', 'finished_at', 'report_key', 'export_id', 'download_relative', 'storage_key', 'selected_revision_id')}, status=JobStatus(row['status']), targets=tuple(json.loads(row['targets_json'])))
         finally:
             connection.close()
+
+    def clone_terminal_job(self, job_id: str) -> Job:
+        """Persist selection from this job's published export, never source latest."""
+        new_id = str(uuid.uuid4())
+        with self._transaction() as connection:
+            row = connection.execute('''SELECT j.*, e.revision_id, r.content_storage_key
+                FROM jobs j LEFT JOIN exports e ON e.job_id=j.job_id AND e.status=j.status
+                LEFT JOIN revisions r ON r.revision_id=e.revision_id WHERE j.job_id=?''', (job_id,)).fetchone()
+            if row is None or not JobStatus(row['status']).terminal:
+                raise JobConflict('只能从终态任务创建新任务')
+            selected = row['revision_id'] if JobStatus(row['status']).downloadable else row['selected_revision_id']
+            connection.execute('''INSERT INTO jobs(job_id,source_id,status,created_at,filename,input_format,message,selected_revision_id)
+                VALUES(?,?,'pending',?,?,?,'Waiting to start',?)''',
+                (new_id,row['source_id'],_now(),row['filename'],row['input_format'],selected))
+        return self.get_job(new_id)
+
+    def revision_record(self, revision_id: str, source_id: str) -> dict:
+        with closing(self._connect()) as connection:
+            row = connection.execute('''SELECT r.*, s.source_id, s.sha256 AS source_sha256,
+                s.storage_key AS source_storage_key, s.format AS source_format, ed.book_id
+                FROM revisions r JOIN editions ed ON ed.edition_id=r.edition_id
+                JOIN sources s ON s.edition_id=ed.edition_id
+                WHERE r.revision_id=? AND s.source_id=? AND r.status='ready'
+                AND EXISTS(SELECT 1 FROM exports e WHERE e.revision_id=r.revision_id
+                    AND e.status IN ('completed','completed_with_warnings','partial'))''', (revision_id,source_id)).fetchone()
+            if row is None or not row['content_storage_key']:
+                raise ValueError('已选正文修订不存在或未发布')
+            result = dict(row)
+            sizes = connection.execute('''SELECT DISTINCT a.size_bytes FROM artifacts a JOIN exports e ON e.export_id=a.export_id
+                WHERE e.revision_id=? AND a.relative_path='book.json' AND a.sha256=?
+                AND e.status IN ('completed','completed_with_warnings','partial')''', (revision_id,row['content_sha256'])).fetchall()
+            if len(sizes)>1:
+                raise ValueError('正文持久大小索引冲突')
+            result['size_bytes'] = sizes[0][0] if sizes else None
+            return result
 
     @staticmethod
     def _owned(connection: sqlite3.Connection, job_id: str, token: str) -> None:

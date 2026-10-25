@@ -1,7 +1,7 @@
 """UC-03-S8：启动拒绝不兼容数据库，升级失败后仍可恢复资料（E5 / US-05）。
 
-Given 独立历史 DDL 与手写资料参考构建的隔离副本（不是 S2 真实旧数据）。
-When 真实 Web 启动遇未来版本、重建表后异常、最终真实外键校验失败。
+Given 独立历史 DDL、schema-4 DDL 与手写资料参考构建的隔离副本（不是 S2 真实旧数据）。
+When 真实 Web 启动遇未来版本、重建表 / v5 添加修订绑定后异常、最终真实外键校验失败。
 Then 明确失败且进程退出；版本、完整结构、全部记录和资料保留，备份可只读恢复。
 """
 
@@ -172,9 +172,9 @@ def startup_child() -> None:
     class Boundary(sqlite3.Connection):
         def execute(self, sql, *args, **kwargs):
             normalized = ' '.join(sql.split()).upper()
-            if window == 'validation' and normalized == 'PRAGMA FOREIGN_KEY_CHECK':
+            if window in ('validation', 'v4-validation') and normalized == 'PRAGMA FOREIGN_KEY_CHECK':
                 version = super().execute('PRAGMA user_version').fetchone()[0]
-                if version == 4:
+                if version == 5:
                     # Earlier check in _upgrade_jobs ran normally. Break only
                     # an uncommitted FK now, so SQLite's final check really fails.
                     valid = list(super().execute(sql))
@@ -182,11 +182,12 @@ def startup_child() -> None:
                     violations = [list(row) for row in super().execute(sql)]
                     emit('injected', boundary='final-foreign-key-check', in_transaction=self.in_transaction,
                          version=version, valid_before=valid, violations=violations,
-                         transaction=logical(self), backups=[identity(p) for p in data.glob('*.before-v4.*.sqlite')])
+                         transaction=logical(self), backups=[identity(p) for p in data.glob('*.before-v5.*.sqlite')])
             cursor = super().execute(sql, *args, **kwargs)
-            if window == 'ddl' and normalized == 'ALTER TABLE JOBS_V3 RENAME TO JOBS':
+            if ((window == 'ddl' and normalized == 'ALTER TABLE JOBS_V3 RENAME TO JOBS')
+                    or (window == 'v4-ddl' and normalized.startswith('ALTER TABLE JOBS ADD COLUMN SELECTED_REVISION_ID'))):
                 emit('injected', boundary='after-real-jobs-rebuild', in_transaction=self.in_transaction,
-                     transaction=logical(self), backups=[identity(p) for p in data.glob('*.before-v4.*.sqlite')])
+                     transaction=logical(self), backups=[identity(p) for p in data.glob('*.before-v5.*.sqlite')])
                 raise RuntimeError('UC-03-S8: failure after real jobs DDL')
             return cursor
 
@@ -283,7 +284,7 @@ def check_window(reference: Path, directory: Path, window: str) -> None:
     before = inspect_database(database)
     hashes = materials(data)
     evidence = {'window': window, 'before': before, 'materials_before': hashes,
-                'backups_before': [str(p) for p in data.glob('*.before-v4.*.sqlite')]}
+                'backups_before': [str(p) for p in data.glob('*.before-v5.*.sqlite')]}
     save(directory / 'evidence.json', evidence)
     evidence['process'] = failed_start(directory, data, window)
     evidence['after'] = inspect_database(database)
@@ -291,7 +292,7 @@ def check_window(reference: Path, directory: Path, window: str) -> None:
     for name in ('injected', 'rolled-back'):
         path = directory / (name + '.json')
         evidence[name] = json.loads(path.read_text(encoding='utf-8')) if path.exists() else None
-    backups = sorted(data.glob('*.before-v4.*.sqlite'))
+    backups = sorted(data.glob('*.before-v5.*.sqlite'))
     evidence['backups'] = []
     for backup in backups:
         backup_state = inspect_database(backup)
@@ -328,16 +329,16 @@ def check_window(reference: Path, directory: Path, window: str) -> None:
         changed = marker['transaction']['tables']
         assert 'owner_token' in [row[1] for row in changed['jobs']['columns']]
         assert marker['transaction'] != before['logical'], '没有真正执行迁移 DDL'
-        if window == 'ddl':
+        if window in ('ddl', 'v4-ddl'):
             assert marker['boundary'] == 'after-real-jobs-rebuild'
             assert 'UC-03-S8: failure after real jobs DDL' in log
-            assert marker['transaction']['version'] == 0
+            assert marker['transaction']['version'] == (4 if window == 'v4-ddl' else 0)
         else:
-            assert marker['boundary'] == 'final-foreign-key-check' and marker['version'] == 4
+            assert marker['boundary'] == 'final-foreign-key-check' and marker['version'] == 5
             assert not marker['valid_before'] and marker['violations']
             assert any(row[0] == 'exports' for row in marker['violations'])
             assert next(row for row in changed['exports']['columns'] if row[1] == 'revision_id')[3] == 0
-            assert {row[0] for row in changed['schema_migrations']['records']} == {1, 2, 3, 4}
+            assert {row[0] for row in changed['schema_migrations']['records']} == {1, 2, 3, 4, 5}
             assert '数据库升级后的外键检查失败' in log
         assert len(evidence['backups']) == 1, '本次升级备份不唯一'
         for item in evidence['backups']:
@@ -354,20 +355,63 @@ def run(workdir: Path) -> dict:
     save(workdir / 'reference.json', provenance)
     reference_hashes = tree_hashes(reference)
     failures = {}
-    windows = ('future', 'ddl', 'validation')
+    reference_v4 = workdir / 'independent-v4-reference'
+    shutil.copytree(reference, reference_v4)
+    with closing(sqlite3.connect(reference_v4 / 'catalog.sqlite')) as connection:
+        connection.executescript((LEGACY_DDL.parent / 'catalog_v4_fixture.sql').read_text(encoding='utf-8'))
+        assert connection.execute('PRAGMA user_version').fetchone()[0] == 4
+        assert 'selected_revision_id' not in [r[1] for r in connection.execute('PRAGMA table_info(jobs)')]
+        assert not list(connection.execute('PRAGMA foreign_key_check'))
+    save(workdir/'v4-reference.json',inspect_database(reference_v4/'catalog.sqlite'))
+    windows = ('future', 'ddl', 'validation', 'v4-ddl', 'v4-validation')
     for window in windows:
         try:
-            check_window(reference, workdir / window, window)
+            check_window(reference_v4 if window.startswith('v4-') else reference, workdir / window, window)
         except Exception:
             failures[window] = traceback.format_exc()
     save(workdir / 'example-results.json', {'windows': list(windows), 'failures': failures})
+    # Successful REAL startup migration from v4; inspect all old rows and files,
+    # the new FK and selection nullability, then reopen without another migration.
+    from tests.common.delivery_support import web_client
+    success = workdir/'v4-success'
+    shutil.copytree(reference_v4,success)
+    before = inspect_database(success/'catalog.sqlite')
+    hashes = materials(success)
+    with web_client(success) as client:
+        assert client.get('/api/download/job-1').status_code == 200
+    after = inspect_database(success/'catalog.sqlite')
+    assert after['logical']['version'] == 5
+    jobs = after['logical']['tables']['jobs']
+    assert 'selected_revision_id' in [r[1] for r in jobs['columns']]
+    assert any(r[2]=='revisions' and r[3]=='selected_revision_id' for r in jobs['foreign_keys'])
+    assert [r[:-1] for r in jobs['records']] == before['logical']['tables']['jobs']['records']
+    assert all(r[-1] is None for r in jobs['records'])
+    for table,state in before['logical']['tables'].items():
+        if table not in ('jobs','schema_migrations'):
+            assert after['logical']['tables'][table] == state, table
+    assert materials(success) == hashes
+    from src.application.jobs import JobRuntime
+    runtime = JobRuntime(success)
+    selected = runtime.queue('job-1','html')
+    assert selected.selected_revision_id == 'revision-1', '旧 v4 任务必须按自身 export 绑定'
+    with closing(sqlite3.connect(success/'catalog.sqlite')) as connection:
+        connection.execute('PRAGMA foreign_keys=ON')
+        try:
+            connection.execute("UPDATE jobs SET selected_revision_id='missing' WHERE job_id=?",(selected.job_id,))
+        except sqlite3.IntegrityError:
+            connection.rollback()
+        else:
+            raise AssertionError('新增修订绑定外键未执行')
+    assert JobRuntime(success).get(selected.job_id).selected_revision_id == 'revision-1'
+    save(workdir/'v4-success.json',{'before':before,'after':after,'materials':hashes,'selected_job':selected.__dict__})
     assert tree_hashes(reference) == reference_hashes, '独立参考来源被改写'
     assert not failures, failures
     return {'checks': ['未来版本经真实 Web 启动明确拒绝，版本、完整结构、全部记录与资料不变',
                        '独立历史旧结构经过真实备份与表重建后异常，实际事务完整回滚',
                        '完成真实迁移后在 SQLite 外键校验中发现注入的未提交坏关联，实际事务完整回滚',
                        '每次一致备份复制到独立恢复目录后只读打开，完整结构、全部记录、完整性与资料哈希匹配',
-                       '三窗口真实 Uvicorn 启动失败退出 3，无就绪、无监听，launcher 与实际 Python 均退出'],
+                       '五窗口真实 Uvicorn 启动失败退出 3，无就绪、无监听，launcher 与实际 Python 均退出',
+                       '独立 schema-4 副本经真实 Web 启动迁移到 v5，保留全部旧行与资料，绑定外键执行且重开保持原任务准确修订'],
             'evidence': {'reference': str(workdir / 'reference.json'),
                          'results': str(workdir / 'example-results.json')},
             'limitations': ['合成异常副本不证明 S2 真实旧数据升级、正文迁移或实际用户库恢复',

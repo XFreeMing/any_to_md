@@ -46,4 +46,5 @@ class Job:
     export_id: str | None
     download_relative: str | None
     storage_key: str | None
+    selected_revision_id: str | None = None
 

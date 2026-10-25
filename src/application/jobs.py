@@ -165,7 +165,7 @@ class JobRuntime:
         if job.source_id is None or job.input_key is None:
             raise ValueError('任务没有保留的原件，请重新上传')
         if job.status.terminal:
-            job = self.catalog.create_job(str(uuid.uuid4()), job.filename, job.input_format, (), None, job.source_id)
+            job = self.catalog.clone_terminal_job(job.job_id)
         return self.catalog.queue_job(job.job_id, (target,), output_format, os.getpid(), time.time() + LEASE_SECONDS)
 
     def source_path(self, job: Job) -> Path:
@@ -306,13 +306,13 @@ class JobExecution:
         self.root = self.runtime.storage.create_staging(self.export_id)
         return self.root
 
-    def publish(self, report: dict, artifacts: list[ArtifactRecord], book: BookRevision | None = None, plan: ExportPlan | None = None) -> Path:
+    def publish(self, report: dict, artifacts: list[ArtifactRecord], book: BookRevision | None = None, plan: ExportPlan | None = None, *, rebuilt_from_original: bool = True) -> Path:
         if self._heartbeat_error is not None:
             raise JobConflict(f'任务续约失败：{self._heartbeat_error}')
         if self.root is None or self.export_id is None:
             raise JobConflict('任务尚未创建导出')
         download_relative = prepare_download(self.root, self.job.output_format).relative_to(self.root).as_posix()
-        rebuilt_revisions = self.runtime.rebuilt_revisions(book) if book is not None else ()
+        rebuilt_revisions = self.runtime.rebuilt_revisions(book) if book is not None and rebuilt_from_original else ()
         self.published = self.runtime.storage.publish(self.export_id)
         revision_key = self.runtime.storage.preserve_revision(book.revision_id, self.published) if book is not None else None
         revision_hash = sha256_file(self.published / 'book.json') if book is not None else None

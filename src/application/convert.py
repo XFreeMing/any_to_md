@@ -57,27 +57,38 @@ def convert(request: ConversionRequest) -> ConversionResult:
             raise ValueError('需要输入文件或已创建的 job_id')
         job = runtime.file_job(request.input_path, request.targets)
     with runtime.execute(job.job_id) as execution:
-        reader, pipeline_version = CAPABILITIES[job.input_format].load_reader()
-        source = runtime.capture_source(job, execution.token)
-        source_id, book_id, edition_id = source_ids(job.input_format, source.stem)
-        execution.progress(15, 'Reading source')
-        reader_options = {'original_filename': job.filename} if job.input_format == 'html' else {}
-        book = reader(
-            source, fallback_title=Path(job.filename).stem,
-            source_sha256=source.stem, source_id=source_id, book_id=book_id,
-            edition_id=edition_id,
-            revision_id=str(uuid.uuid5(uuid.UUID(edition_id), f'pending:{source.stem}:{pipeline_version}')),
-            **reader_options,
-        )
+        book = None
+        if job.selected_revision_id is not None:
+            record = runtime.catalog.revision_record(job.selected_revision_id,job.source_id)
+            execution.progress(15,'Loading selected published revision')
+            book = runtime.storage.read_revision(record)
+        reused = book is not None
+        if not reused:
+            reader, pipeline_version = CAPABILITIES[job.input_format].load_reader()
+            source = runtime.capture_source(job, execution.token)
+            source_id, book_id, edition_id = source_ids(job.input_format, source.stem)
+            execution.progress(15, 'Reading source')
+            reader_options = {'original_filename': job.filename} if job.input_format == 'html' else {}
+            book = reader(
+                source, fallback_title=Path(job.filename).stem,
+                source_sha256=source.stem, source_id=source_id, book_id=book_id,
+                edition_id=edition_id,
+                revision_id=str(uuid.uuid5(uuid.UUID(edition_id), f'pending:{source.stem}:{pipeline_version}')),
+                **reader_options,
+            )
         semantic_sha256 = _semantic_snapshot_sha256(book)
-        book.revision_id = str(uuid.uuid5(uuid.UUID(edition_id), f'revision:{pipeline_version}:{semantic_sha256}'))
+        if reused:
+            if semantic_sha256 != record['semantic_sha256']:
+                raise ValueError('持久正文语义身份校验失败')
+        else:
+            book.revision_id = str(uuid.uuid5(uuid.UUID(book.edition_id), f'revision:{pipeline_version}:{semantic_sha256}'))
         plan = create_export_plan(book)
         plan.targets = job.targets
         staging = execution.begin(plan.export_id)
         runtime.catalog.attach_revision(book=book, semantic_sha256=semantic_sha256, job_id=job.job_id, token=execution.token, plan=plan)
         execution.progress(50, 'Writing requested views')
         report, artifacts = write_bundle(book, plan, staging, job.targets, job_id=job.job_id)
-        output_dir = execution.publish(report, artifacts, book, plan)
+        output_dir = execution.publish(report, artifacts, book, plan, rebuilt_from_original=not reused)
         return ConversionResult(
             job_id=job.job_id, book_id=book.book_id, edition_id=book.edition_id,
             revision_id=book.revision_id, export_id=plan.export_id,

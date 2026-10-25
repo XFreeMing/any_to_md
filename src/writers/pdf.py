@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
+from urllib.request import url2pathname
+from urllib.parse import urlsplit
 
 from .html import BASE_CSS
 
@@ -29,7 +30,7 @@ def render_pdf(html_path: Path, *, output_path: Path | None = None, extra_css: s
         if parsed.scheme == 'data':
             return default_url_fetcher(url)
         if parsed.scheme == 'file' and not parsed.netloc:
-            path = Path(unquote(parsed.path)).resolve()
+            path = Path(url2pathname(parsed.path)).resolve()
             if path.is_file() and (path.is_relative_to(allowed_root) or path in allowed_fonts):
                 return default_url_fetcher(url)
         blocked.append(url)

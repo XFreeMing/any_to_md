@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import errno
 import os
 import re
@@ -92,6 +93,41 @@ class LocalStorage:
         if not path.is_relative_to(self.root):
             raise ValueError('存储键越界')
         return path
+
+    def read_revision(self, record: dict):
+        """Trust catalog identities, then verify bytes and restore the model.
+
+        Schema-1 is the only explicit rebuild result. Corrupt/unknown snapshots
+        always raise; they must never be interpreted as a cache miss.
+        """
+        from ..domain.book import BookRevision
+
+        path = self.resolve(record['content_storage_key'])
+        def verified(file, size, sha):
+            if not file.is_file() or any(p.is_symlink() for p in (file,*file.parents)):
+                raise ValueError(f'持久正文或资源不存在或路径无效：{file}')
+            content = file.read_bytes()
+            if size is not None and len(content) != size:
+                raise ValueError(f'持久正文或资源大小校验失败：{file}')
+            if hashlib.sha256(content).hexdigest() != sha:
+                raise ValueError(f'持久正文或资源 SHA 校验失败：{file}')
+            return content
+        try:
+            data = json.loads(verified(path,record['size_bytes'],record['content_sha256']))
+        except (json.JSONDecodeError,UnicodeError) as error:
+            raise ValueError('持久正文 JSON 损坏') from error
+        if not isinstance(data,dict):
+            raise ValueError('持久正文 schema 无效')
+        for name in ('revision_id','edition_id','source_id','source_sha256','book_id','pipeline_version'):
+            if data.get(name) != record[name]:
+                raise ValueError(f'持久正文身份校验失败：{name}')
+        if type(data.get('schema_version')) is int and data['schema_version'] == 1:
+            return None
+        if data.get('source_format') != record['source_format']:
+            raise ValueError('持久正文来源格式校验失败')
+        def asset(name,size,sha):
+            return verified(path.parent/'assets'/name,size,sha)
+        return BookRevision.from_dict(data,source_path=self.resolve(record['source_storage_key']),load_asset=asset)
 
     def diagnostic_path(self, job_id: str) -> Path:
         path = self.root / 'jobs' / str(uuid.UUID(job_id)) / 'report.json'
