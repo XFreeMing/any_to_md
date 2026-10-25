@@ -27,6 +27,23 @@ LEASE_SECONDS = 60
 logger = logging.getLogger(__name__)
 
 
+def _exception_chain(error: BaseException) -> list[dict[str, str]]:
+    """Keep typed causes/contexts even when the outer error has a short message."""
+    chain, seen = [], set()
+    relation = 'raised'
+    while error is not None and id(error) not in seen:
+        seen.add(id(error))
+        chain.append({'type': f'{type(error).__module__}.{type(error).__qualname__}',
+                      'message': str(error), 'relation': relation})
+        if error.__cause__ is not None:
+            error, relation = error.__cause__, 'cause'
+        else:
+            # Transport libraries may use `raise ... from None` to shorten a
+            # traceback. The original OS error still matters in durable evidence.
+            error, relation = error.__context__, 'context'
+    return chain
+
+
 def _process_alive(pid: int) -> bool:
     if os.name == 'nt':
         # os.kill(pid, 0) sends a console event on Windows; it is not a probe.
@@ -220,7 +237,7 @@ class JobRuntime:
             self._reconcile_failure(job)
         return recovered
 
-    def _reconcile_failure(self, job: Job) -> None:
+    def _reconcile_failure(self, job: Job, *, error: BaseException | None = None) -> None:
         report = self.storage.diagnostic_path(job.job_id)
         published = self.storage.exports_dir / job.export_id if job.export_id else None
         retained = self.storage.staging_dir / job.export_id if job.export_id else None
@@ -242,6 +259,8 @@ class JobRuntime:
                     logger.exception('Could not quarantine failed export %s', job.export_id)
                     retained, rollback_error = published, str(failure)
         failure_report = {'schema_version': 2, 'job_id': job.job_id, 'export_id': job.export_id, 'status': 'failed', 'error': job.message, 'rollback_error': rollback_error, 'retained_dir': str(retained) if retained else None}
+        if error is not None:
+            failure_report['exception_chain'] = _exception_chain(error)
         write_json(report, failure_report)
         if retained is not None and retained.exists() and retained != published:
             write_json(retained / 'report.json', failure_report)
@@ -324,7 +343,7 @@ class JobExecution:
             # Commit the conditional terminal transition before changing files.
             # If ownership/commit outcome cannot be established, leave them intact.
             self.runtime.catalog.fail_job(self.job_id, str(error), report.relative_to(self.runtime.storage.root).as_posix(), self.token)
-            self.runtime._reconcile_failure(self.runtime.get(self.job_id))
+            self.runtime._reconcile_failure(self.runtime.get(self.job_id), error=error)
             if not isinstance(error, Exception):
                 return False
             raise ConversionFailure(self.job_id, report, error) from error

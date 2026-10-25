@@ -19,6 +19,10 @@ from ..domain.book import Diagnostic
 MAX_OCR_RESPONSE_BYTES = 100 * 1024 * 1024
 
 
+class OcrTransportError(RuntimeError):
+    """An OCR network failure, retaining the original exception as its cause."""
+
+
 @dataclass(frozen=True)
 class OcrConfig:
     api_url: str
@@ -60,9 +64,22 @@ def recognize(source: Path, config: OcrConfig, *, client: httpx.Client | None = 
     if client is None:
         with httpx.Client(timeout=config.timeout) as session:
             return recognize(source, config, client=session)
-    with source.open('rb') as stream:
-        with client.stream('POST', config.api_url, files={'file': (source.name, stream)}, timeout=config.timeout,
-                           headers={'Accept-Encoding': 'identity'}) as response:
-            response.raise_for_status()
-            content = read_response_body(response, MAX_OCR_RESPONSE_BYTES)
+    try:
+        with source.open('rb') as stream:
+            with client.stream('POST', config.api_url, files={'file': (source.name, stream)}, timeout=config.timeout,
+                               headers={'Accept-Encoding': 'identity'}) as response:
+                response.raise_for_status()
+                content = read_response_body(response, MAX_OCR_RESPONSE_BYTES)
+    except (httpx.TimeoutException, httpx.NetworkError) as error:
+        if isinstance(error, httpx.ConnectTimeout):
+            reason = '连接超时'
+        elif isinstance(error, httpx.ReadTimeout):
+            reason = '读取超时'
+        elif isinstance(error, httpx.TimeoutException):
+            reason = '请求超时'
+        elif isinstance(error, httpx.ConnectError):
+            reason = '连接失败'
+        else:
+            reason = '网络请求失败'
+        raise OcrTransportError(f'OCR 识别服务{reason}（{type(error).__name__}，超时配置 {config.timeout:g} 秒）：{error}') from error
     return parse_ocr_response(content)

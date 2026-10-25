@@ -12,12 +12,12 @@
 
 | 字段 | 当前值 |
 | --- | --- |
-| 批次状态 | 待执行 |
+| 批次状态 | 执行中 |
 | 关联 | E4 / US-05 / `UC-03-S5` 的运行条件错误反馈 |
-| 执行者 / 接单时间 | 未接单；启动后记录会话标识、时间、实际 HEAD 与已有差异 |
+| 执行者 / 接单时间 | Codex / EX-05-20261025-2037；2026-10-25 20:37 +08:00；起始 HEAD `41ee9032c3efd06615348fe2816f763ee313061c`，分支 `main`，工作区干净，无其他领取记录 |
 | 规划基线 | `98b2038`；EX-04 实现 `c397220` 与交接已复核接受 |
-| 文档更新时间 | 2026-10-25 20:31 +08:00；EX-05 仅规划，尚未实施 |
-| 实现最后核对 | 2026-10-25 20:28 +08:00；S3 / S4 / S6 / S7 / S8 回归通过，现有 S5 的 OCR 错误仍仅为 timed out |
+| 文档更新时间 | 2026-10-25 20:45 +08:00；指定回归与证据核验完成，收尾提交推送中 |
+| 实现最后核对 | 2026-10-25 20:45 +08:00；S3 / S4 / S5 / S6 / S7 / S8 全部通过；报告相对当前只差 TODO 回写 |
 
 **交付目标与范围**
 
@@ -46,11 +46,15 @@ $exRunId = Get-Date -Format 'yyyyMMddTHHmmssfff'
 
 **执行者回报（接单及取得新结论时局部更新）**
 
-- 实现：未执行；接单后记录起始提交与已有改动，完成时链接关键文件。
-- 验证：未执行；现有失败基线见上方，执行者须保留自己接单后的复现与补强场景结果。
-- 运行中任务：无本批任务；故障服务需记录命令、目录、实际 PID / 标识、端口、日志及最近核实时间。
-- 未完成 / 阻塞：尚未接单；本批不依赖可用的真实 OCR 服务或用户旧数据。
-- 下一步建议：先稳定连接故障与读取超时的独立条件，再补强双重语义断言并修复共同错误边界；回报后复核 S5，再进入 US-12 主线规划。
+- 实现：已补强 [S5](tests/E4/UC-03-S5.py) 三个独立进程条件、双层错误语义、重新打开后的持久失败及早期成功资料保护；[OCR provider](src/adapters/ocr.py) 仅包装 HTTPX 超时 / 网络异常并 `raise from` 保留原因，状态含识别服务、连接 / 读取阶段、异常类别、原信息与超时配置，HTTP 状态 / ZIP / 解析错误保留原分类。[共同运行时](src/application/jobs.py) 保存 typed `exception_chain`，包括被 `raise from None` 隐藏的 OS context，恢复时保留原诊断。场景子进程仅对回环地址绕过继承代理，避免将代理 502 冒充连接故障。
+- 验证：工作目录均为仓库根目录，CPython 3.13.12 / Windows；包装命令 `.venv/Scripts/python.exe var/quality/ex-05/execute.py <标签> [场景编号...]` 保存实际执行命令、环境、日志、Git 差异及 122 输入匹配源码 ZIP / 产物哈希。原 S5 [baseline](var/quality/ex-05/20261025T203746705394-baseline/scenarios.json) 退出 1（0 passed / 1 failed），OCR 仅 timed out；首轮补强 [strengthened](var/quality/ex-05/20261025T203943647615-strengthened/scenarios.json) 连接窗口被代理 502 干扰，保留为无效连接条件证据。修正场景环境后的 [strengthened-direct](var/quality/ex-05/20261025T204023296874-strengthened-direct/scenarios.json) 仍退出 1：真实连接 WinError 10061 与已收完整请求后的读取 timed out 都缺服务上下文；PDF 依赖例执行成功。三例保护断言均先于语义断言执行；HTTP 请求 ID、阶段、PID、端口和有界等待见各例 `http-fault.json`。
+- 协议对照：[protocol-before](var/quality/ex-05/20261025T204040762305-protocol-before/scenarios.json) 与 [protocol-after](var/quality/ex-05/20261025T204300319428-protocol-after/scenarios.json)，UC-02-S3 / S4 / S5、UC-01-S4 改前改后均 0 passed / 4 failed / 0 blocked（执行器退出 1）：分别为 CLI 未接共同 Reader、Web 无 book.json、CLI 未接共同 Reader、缺逐页诊断。Web 实际响应仍准确保留非法资源路径 / HTTP 503，改后链首分别为 ValueError / HTTPStatusError，未混报网络错误；未放宽原断言，原缺口继续归 US-02 / US-03。
+- 修复验证：首轮 [fixed-s5](var/quality/ex-05/20261025T204131574795-fixed-s5/scenarios.json) 退出 1，已带服务上下文，但 httpcore 隐藏的 OS context 未记录；继续修复后 [fixed-chain-s5](var/quality/ex-05/20261025T204201392511-fixed-chain-s5/scenarios.json) 退出 0，1 passed / 0 failed / 0 blocked，三个条件和保护 / 双层语义 / 完整异常链均执行。
+- 最终回归：[regression](var/quality/ex-05/20261025T204300319027-regression/scenarios.json)，仓库根目录按上方六场景命令实际执行，CPython 3.13.12 / Windows 11 10.0.26340 / UTF-8，执行器退出 0，**6 passed / 0 failed / 0 blocked**。S5 的连接链为 OcrTransportError → httpx.ConnectError → httpcore.ConnectError → ConnectionRefusedError / WinError 10061；读取链为 OcrTransportError → httpx.ReadTimeout → httpcore.ReadTimeout → TimeoutError / timed out，完整请求到达后约 1 秒发生超时；PDF 例为 ModuleNotFoundError / weasyprint。三例重新打开后仍 failed，状态和诊断双层语义、下载 404、无发布 / 索引、原件与早期成功资料全部核对。
+- 证据复核：2026-10-25 20:44 +08:00 运行 `.venv/Scripts/python.exe var/quality/ex-05/verify_evidence.py`，八轮各 122 输入快照与报告完全匹配，合计 1,433 项产物 SHA-256 一致，所有执行期间指纹稳定；[核验记录](var/quality/ex-05/evidence-review.json)。各轮目录保留实际命令 / 环境 / 起始 HEAD / 差异、退出码与日志、源码 ZIP、SQLite、资料哈希，S5 子目录另存状态 / 诊断 / 旧资料快照 / HTTP 故障证据与进程标识。回写后报告仅证明相应快照，后续补审使用其源码 ZIP 或重新运行，未改旧报告或哈希。
+- 运行中任务：本批场景及 HTTP 服务均已退出，服务停止与 handler 完成见 S5 各例 `http-fault.json`，独立子进程退出码见 `*-process.json`；20:44 [进程核对](var/quality/ex-05/process-check.json) 仅见编辑器 Python 服务与当时执行的证据检查器，未终止其他进程。
+- 未完成 / 阻塞：代码和本批自动验证已完成，待提交推送与规划复核；无本批外部阻塞。全量、真实 OCR 质量、PDF / 图片共同 Reader、完整 CLI / 浏览器矩阵、真实旧数据、非 Windows、安装及部署未验证，所属待办保持，US-05 不整体宣告交付。
+- 下一步建议：规划者复核本批 diff、S5 三例与匹配证据后决定是否清理 S5 声明；本轮保留声明。之后由规划者另行派发 US-12 主线，不在本会话扩展范围。
 - 提交 / 推送：未执行；按 AGENTS 收尾并记录实际结果，最终回复给出提交号。
 
 <a id="latest-review"></a>
@@ -587,9 +591,8 @@ Scenario: UC-03-S1 [离开源码目录使用安装包](tests/E4/UC-03-S1.py)
 
 Scenario: UC-03-S5 [运行条件不满足](tests/E4/UC-03-S5.py)
 
-- 当前缺口（2026-10-25 20:23 独立复现）：真实 OCR 连接故障的状态 message 仅为 `timed out`，没有识别服务上下文；现有 S5 失败，证据见 `var/quality/planner-review/ex-05-baseline/20261025T202355312/`。缺 WeasyPrint 分支在该轮通过现有断言，仍保留回归。
-- 剩余 Tasks：同一 S5 分别承接真实连接故障、已接受请求但不返回的受控 HTTP 读取超时、独立进程缺渲染依赖。OCR 状态与持久诊断分别同时核对服务上下文及实际原因 / 类别，保留底层错误；读取超时需有请求确实到达的证据，不能只判断错误非空或匹配任一宽泛词。PDF 例继续准确说明 WeasyPrint。
-- 所有条件经完整 Web/API 转换验证失败状态、无有效发布和下载、原件及早期成功资料保持；模拟只用于明确依赖 / 故障边界，不替代真实识别质量。此交付不要求可用真实 OCR，也不接入尚缺的 PDF / 图片共同 Reader。
+- 待规划复核：三个条件、上下文与实际原因的分别断言、底层异常链、读取请求到达证据及数据保护均由 [S5](tests/E4/UC-03-S5.py) 承接；实现与验证证据见顶部 EX-05 回报。复核前保留此声明，不以本批局部通过宣告 US-05 整体交付。
+- 边界：经完整 Web/API 转换核对持久失败、无有效发布和下载、原件及早期成功资料保持；受控故障不替代真实识别质量，也不代表 PDF / 图片共同 Reader 或完整入口矩阵交付，其他未交付范围继续归所属故事。
 
 ### 浏览器转换与反馈（UC-04）
 
