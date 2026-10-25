@@ -8,59 +8,58 @@
 
 ## 当前执行批次
 
-### EX-01 — 修复 Windows 中断任务恢复失败
+### EX-02 — 补齐发布与恢复异常的完整场景
 
 | 字段 | 当前值 |
 | --- | --- |
-| 批次状态 | 待规划复核 |
-| 关联 | E5 / US-05 / `UC-03-S6` 的现有「发布提交前中断」路径 |
-| 执行者 / 接单时间 | Codex EX-01 执行会话 / 2026-10-25 15:45 +08:00 |
-| 规划基线 | `a6a264f`；2026-10-25 在 Windows 核对。接单时记录实际 HEAD 与已有差异 |
-| 文档更新时间 | 2026-10-25 15:51 +08:00；修复和验收回报已提交并推送，交规划者复核 |
-| 实现最后核对 | 2026-10-25 15:49 +08:00；S3 / S4 / S6 通过并核对代码指纹、数据库与产物 |
+| 批次状态 | 待执行 |
+| 关联 | E5 / US-05 / `UC-03-S6` 的两个剩余 Examples |
+| 执行者 / 接单时间 | 未接单；启动后记录会话标识、时间、实际 HEAD 与已有差异 |
+| 规划基线 | `9b2929f`；EX-01 实现 `563abec` 已按限定范围复核接受，见下方复核 |
+| 文档更新时间 | 2026-10-25 16:12 +08:00；EX-02 仅规划，尚未实施 |
+| 实现最后核对 | 2026-10-25 16:11 +08:00；现有 S6 及关联回归通过，两个剩余 Examples 尚无场景实现 |
 
 **交付目标与范围**
 
-- 修复 [任务恢复](src/application/jobs.py) 在 Windows 检查已退出 owner 进程时报 WinError 87 的问题，使 [现有 UC-03-S6](tests/E5/UC-03-S6.py) 能经真实 Web 启动完成恢复、隔离未提交产物并保留历史下载。
-- 先运行现有场景复现，再在共同任务运行时修复；保留其他平台语义，进程存活检查不能结束他人或仍存活的任务进程。必要的保护验证仍通过实际场景完成，不另建函数级单元测试。
-- 本批仅交付上述缺陷及必要回归。S6 尚未编码的另外两种异常、S7 / S8、真实旧数据升级与《本草纲目》重转仍留在下方所属故事，不能随本批通过删除或标作完成；其他故事与 TV-01 不在本批范围。
+- 将[下方 S6 的两个剩余 Examples](#s6-remaining-examples)完整承接到 [UC-03-S6.py](tests/E5/UC-03-S6.py)：恢复再次中断后仍可补齐隔离与诊断；成功提交后发生异常仍保留成功结果及下载。保留已有提交前中断、历史文件哈希和存活 owner 保护，不另分配场景编号。
+- 先补场景并运行，记录真实失败或既有通过，再修复实际缺口。优先核实下方标出的诊断补写风险；它目前只是静态推断，不能预填为已复现或已修复。
+- 主要实现边界为 [jobs.py](src/application/jobs.py) 的恢复 / 发布及原 S6 文件，必要时复用公共场景支持或调整实际涉及的存储 / 持久化边界；保留租约、CAS、只观察进程和历史资料保护。不为本批搭建通用故障平台。
+- S7 / S8、正文重导出、真实旧数据升级、原书重转、OCR / PDF / 图片、安装 / 部署和 TV-01 留在所属待办，不在本批展开。本批完成后交规划复核，暂不移除 S6 声明或将 US-05 整体标作交付。
 
 **验收与证据**
 
-- 工作目录：仓库根目录；使用当前检出的 `.venv/Scripts/python.exe`。记录实际 Python、Windows 版本、起始提交、执行时差异与报告指纹。
-- 先单独复现 `UC-03-S6` 并保留失败报告，再完成修复；修复后执行以下关联回归。每次生成新的运行标识，不覆盖失败或历史报告：
+- 使用真实 EPUB 完整转换和实际 Web 启动恢复；只在真实事务、隔离、写诊断或成功提交后的边界注入中断 / 异常。断言须证明注入确实发生、已到达指定持久化位置，不能手工预填终态或用模拟成功结果代替。
+- 每个异常窗口分别保留标识、子进程退出码、日志、恢复前后关键 SQLite 记录、发布 / 隔离路径、主诊断与隔离目录诊断、当前及历史导出的实际哈希。恢复重复执行须稳定、无未提交下载；成功提交后的当前结果和历史结果均保持可下载。
+- 工作目录为仓库根目录，记录实际 Python / Windows、起始提交、运行时差异与报告指纹。先保存新场景的首次报告，再完成必要修复；每次报告使用新目录：
 
 ```powershell
 $env:PYTHONUTF8 = '1'
 $env:PYTHONIOENCODING = 'utf-8'
 $exRunId = Get-Date -Format 'yyyyMMddTHHmmssfff'
-.venv/Scripts/python.exe tests/common/run.py UC-03-S3 UC-03-S4 UC-03-S6 --report "var/quality/ex-01/$exRunId/scenarios.json"
+.venv/Scripts/python.exe tests/common/run.py UC-03-S3 UC-03-S4 UC-03-S6 --report "var/quality/ex-02/$exRunId/scenarios.json"
 ```
 
-- 所选三场景须全部通过；逐项检查报告与保留产物，确认中断任务失败可查询、无未提交下载、隔离和诊断完整、旧下载哈希不变。S3 / S4 仅证明其现有覆盖，不能据此清理这些故事的其他缺口。
-- 对存活进程保护或其他必要改动说明实际验证方法与结果；只清理本批创建的测试进程。若某项无法验证，具体记录缺失，保留待规划复核或阻塞状态，不宣称全部条件满足。
-- 报告绑定验证时快照；完成本次需要的人工补审后再回写交接，不修改历史报告或现有指纹校验。提交 / 推送失败须记录真实原因。
+- 三个场景须全部通过，S6 必须实际执行所有既有条件及两个剩余 Examples 的全部约定窗口；只测其中一处不能算完成。保留失败与成功报告、产物和源码身份；回写 TODO 前完成本轮证据核验，保存可复查的验证快照或对应提交，不改历史报告哈希或指纹规则。
+- 只清理本批创建的进程。缺条件、失败或部分覆盖如实回写；产品全量、非 Windows、安装与部署没有执行时继续明确未验证。
 
 **执行者回报（接单及取得新结论时局部更新）**
 
-- 实现：起始分支 `main`，HEAD `de62af008a7a5e8520f15592d589ed8e2cc21b3f`，接单时工作区干净；接单核实 EX-01 未被替换或领取。[jobs.py](src/application/jobs.py) 在 Windows 以 `OpenProcess(SYNCHRONIZE)` / 零超时 `WaitForSingleObject` 只观察进程，区分不存在 / 退出 / 存活 / 拒绝访问并关闭句柄；非 Windows 保留 signal 0、EPERM / ESRCH 语义。租约和 CAS 恢复条件不变。[S6](tests/E5/UC-03-S6.py) 增加真实转换在发布边界暂停、Web 恢复后原进程继续提交的保护验证，并保留恢复状态与历史哈希证据；未新增其他异常 Examples。
-- 验证：在仓库根目录以 `.venv/Scripts/python.exe tests/common/run.py UC-03-S6 --report var/quality/ex-01/20261025T154516814/scenarios.json` 复现失败（退出 1，Web lifespan → `recover()` → `os.kill` 抛 WinError 87）；失败产物及完整代码指纹保留，运行期间代码未变化。环境：CPython 3.13.12 / MSC v.1944 64-bit AMD64，Windows 11 10.0.26340；设置 `PYTHONUTF8=1`、`PYTHONIOENCODING=utf-8`。后续修复报告单独生成。
-- 补充失败：新增存活 owner 保护后、修复前运行 S6，旧 `os.kill(pid, 0)` 触发控制台中断，执行器以 `KeyboardInterrupt` 退出，`20261025T154627083` / `20261025T154652964` 只有保留产物而无完成报告，不能计为通过。测试子进程已在 finally 清理，未按数据库 PID 清理其他进程；不再对存活 PID 重跑旧探测。Windows 信号边界参见 [Python 文档](https://docs.python.org/3.13/library/os.html#os.kill)；观察式替代依据 [OpenProcess](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-openprocess) / [WaitForSingleObject](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject)。
-- 修复验证：工作目录 `C:\Users\xiaof\workspace\any_to_md`，同上 Python / Windows / UTF-8 环境，执行 `.venv/Scripts/python.exe tests/common/run.py UC-03-S3 UC-03-S4 UC-03-S6 --report var/quality/ex-01/20261025T154800267/scenarios.json`，退出 0；selected 范围 3 passed / 0 failed / 0 blocked，`code_unchanged_during_run=true`。执行时差异仅 `TODO.md`、`src/application/jobs.py`、`tests/E5/UC-03-S6.py`，起始 HEAD 未变。未运行全量产品验收、非 Windows 运行、安装或部署；非 Windows 分支按差异核对保留原逻辑。
-- 证据复核：报告在 [scenarios.json](var/quality/ex-01/20261025T154800267/scenarios.json)，产物根为同目录 `artifacts/8b404790628d47aba1b3953fd3a61b28/`；S3 四任务并发与正文资源检查、S4 四种格式的迁移后阅读检查均通过。S6 的 `recovery-evidence.json` 与 SQLite 核对：中断任务 `9e7d260d-4e82-4ba8-a4d5-9c127d39fb9e` 为 failed、无下载与租约，未提交 export 无发布路径且完整移到 staging，诊断 `rollback_error=null`；旧下载可用，15 个历史文件前后哈希相同；存活子进程启动恢复后仍 processing，随后原进程退出 0、完成提交且 HTTP 下载 200。核验记录 [verification.json](var/quality/ex-01/20261025T154800267/verification.json)；这些场景不要求视觉人工补审。
-- 快照边界：回写交接前已逐文件核对报告完整指纹与工作区一致，并将全部指纹输入原样保留到同目录 `source-snapshot.zip`（SHA-256 `833570bb8974749610c1db9ad4e1b01c2f6cd84f4bfc6ac7e503ec328e1ebe89`），可解压到独立目录复核。此后只回写 TODO，当前 TODO 指纹已不同，报告仅证明归档快照与所选三场景；原失败报告、部分失败产物及新报告均保留，不更改哈希或放宽校验。
-- 运行中任务：本批场景均已退出；2026-10-25 15:50 +08:00 以 `Get-CimInstance Win32_Process` 核实无命令行含本批 `ex-01` 路径的 Python 进程残留。存活测试进程标识、日志在 S6 的 `live-owner-ready.json`、`live-owner.log` 和恢复证据中；未清理其他会话进程。
-- 未完成 / 阻塞：本批实现与约定关联回归完成，无阻塞，待规划者独立复核。US-05 的 S6 另外两种异常、S7 / S8、真实旧数据升级与《本草纲目》重转，以及 S3 / S4 原有其他覆盖缺口仍留在所属故事；未将故事整体交付或清理需求。
-- 下一步建议：规划者按 EX-01 diff、报告与快照接受或退回本批；如需补审使用匹配快照独立检出或新报告。后续范围由规划者选批，执行者未另行派发。
-- 收尾检查：`git diff --check`、`.venv/Scripts/python.exe tests/common/run.py --list` 通过，原 20 个保留场景文件与 31 个待建场景仍可发现；仅修改 EX-01 与所属 Windows 缺口说明，未改其他故事或 TV。
-- 提交 / 推送：实现和验收回报已提交为 `563abecdca726667201ea53f414f5f1b69e1ef4b`，`git push origin main` 成功（远端 `de62af0..563abec`）；仅纳入上述三文件，报告及快照留在 Git 忽略的 `var/quality/ex-01/`。此条实际推送回执的收尾提交由 `git log` 定位，最终回复给出实际提交号。
+- 实现：未执行；接单后记录起始提交与已有改动，完成时链接关键文件。
+- 验证：未执行；EX-01 的已接受证据仅作为回归基线，不能代替新增 Examples。
+- 运行中任务：无本批任务；异步任务需记录命令、工作目录、PID / 任务标识、日志及最近核实时间。
+- 未完成 / 阻塞：尚未接单；范围缺口见下方 S6，执行中分别更新覆盖与缺失条件。
+- 下一步建议：先为恢复诊断补写窗口建立可核对的场景，再承接成功提交后异常；由规划者在回报后安排下一批。
+- 提交 / 推送：未执行；收尾按 AGENTS 记录实际结果，最终回复给出提交号。
 
 <a id="latest-review"></a>
 
 ## 最近规划复核
 
-- 2026-10-25：首次建立规划者 / 执行者协作入口，尚无执行批次回报。EX-01 已定义，尚未派出或实施。
-- 本轮文档迁移核验（2026-10-25 15:40 +08:00，仓库根目录，基线 `a6a264f`）：`git diff --check` 与 `.venv/Scripts/python.exe tests/common/run.py --list` 通过。与基线逐项对照的 49 个产品场景编号 / Epic、15 段 Gherkin 及 Examples 保持不变；仍发现 20 个测试文件、31 个待建文件。TV-01 / C1～C3 的范围、样本身份和判定完整迁入，原 macOS 证据保留日期并补注 Windows 边界；本次变更文档的本地链接 / 锚点、MinerU 检查脚本语法与指纹依赖路径核验通过。未运行产品转换、下载权重或真实推理，不改变既有验收结论。
+- 2026-10-25 16:11 +08:00，**接受 EX-01 的限定交付**：实现 `563abec`、交接 `9b2929f`。复核 Windows 只观察进程的实现、句柄关闭及原有租约 / CAS / 非 Windows 分支，未发现阻断问题；原场景断言保留，新增存活 owner 通过真实转换进程继续提交并下载验证。
+- 原[执行报告](var/quality/ex-01/20261025T154800267/scenarios.json)及快照逐项核验：118 个指纹输入一致、快照 SHA-256 与回报一致，当前源码相对该快照只差 TODO 交接；数据库失败状态、隔离与无下载、主 / 隔离诊断和 15 个历史文件哈希符合回报。失败报告与两次无完成报告的中断产物保留，未改写为通过。
+- 规划者在干净 `9b2929f`、仓库根目录、同一 CPython 3.13.12 / Windows 11 UTF-8 环境独立运行 `.venv/Scripts/python.exe tests/common/run.py UC-03-S3 UC-03-S4 UC-03-S6 --report var/quality/planner-review/ex-01/20261025T160935143/scenarios.json`：退出 0，3 passed / 0 failed / 0 blocked，运行期间指纹不变；再次核对 SQLite、隔离诊断、历史 15 文件和存活 owner 证据。记录见[规划复核](var/quality/planner-review/ex-01/20261025T160935143/review.json)，同目录保留验证源码快照；回写本规划后报告继续只证明该验证快照。
+- 所选场景已退出，16:10 核实无本批路径对应的 Python 测试进程残留。原实现 / 交接提交均已推送，工作区核对时干净；本次仅更新 TODO 复核与 EX-02 规划，不实施后续修复。
+- 接受不涵盖 S6 剩余异常、S7 完整租约竞态、US-05 其他范围、非 Windows 实际运行、安装或部署；这些仍未交付。下一批选择 EX-02 补齐 S6，因其紧接现有恢复路径且无需外部 OCR / 旧数据；正文重导出和其他故事继续保留，不用本批局部通过替代。
 
 <a id="product-backlog"></a>
 
@@ -731,7 +730,7 @@ UC-04-S5～S7 测试文件待实现。S5 对页面提供的操作补可见反馈
 
 #### US-05 — 安装或升级后继续访问转换结果
 
-- Windows 待复核（2026-10-25）：文件锁退避修复及 `e2m` 快捷入口已迁入新结构；《本草纲目》曾在修订快照发布时报 WinError 5，真实原文件重转仍待验证。命令、修订和历史下载继续按 UC-03 验收。
+- Windows 待复核（2026-10-25）：文件锁退避修复及 `e2m` 快捷入口已迁入新结构；《本草纲目》曾在修订快照发布时报 WinError 5，真实原文件重转仍待验证。命令、修订和历史下载继续按 UC-03 验收。 `e2m` 帮助与样本 EPUB 转换证据在 `var/quality/merge-resolution/e2m-smoke/`，不替代真实原书复核。
 
 作为安装或升级工具的使用者，我希望离开源码目录仍能转换文件并访问历史结果，以便使用新版本时不损坏已有资料。
 
@@ -750,11 +749,13 @@ Scenario: UC-03-S4 [导出包离开原工作目录](tests/E5/UC-03-S4.py)
 
 - 未编码验收：独立定义应保留的样式及 CSS 资源，并验证搬移后仍可用，不能只检查产物已有引用。当前仅覆盖 EPUB / HTML / DOCX / URL 的 Markdown、HTML；PDF / 图片及其他既定输出仍需补齐。
 
-<a id="windows-recovery-gap"></a>
-
-- Windows 恢复缺陷：原失败依据为 `var/quality/merge-resolution/utf8-scenarios.json` 的 S6 WinError 87；默认编码首轮失败另保留在同目录 `scenarios.json`。本批修复与新验证见 [EX-01 回报](#current-execution)，待规划复核，仍须保留下述未交付范围。`e2m` 帮助与样本 EPUB 转换产物在 `var/quality/merge-resolution/e2m-smoke/`，不替代真实原书复核。
+<a id="s6-remaining-examples"></a>
 
 UC-03-S6 的[现有测试](tests/E5/UC-03-S6.py)维护“产物落盘后、成功状态提交前中断”的失败、隔离与旧下载保护。以下两种异常尚未编码，沿用同一编号：
+
+- 恢复再次中断的剩余 Task：在真实恢复进程中至少覆盖失败事务已提交、隔离前，以及隔离后诊断尚未写齐的窗口；后者须包含主诊断已写、`staging/report.json` 尚未更新时退出。重启补全两处诊断与隔离后，再次启动仍保持稳定，未提交产物不可下载，历史结果及哈希不变。
+- 待验证风险（2026-10-25 静态复核，尚未复现）：`_reconcile_failure()` 在主诊断存在且发布目录不存在时提前返回，可能跳过上述隔离目录的诊断补写；先用真实进程中断证明实际结果，再作必要修复。
+- 成功提交后异常的剩余 Task：包装真实 `publish_export`，先完成原方法事务提交再触发有标识的异常；保留异常确实发生的证据，核对当前及既有导出在重启后仍成功、可下载且未被隔离或改写。仅预置成功记录不算验证。
 
 ```gherkin
   Scenario Outline: UC-03-S6 发布与恢复异常后结果仍可核对
