@@ -15,6 +15,8 @@ import importlib
 import json
 import shutil
 import sqlite3
+import subprocess
+import sys
 import traceback
 from contextlib import closing
 from pathlib import Path
@@ -25,6 +27,147 @@ from src.application.jobs import JobRuntime
 from tests.common.conversion_support import api, submit, published, file_hashes
 from tests.common.delivery_support import source_server, require_visual_evidence
 from tests.common.reuse_support import sources, save, digest, database, observe, canonical_observation, view_observation, TEXT
+
+
+def historical_boundary(root, inputs, reference):
+    """Publish with the actual pre-fix code; upgrade only a separate data copy.
+
+    This synthetic source fixture proves the pipeline boundary, not the real
+    user-data upgrade commitment of UC-03-S2.
+    """
+    from zipfile import ZipFile
+    from tests.common.delivery_support import subprocess_environment
+    root.mkdir()
+    repository = Path(__file__).resolve().parents[2]
+    baseline_commit = '862f10e13feb76e59bf5347d2f4cc113c252dcea'
+    archive = root/'pre-fix-source.zip'
+    command = ['git','archive','--format=zip','--output='+str(archive),baseline_commit]
+    archived = subprocess.run(command,cwd=repository,capture_output=True,text=True,timeout=60)
+    assert archived.returncode == 0, archived.stderr
+    checkout = root/'pre-fix-source'
+    with ZipFile(archive) as package:
+        package.extractall(checkout)
+    baseline = root/'pre-fix-published'
+    script = '''import json,sys
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+from src.application.convert import ConversionRequest,convert
+assert Path(sys.modules['src.application.convert'].__file__).resolve().is_relative_to(Path(sys.argv[1]).resolve())
+rows=[]
+for kind,name in [('epub','journey.epub'),('html','journey.zip'),('docx','journey.docx'),('url','journey.url')]:
+    r=convert(ConversionRequest(Path(sys.argv[2])/name,Path(sys.argv[3])/kind,('html','markdown')))
+    rows.append({'kind':kind,'job_id':r.job_id,'revision_id':r.revision_id,'output_dir':str(r.output_dir)})
+Path(sys.argv[4]).write_text(json.dumps(rows),encoding='utf-8')
+'''
+    command = [sys.executable,'-c',script,str(checkout),str(inputs),str(baseline),str(root/'published.json')]
+    process = subprocess.run(command,cwd=root,env=subprocess_environment(),capture_output=True,text=True,timeout=180)
+    save(root/'baseline-process.json',{'commit':baseline_commit,'source_zip_sha256':digest(archive),
+         'command':command,'returncode':process.returncode,'stdout':process.stdout,'stderr':process.stderr})
+    assert process.returncode == 0, process.stderr
+    baseline_before = file_hashes(baseline)
+    upgraded = root/'upgrade-copy'
+    shutil.copytree(baseline,upgraded)
+    records = []
+    for row in json.loads((root/'published.json').read_text(encoding='utf-8')):
+        kind = row['kind']
+        data = upgraded/kind
+        before = file_hashes(data)
+        before.pop('catalog.sqlite')
+        old_rows = database(data)
+        runtime = JobRuntime(data)
+        old_export = runtime.storage.resolve(runtime.get(row['job_id']).storage_key)
+        old_book = json.loads((old_export/'book.json').read_text(encoding='utf-8'))
+        assert all('data-source-location' not in f['html'] for f in old_book['content'])
+        with api(data) as client:
+            download_before = client.get('/api/download/'+row['job_id']).content
+            # Fresh interpretation uses the same captured bytes, new semantics.
+            source = inputs/({'epub':'journey.epub','html':'journey.zip','docx':'journey.docx','url':'journey.url'}[kind])
+            with observe(data) as active_calls:
+                active = submit(client,source,'html')
+            assert active['status'] in {'completed','completed_with_warnings','partial'},active
+            current_export = published(data,active['task_id'])
+            current = json.loads((current_export/'book.json').read_text(encoding='utf-8'))
+            if kind == 'url':
+                # A fresh HTTP capture also preserves response headers (Date can
+                # change). Check the actual page/resources, retaining both raw
+                # snapshot identities rather than pretending captures are equal.
+                def payload(job_id):
+                    with ZipFile(runtime.source_path(runtime.get(job_id))) as package:
+                        return {name:package.read(name) for name in package.namelist() if name != 'url-source.json'}
+                assert payload(active['task_id']) == payload(row['job_id'])
+            else:
+                assert current['source_sha256'] == old_book['source_sha256']
+            assert current['revision_id'] != old_book['revision_id']
+            assert current['pipeline_version'] != old_book['pipeline_version']
+            assert any(c['kind']=='reader' for c in active_calls)
+            observed, failures = canonical_observation(current_export,reference,kind)
+            assert not failures,failures
+            with observe(data,forbid=True) as calls:
+                response = client.post('/api/convert',json={'task_id':row['job_id'],'output_format':'md_single'})
+            assert response.status_code == 200,response.text
+            new_id = response.json()['task_id']
+            reused = json.loads((published(data,new_id)/'book.json').read_text(encoding='utf-8'))
+            assert reused == old_book, '旧快照被重新解释或补造定位'
+            assert JobRuntime(data).get(new_id).selected_revision_id == row['revision_id']
+            assert client.get('/api/download/'+row['job_id']).content == download_before
+            assert client.get('/api/download/'+new_id).status_code == 200
+        after = file_hashes(data)
+        assert all(after.get(name)==sha for name,sha in before.items()), '改写旧修订、资源或产物'
+        after_rows = database(data)
+        for table, rows in old_rows.items():
+            assert all(old in after_rows[table] for old in rows),(kind,table)
+        records.append({'kind':kind,'old':old_book['pipeline_version'],'new':current['pipeline_version'],
+                        'old_source_sha256':old_book['source_sha256'],'new_source_sha256':current['source_sha256'],
+                        'old_revision':old_book['revision_id'],'new_revision':current['revision_id'],
+                        'selected_job':new_id,'files_before':before,'database_before':old_rows,
+                        'database_after':after_rows,'active_calls':active_calls,'reuse_calls':calls,
+                        'download_sha256':__import__('hashlib').sha256(download_before).hexdigest(),'current_observation':observed})
+        save(root/'boundary-results.json',{'records':records})
+    assert file_hashes(baseline) == baseline_before, '独立原基线被改写'
+    save(root/'baseline-identity.json',baseline_before)
+
+
+def heading_scope(root):
+    """A third level and return to sibling scope, independently specified before conversion."""
+    from bs4 import BeautifulSoup
+    from tests.common.inspection import _soup
+    root.mkdir()
+    source = root/'scope.html'
+    source.write_text('<h1>A</h1><p>A direct.</p><h2>B</h2><p>B direct.</p>'
+                      '<h3>C</h3><p>C direct.</p><h2>D</h2><p>D direct.</p>'
+                      '<h1>E</h1><p>E direct.</p>', encoding='utf-8')
+    expected = [('A',), ('A','B'), ('A','B','C'), ('A','D'), ('E',)]
+    save(root/'independent-reference.json', {'paths':expected,'direct_body':[(v[-1],v[-1]+' direct.') for v in expected]})
+    result = convert(ConversionRequest(source, root/'data', ('html','markdown','pdf')))
+    book = json.loads((result.output_dir/'book.json').read_text(encoding='utf-8'))
+    nodes = {n['node_id']:n for n in book['nodes']}
+    def path(n):
+        return (*path(nodes[n['parent_id']]),n['title_original']) if n['parent_id'] else (n['title_original'],)
+    observed = {'paths':[path(n) for n in book['nodes']], 'body':[],'views':[]}
+    for f in book['content']:
+        text = BeautifulSoup(f['html'],'html.parser').get_text(' ',strip=True)
+        if text:
+            observed['body'].append((nodes[f['node_id']]['title_original'],text))
+    for files in ([result.output_dir/'book.html'],[result.output_dir/'book.md'], sorted((result.output_dir/'chapters').glob('*.md'))):
+        headings,body = [],[]
+        for file in files:
+            owner = None
+            for tag in _soup(file).find_all(['h1','h2','h3','h4','h5','h6','p']):
+                text = tag.get_text(' ',strip=True)
+                if tag.name.startswith('h') and text in 'ABCDE':
+                    headings.append((int(tag.name[1]),text)); owner=text
+                if text.endswith(' direct.'):
+                    body.append((owner,text))
+        observed['views'].append({'headings':headings,'body':body})
+    save(root/'observed.json',observed)
+    assert observed['paths'] == expected, observed
+    assert observed['body'] == [(v[-1],v[-1]+' direct.') for v in expected], observed
+    for view in observed['views']:
+        levels = [level for level,_ in view['headings']]
+        assert [title for _,title in view['headings']] == list('ABCDE'), view
+        assert [level-levels[0] for level in levels] == [0,1,2,1,0], view
+        assert view['body'] == observed['body'], view
+    return source,result.output_dir
 
 
 def guards(root, source):
@@ -241,6 +384,16 @@ def run(workdir: Path):
                         records.append(record)
                         save(workdir/'combination-results.json', {'records':records,'failures':failures})
                 assert all(event['kind']=='file' for record in records if record.get('stage') != 'first' for event in record.get('calls',[])), '重导出调用外部边界'
+        try:
+            historical_boundary(workdir/'historical-boundary',workdir/'inputs',reference)
+        except Exception:
+            failures.append({'historical_pipeline_boundary':traceback.format_exc()})
+    try:
+        scope_source,scope_export = heading_scope(workdir/'heading-scope')
+        review_sources.append(scope_source)
+        review_exports.append(scope_export)
+    except Exception:
+        failures.append({'third_level_scope':traceback.format_exc()})
     try:
         guards(workdir/'identity-guards', workdir/'inputs'/'journey.zip')
     except Exception:

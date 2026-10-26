@@ -9,6 +9,12 @@ from markdownify import MarkdownConverter
 
 
 class _MarkdownSerializer(MarkdownConverter):
+    def convert_figure(self, el, text, parent_tags):
+        return '\n\n'+str(el)+'\n\n'
+
+    def convert_figcaption(self, el, text, parent_tags):
+        return '\n\n'+str(el)+'\n\n'
+
     def convert_video(self, el, text, parent_tags):
         return '\n\n'+str(el)+'\n\n'
 
@@ -47,8 +53,10 @@ class _MarkdownSerializer(MarkdownConverter):
         return super().convert_table(el, text, parent_tags)
 
     def convert_img(self, el, text, parent_tags):
-        if el.get("srcset"):
-            return "\n\n" + str(el) + "\n\n"
+        if el.get('data-source-location') or el.get("srcset"):
+            # Inline HTML keeps occurrence provenance and does not split a list
+            # item into a new block when an image follows its text.
+            return str(el)
         # Markdownify otherwise replaces images in headings/table cells with alt text.
         return super().convert_img(el, text, parent_tags - {"_inline"})
 

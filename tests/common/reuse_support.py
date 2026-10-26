@@ -35,6 +35,12 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def expected_locations(reference, kind):
+    document = reference['source_documents'][kind]
+    suffixes = reference['docx_image_positions'] if kind == 'docx' else reference['dom_image_positions']
+    return [document+'#'+position for position in suffixes]
+
+
 def expected_flow(reference, kind):
     red, blue = (reference['pixel_sha256'][c] for c in ('red','blue'))
     return [('text','Arrival','Opening paragraph.'),
@@ -83,6 +89,8 @@ def sources(root: Path) -> dict:
                                        {'owner': 'Details', 'container': 'li', 'color': 'red', 'caption': None, 'source': 'journey.html#details/ul/li[1]'},
                                        {'owner': 'Departure', 'container': 'td', 'color': 'blue', 'caption': None, 'source': 'journey.html#departure/table/tr/td[1]'}],
                  'docx_locations': ['word/document.xml:p[3]', 'word/document.xml:p[7]', 'word/document.xml:tbl[1]/tr[1]/tc[1]/p[1]'],
+                 'dom_image_positions': ['body/figure[1]/img[1]', 'body/ul[1]/li[1]/img[1]', 'body/table[1]/tr[1]/td[1]/img[1]'],
+                 'docx_image_positions': ['body/p[3]/r[1]/drawing[1]', 'body/p[7]/r[2]/drawing[1]', 'body/tbl[1]/tr[1]/tc[1]/p[1]/r[2]/drawing[1]'],
                  'docx_caption_boundary': 'standalone following paragraph, no fabricated figure wrapper',
                  'pixel_sha256': {'red': image_identity(red), 'blue': image_identity(blue)},
                  'source_documents': {'epub': 'journey.xhtml', 'html': 'journey.html', 'url': 'response.html', 'docx': 'word/document.xml'},
@@ -134,7 +142,7 @@ def canonical_observation(export, reference, kind):
     def path(identifier):
         node = nodes[identifier]
         return (*path(node['parent_id']), node['title_original']) if node['parent_id'] else (node['title_original'],)
-    observed = {'paths': [path(n['node_id']) for n in book['nodes']], 'body': [], 'images': [], 'locators': [], 'flow': []}
+    observed = {'paths': [path(n['node_id']) for n in book['nodes']], 'body': [], 'images': [], 'locators': [], 'flow': [], 'image_locations': []}
     for fragment in book['content']:
         soup = BeautifulSoup(fragment['html'], 'html.parser')
         owner = nodes[fragment['node_id']]['title_original']
@@ -143,6 +151,7 @@ def canonical_observation(export, reference, kind):
             if str(text).strip() in [value for _, value in TEXT]:
                 observed['body'].append((owner, str(text).strip()))
         for image in soup.find_all('img'):
+            observed['image_locations'].append(image.get('data-source-location'))
             asset = next(a for a in book['assets'] if image.get('src') == 'asset://'+a['asset_id'])
             container = image.find_parent(['li', 'td', 'figure'])
             observed['images'].append((owner, container.name if container else 'p', image_identity((export/'assets'/asset['file_name']).read_bytes())))
@@ -172,14 +181,13 @@ def canonical_observation(export, reference, kind):
         failures.append({'image_ownership_container_order': observed['images'], 'expected': expected_images})
     if any(locator['format'] != kind or locator['path'] != reference['source_documents'][kind] for locator in observed['locators']):
         failures.append({'source_document_mismatch': observed['locators']})
-    # Document-only locators cannot distinguish the three known source occurrences.
-    # This is a content provenance gap, explicitly retained rather than inferred.
-    observed['source_occurrence_limit'] = 'fragment locators identify document; individual image source occurrence is not persisted'
+    if observed['image_locations'] != expected_locations(reference, kind):
+        failures.append({'canonical_image_source_occurrences': observed['image_locations'], 'expected': expected_locations(reference, kind)})
     return observed, failures
 
 
 def view_observation(paths, root, reference, kind):
-    result = {'headings': [], 'body': [], 'images': [], 'flow': []}
+    result = {'headings': [], 'body': [], 'images': [], 'flow': [], 'image_locations': []}
     captions = 0
     for file in paths:
         soup = _soup(file)
@@ -201,6 +209,7 @@ def view_observation(paths, root, reference, kind):
                 if text in [value for _, value in TEXT] and not any(child.get_text(' ', strip=True) == text for child in element.find_all(['p', 'li', 'td'])):
                     result['body'].append((owner, text))
             if element.name == 'img':
+                result['image_locations'].append(element.get('data-source-location'))
                 target = (file.parent / element['src']).resolve()
                 assert target.is_relative_to(root.resolve()) and target.is_file(), element
                 container = element.find_parent(['figure', 'li', 'td'])
@@ -210,6 +219,8 @@ def view_observation(paths, root, reference, kind):
             assert soup.find('figcaption').get_text(strip=True) == 'Red caption.'
         captions += soup.get_text().count('Red caption.')
     failures = []
+    if result['image_locations'] != expected_locations(reference, kind):
+        failures.append({'view_image_source_occurrences': result['image_locations'], 'expected': expected_locations(reference, kind)})
     if captions != 1:
         failures.append({'caption_occurrences':captions,'expected':1})
     if [title for _, title in result['headings']] != ['Arrival', 'Details', 'Departure']:

@@ -13,7 +13,7 @@ from ...content.revision import populate_html_revision
 from ...content.references import resolve_path
 from ...domain.book import BookMetadata, BookRevision
 
-PIPELINE_VERSION = 'html-dom-v1'
+PIPELINE_VERSION = 'html-dom-v2'
 
 
 def read_html_document(

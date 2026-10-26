@@ -17,7 +17,7 @@ from ...content.revision import populate_html_revision
 from ...domain.book import BookMetadata, BookRevision, Diagnostic
 from .package import normalized_text, prepare_docx
 
-PIPELINE_VERSION = 'docx-dom-v1'
+PIPELINE_VERSION = 'docx-dom-v2'
 STYLE_MAP = "\n".join([
     *(f"p[style-name='{name}'] => pre:separator('\\n')" for name in ('Code', 'Code Block', 'Source Code', '代码', '代码块')),
     'comment-reference => sup',
@@ -155,6 +155,14 @@ def read_docx_document(
         lost = message.type == 'error' or any(token in text.lower() for token in ('could not', 'was ignored', 'unlikely to display'))
         diagnostics.append(Diagnostic('docx_conversion', text, severity='error' if lost else 'warning', source_path=prepared.document_path))
     soup = BeautifulSoup(result.value, 'html.parser')
+    for identifier, location in prepared.image_locations.items():
+        anchor = soup.find('a',id=identifier)
+        image = anchor.find_next('img') if anchor is not None else None
+        if image is not None and image.find_parent(['p','li']) is anchor.find_parent(['p','li']):
+            image['data-source-location'] = location
+            anchor.decompose()
+        else:
+            diagnostics.append(Diagnostic('docx_image_location','源图片位置未映射到对应正文图片。',severity='error',source_path=prepared.document_path))
     _normalize_notes(soup)
     _apply_numbering(soup, prepared.list_hints, diagnostics, prepared.document_path)
     _check_source_text(soup, prepared.expected_text, diagnostics, prepared.document_path)

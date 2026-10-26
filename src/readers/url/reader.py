@@ -6,7 +6,7 @@ from ...adapters.url_source import article_document, read_url_source
 from ...content.revision import populate_html_revision
 from ...domain.book import BookMetadata, BookRevision, Diagnostic
 
-PIPELINE_VERSION = 'url-dom-v1'
+PIPELINE_VERSION = 'url-dom-v2'
 
 
 def read_url_document(source_path: Path, *, fallback_title: str, source_sha256: str,

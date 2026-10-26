@@ -19,6 +19,7 @@ from .archive import validate_archive
 from .http import read_response_body
 from .html_source import _html_references, MAX_SOURCE_BYTES, MAX_SOURCE_FILES
 from ..content.styles import style_references, rewrite_stylesheet_resources
+from ..content.document import locate_images
 
 MANIFEST = 'url-source.json'
 MAX_RESPONSE_BYTES = 20 * 1024 * 1024
@@ -40,6 +41,7 @@ def article_document(content: bytes | str, final_url: str, content_type: str = '
     header = Message()
     header['content-type'] = content_type
     soup = BeautifulSoup(content, 'html.parser', from_encoding=header.get_content_charset() if isinstance(content, bytes) else None)
+    locate_images(soup, final_url)
     for node in soup.select('nav, footer, script, iframe, object, embed, [role=navigation], [role=banner], [role=complementary]'):
         node.decompose()
     for node in soup.find_all('aside'):

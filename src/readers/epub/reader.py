@@ -19,7 +19,7 @@ from ebooklib import epub
 
 from ...content.dom import can_replace_with_text, partition, strip_title
 from ...content.references import source_anchor
-from ...content.document import DocumentStyleSources, document_styles, prepare_html_document, scoped_fragment
+from ...content.document import DocumentStyleSources, document_styles, prepare_html_document, scoped_fragment, locate_images
 from ...content.typography import FontEvidence, author_font_evidence
 from ...content.media import ResourceState
 from ...domain.book import (
@@ -32,7 +32,7 @@ from ...domain.book import (
     StructureNode,
 )
 
-PIPELINE_VERSION = "epub-dom-v3"
+PIPELINE_VERSION = "epub-dom-v4"
 _SOURCE_ANCHORS_ATTRIBUTE = "data-any-to-md-source-anchors"
 _SPLIT_DOCUMENT_RE = re.compile(
     r"^(?P<family>.+)_split_(?P<part>\d+)(?P<suffix>\.[^./]+)$",
@@ -485,6 +485,7 @@ def _prepare_document(
     resource_state: ResourceState | None = None,
 ) -> BeautifulSoup:
     soup = BeautifulSoup(style_sources.source_html or item.content.decode("utf-8", errors="replace"), "html.parser")
+    locate_images(soup, _normalize_package_path(item.file_name))
     _mark_code_listing_lines(soup, book, style_sources, lambda message: diagnostics.append(
         Diagnostic('code_font_uncertain', message, source_path=_normalize_package_path(item.file_name))
     ))
@@ -495,7 +496,7 @@ def _prepare_document(
         resource = asset_items.get(path)
         return (resource.get_content(), getattr(resource, "media_type", None)) if resource is not None else None
 
-    return prepare_html_document(soup, _normalize_package_path(item.file_name), assets, load_resource, style_sources, styles, diagnostics, resource_state=resource_state)
+    return prepare_html_document(soup, _normalize_package_path(item.file_name), assets, load_resource, style_sources, styles, diagnostics, resource_state=resource_state, locate_source_images=False)
 
 
 def _render_and_split_document(

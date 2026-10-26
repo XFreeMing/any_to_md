@@ -20,6 +20,27 @@ from .media import MediaFreezer, ResourceState, xml_resource_base
 from ..domain.book import AssetRef, Diagnostic
 
 SOURCE_ANCHORS_ATTRIBUTE = "data-any-to-md-source-anchors"
+SOURCE_LOCATION_ATTRIBUTE = "data-source-location"
+
+
+def locate_images(soup: BeautifulSoup, path: str) -> None:
+    """Capture source DOM positions before sanitizing, inserting or splitting tags.
+
+    DOCX supplies its OOXML positions before entering this shared boundary.
+    Positions are per occurrence, independent of media byte deduplication.
+    """
+    container = soup.body or soup
+    def visit(parent, position):
+        counts = defaultdict(int)
+        for child in parent.children:
+            if not isinstance(child, Tag):
+                continue
+            counts[child.name] += 1
+            location = f'{position}/{child.name}[{counts[child.name]}]'
+            if child.name == 'img':
+                child[SOURCE_LOCATION_ATTRIBUTE] = path+'#'+location
+            visit(child, location)
+    visit(container, 'body')
 
 
 @dataclass(frozen=True)
@@ -85,9 +106,12 @@ def prepare_html_document(
     diagnostics: list[Diagnostic],
     *, resource_base: str | None = None, document_paths: set[str] | None = None,
     resource_state: ResourceState | None = None,
+    locate_source_images: bool = True,
 ) -> BeautifulSoup:
     resource_base = resource_base or path
     resource_state = resource_state if resource_state is not None else ResourceState()
+    if locate_source_images:
+        locate_images(soup, path)
     media = MediaFreezer(load_resource, lambda message: diagnostics.append(Diagnostic('svg_resource', message, severity='error', source_path=path)), resource_state)
     sanitize_html(soup)
     seen_anchors: set[str] = set()

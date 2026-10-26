@@ -145,6 +145,7 @@ class PreparedDocx:
     stream: io.BytesIO | None
     expected_text: str
     list_hints: dict[str, ListHint]
+    image_locations: dict[str, str]
 
 
 def prepare_docx(archive: ZipFile, edition_id: str, diagnostics: list[Diagnostic]) -> PreparedDocx:
@@ -197,7 +198,7 @@ def prepare_docx(archive: ZipFile, edition_id: str, diagnostics: list[Diagnostic
             definition = replacement if replacement is not None else entries.get(level)
             start = _value(override, 'startOverride', _value(definition, 'start', '1'))
             levels[(number.get(W+'numId'), level)] = (int(start), _value(definition, 'numFmt', 'decimal'), _value(definition, 'lvlText', f'%{int(level)+1}.'), _value(definition, 'lvlRestart'))
-    modified, trees, hints = {}, {}, {}
+    modified, trees, hints, image_locations = {}, {}, {}, {}
     # Mammoth otherwise resolves embedded images against a literal "word/".
     # Root-relative package URIs also handle nested/custom part directories.
     for name in names:
@@ -236,6 +237,23 @@ def prepare_docx(archive: ZipFile, edition_id: str, diagnostics: list[Diagnostic
             return trees[path]
         tree, bindings, changed = _parse(archive.read(path))
         changed |= _select_alternatives(tree, bindings, diagnostics, path)
+        def mark_images(parent, position):
+            nonlocal changed
+            counts = defaultdict(int)
+            for child in list(parent):
+                name = child.tag.rsplit('}',1)[-1]
+                counts[name] += 1
+                location = f'{position}/{name}[{counts[name]}]' if position else name
+                if child.tag in {W+'drawing',W+'pict'}:
+                    anchor = 'any-to-md-image-'+uuid.uuid5(uuid.UUID(edition_id),path+'#'+location).hex
+                    marker = ET.Element(W+'bookmarkStart',{W+'id':str(2000000+len(image_locations)),W+'name':anchor})
+                    parent.insert(list(parent).index(child),marker)
+                    image_locations[anchor] = path+'#'+location
+                    changed = True
+                else:
+                    mark_images(child,location)
+        body = tree.find(W+'body')
+        mark_images(body if body is not None else tree,'body' if body is not None else '')
         counts = defaultdict(dict)
         paragraphs = tree.iter(W+'p') if active_ids is None else (paragraph for note in tree.findall(W+note_kind) if note.get(W+'id') in active_ids for paragraph in note.iter(W+'p'))
         for index, paragraph in enumerate(paragraphs):
@@ -290,4 +308,4 @@ def prepare_docx(archive: ZipFile, edition_id: str, diagnostics: list[Diagnostic
                     with archive.open(item) as source, target.open(item.filename, 'w') as output:
                         shutil.copyfileobj(source, output)
         stream.seek(0)
-    return PreparedDocx(document_path, stream, normalized_text(expected), hints)
+    return PreparedDocx(document_path, stream, normalized_text(expected), hints, image_locations)
