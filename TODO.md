@@ -12,12 +12,12 @@
 
 | 字段 | 当前值 |
 | --- | --- |
-| 批次状态 | 待执行 |
+| 批次状态 | 待规划复核 |
 | 关联 | E5 / US-12 / `UC-08-S2`；共同内容缺口关联 US-08 / US-09 / US-11，`UC-08-S4` 与 S3～S8 继续回归 |
-| 执行者 / 接单时间 | 未接单；启动后记录会话标识、时间、实际 HEAD 与已有差异 |
-| 规划基线 | `21b1a28`；EX-06 实现 `70085b5` 的准确修订复用、完整 S4 与 v5 迁移部分接受，S2 不接受 |
-| 文档更新时间 | 2026-10-25 22:22 +08:00；EX-07 仅规划，尚未实施 |
-| 实现最后核对 | 2026-10-25 22:18 +08:00；独立八场景 7 passed / 1 failed，S2 的结构 / 图题失败与逐次定位断言缺口仍在 |
+| 执行者 / 接单时间 | Codex / EX-07-20261026；2026-10-26 20:50 +08:00；main，HEAD `862f10e13feb76e59bf5347d2f4cc113c252dcea`，起始工作区干净 |
+| 规划基线 | 用户派发规划提交 `862f10e`；前次复核 `21b1a28` 部分接受 EX-06，S2 不接受 |
+| 文档更新时间 | 2026-10-26 21:11 +08:00；执行及匹配阅读完成，待规划复核 |
+| 实现最后核对 | 2026-10-26 21:10 +08:00；实现 `18cbe5c`，指定八场景 8 passed / 0 failed / 0 blocked；S2 全组合、定位、作用域、历史边界及匹配阅读通过 |
 
 **交付目标与范围**
 
@@ -50,12 +50,16 @@ $exRunId = Get-Date -Format 'yyyyMMddTHHmmssfff'
 
 **执行者回报（接单及取得新结论时局部更新）**
 
-- 实现：未执行；接单后记录实际基线及差异，完成时链接关键文件。
-- 验证：未执行；先复现 S2，再补强逐次源定位与作用域失败证据。
-- 运行中任务：无本批任务；启动服务或子进程后记录命令、工作目录、PID / 端口、日志与最近核实时间。
-- 未完成 / 阻塞：尚未接单；结构 / 图题修复、逐次定位断言及新阅读证据待完成。
-- 下一步建议：先补强源定位断言并确定共同表示，再修复共享建树与序列化，持续验证身份和历史资料保护。
-- 提交 / 推送：未执行；按 AGENTS 收尾并记录实际结果，最终回复给出提交号。
+- 实现：[共同 DOM 建树](src/content/revision.py) 按源标题级别恢复直接正文归属；[共同源定位](src/content/document.py) 在 DOM 改写前保存逐图片位置，[DOCX 包解释](src/readers/docx/package.py) 用 OOXML 书签携带实际段落 / run / drawing 容器位置；[唯一 Markdown 序列化器](src/writers/serialization.py) 保留 figure / figcaption、交错顺序及定位属性。四 Reader pipeline 升级（HTML / URL / DOCX v2、EPUB v4），schema-2 不变；[架构边界](specs/0002-conversion-architecture.md) 说明旧快照不重解、不补造定位。新增断言及完整原矩阵见 [S2](tests/E5/UC-08-S2.py) 与[独立参考 / 检查器](tests/common/reuse_support.py)。
+- 最终验证：仓库根目录，CPython 3.13.12 / Windows 11 / UTF-8，使用本卡隔离 PDF 环境及八场景命令，报告参数为 `--report var/quality/ex-07/final-01/scenarios.json`。运行 ID `555882b7d27f491890fdd228d106eddc`，日志 `var/quality/ex-07-final-01.log`；报告为 **8 passed / 0 failed / 0 blocked**，运行期间 126 项输入不变。S2 保留四来源 12 次首次检查、15 次重导出，以及第三层 A/B/C → A/D → E 作用域、全部身份 / partial / schema-1 守卫。共享内容与 Writer 的 EPUB / HTML / DOCX / URL 丰富样本同时由 S3～S8 回归覆盖。
+- 匹配阅读：生成并查看四来源首次 / 重导出 8 份及作用域 1 份真实 PDF 的全部 9 页；核对 5 份源身份、28 份导出、128 项阅读文件 / 资源身份，Markdown / HTML 整体及适用分章均与源参考一致，DOCX 图题保留独立后续段落。阅读记录及渲染在 `var/quality/ex-07/reading-final-01/`；已执行 `.venv/Scripts/python.exe -X utf8 tests/common/run.py --report var/quality/ex-07/final-01/scenarios.json --review-evidence var/quality/ex-07/reading-final-01/visual-review.json`，退出 0。先完成匹配阅读和审计，再回写本交接；回写后旧报告只证明其 ZIP 中的匹配 TODO 快照，不能直接在新 TODO 上补签。
+- 失败与源码证据：`var/quality/ex-07/red-original/scenarios.json` 保留原 76 条内容失败；`red-assertions/scenarios.json` 保留补强断言后的 126 条失败；`implementation-01` 保留技术通过但缺阅读的 blocked；`integration-01` 保留 URL 新旧 HTTP 捕获 SHA 比较失败。执行器仅自动保留输入指纹，五轮 `source-snapshot.zip` 由规划 Git 版本 / 本轮补丁恢复或当前文件采集，**各 126 项字节 SHA 与对应报告完全一致**，恢复方法与结果见 `var/quality/ex-07/save_snapshots.py`、`snapshot-recovery.json`；没有改写报告哈希或降低旧断言。
+- 历史保护与独立审计：S2 的 `historical-boundary/` 从规划提交归档真实运行旧 Reader，发布四来源后复制 `pre-fix-published/` 到 `upgrade-copy/`，原基线 81 个文件身份保持；新提交用新版 pipeline，旧任务加载旧修订、旧行 / 正文 / 资源 / 下载均不变。URL 原始捕获因 HTTP Date 头可有不同 SHA，分别保留原身份并逐字节核对相同页面和资源。`var/quality/ex-07/final-audit.json` 另核对 15 条原任务→准确修订→新任务 / export 数据库链、163 项新发布文件、离线调用观察、四来源历史边界及五份源码 ZIP；审计命令为 `.venv/Scripts/python.exe -X utf8 var/quality/ex-07/audit_final.py`，回写前通过。
+- 附加回归边界：`integration-01` 中 UC-02-S4 因过渡 OCR 路径缺 book.json 失败、UC-04-S2 因 Windows pass_fds 失败；固定规划提交的独立源码运行 `UC-02-S4 UC-04-S2`，在 `var/quality/ex-07/baseline-supplemental/scenarios.json` 复现相同失败。保留两份报告，不将附加检查称为通过；相应产品 / 浏览器范围仍在原故事，未扩展本批实现。
+- 运行中任务：本批所有执行器与子进程已结束（final-01 实际 Python PID 30704 / 启动器 25068，执行会话 62789；integration-01 PID 21360 / 25628）。21:10 核实无本批测试或服务残留，既有编辑器进程保留。
+- 未完成 / 阻塞：本批无未解除阻塞，仍待规划者接受 S2；**保留 S2 Scenario 声明和 US-12**。S1 / S3、UC-06-S10～S13 完整内容 Examples、T-04-7、真实用户旧数据、真实 OCR、PDF / 图片 Reader、安装 / 部署继续留待所属故事；本批小型样本和合成发布副本不替代这些承诺。
+- 下一步建议：规划者先以最终报告 / 源码 ZIP、实际 diff 和历史边界审计复核 EX-07，再决定是否接受 S2 及后续批次；执行者未派发下一批。
+- 提交 / 推送：实现及测试提交 `18cbe5cebbd9613b28b99730978bd8059fbea51d`，已成功 `git push origin main`（`862f10e..18cbe5c`）。本条交接随后单独提交并推送；包含本检查点的提交由 `git log` 定位，最终回复给出实际提交号。
 
 <a id="latest-review"></a>
 
@@ -820,12 +824,12 @@ UC-06-S3 / S7～S9 测试文件均待实现。S3 的 HTML 入口歧义仅适用�
 作为已有资料的使用者，我希望从保留快照或正文导出文档，来源变化时形成独立版本，以便长期使用资料而不重复识别或覆盖历史结果。
 
 - 状态：进行中。
-- 当前缺口：S2 的独立标题树、正文 / 图片归属、Markdown 图题容器及逐次源定位仍未满足；S1 / S3 完整范围未交付。已接入的准确修订复用和完整性保护由保留场景回归，不能据此宣称 US-12 完成。
+- 当前缺口：S2 的本批交付待规划复核，验收证据见顶部 EX-07；S1 / S3 完整范围未交付。准确修订复用和完整性保护由保留场景回归，不能据此宣称 US-12 完成。
 - 验收关联：UC-08-S1～S4；S4 同时关联 US-05，PDF 正文复用另由 UC-01-S5 验证。
 - 依赖：先覆盖已有共同 Reader 的 EPUB / HTML / DOCX / URL；PDF / 图片接入后纳入同一机制，不为它们另做持久正文或复用实现。
 - 剩余 Tasks：
-  - T-12-1：完成 [S2](tests/E5/UC-08-S2.py) 的全部独立结构 / 图文条件、逐次源定位断言和匹配阅读证据，修复首次解释与重导出的共同缺口；[S4](tests/E5/UC-08-S4.py) 继续回归。S1 / S3 全部未完成范围继续保留，不建空占位场景。
-  - T-12-2：补齐共同正文及交付中每次图片出现的可区分源定位，以源 DOM 锚点 / 出现位置或 OOXML 段落 / 容器独立参考断言；当前仅文档级 path 与局限说明不足。必要模型 / 解释变化保持旧修订绑定、加载与历史资料保护。
+  - T-12-1：复核 [S2](tests/E5/UC-08-S2.py) 已承接的独立结构 / 图文、完整输出及阅读证据；[S4](tests/E5/UC-08-S4.py) 继续回归。S1 / S3 全部未完成范围继续保留，不建空占位场景。
+  - T-12-2：复核 S2 的逐次源定位、解释升级与历史保护边界；断言、独立参考及剩余适用范围以场景代码和 EX-07 回报为准，不另复制行为清单。
   - T-12-3：按来源身份、解释选项及 pipeline 版本判定修订适用性；仅输出格式变化不重读来源，新提交的正文 / 资源变化产生新身份，旧修订与下载保持不变。需重新解释时从已保留来源生成新修订，不静默回退旧引擎。
 
 **用例契约**：参与者为已有资料使用者；触发为对已结束任务请求输出或重新提交变化来源；前置条件为已有可定位的来源快照、修订或发布记录；成功结果为生成正确的新导出并保留旧版本。通过实际已结束任务 Web/API 或完整应用用例执行；不虚构目前不存在的 CLI 恢复参数。S2 见现有场景；S4 由保留回归承接，S1 / S3 仍待完整承接。
