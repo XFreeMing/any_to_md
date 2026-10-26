@@ -36,7 +36,7 @@ class _MarkdownSerializer(MarkdownConverter):
         return super().convert_ol(el, text, parent_tags)
 
     def convert_ul(self, el, text, parent_tags):
-        if el.find(['ol', 'ul']) or el.find(id=True) or el.get('id'):
+        if el.find(['ol', 'ul']) or el.find(id=True) or el.get('id') or el.get('data-docx-list-instance'):
             return '\n\n'+str(el)+'\n\n'
         return super().convert_ul(el, text, parent_tags)
 

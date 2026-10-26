@@ -15,6 +15,8 @@ BASE_CSS = '''
 body { font-family: AnyToMdSans, sans-serif; font-size: 12pt; line-height: 1.55; color: #111; }
 [data-source-html], [data-source-body] { display: block; }
 h1,h2,h3,h4,h5,h6 { break-after: avoid; }
+[data-docx-note] { break-inside: avoid; }
+dt[data-docx-note] { break-after: avoid; }
 img,svg { max-width: 100%; height: auto; }
 table { border-collapse: collapse; max-width: 100%; }
 th,td { border: 1px solid #ccc; padding: 6px 8px; vertical-align: top; }

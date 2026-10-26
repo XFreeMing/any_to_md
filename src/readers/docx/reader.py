@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import mimetypes
 import posixpath
+import re
 from pathlib import Path
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile
@@ -17,7 +18,7 @@ from ...content.revision import populate_html_revision
 from ...domain.book import BookMetadata, BookRevision, Diagnostic
 from .package import normalized_text, prepare_docx
 
-PIPELINE_VERSION = 'docx-dom-v2'
+PIPELINE_VERSION = 'docx-dom-v3'
 STYLE_MAP = "\n".join([
     *(f"p[style-name='{name}'] => pre:separator('\\n')" for name in ('Code', 'Code Block', 'Source Code', '代码', '代码块')),
     'comment-reference => sup',
@@ -27,6 +28,16 @@ STYLE_MAP = "\n".join([
 
 def _normalize_notes(soup):
     """One note body per source identity, with return links to every reference."""
+    labels, counts = {}, {'note': 0, 'comment': 0}
+    for reference in soup.find_all('a', href=True):
+        identifier = reference['href'][1:]
+        if not reference['href'].startswith('#') or not re.fullmatch(r'(footnote|endnote|comment)-[^-]+', identifier):
+            continue
+        if identifier not in labels:
+            group = 'comment' if identifier.startswith('comment-') else 'note'
+            counts[group] += 1
+            author = re.sub(r'\d+\]$', '', reference.get_text()).lstrip('[') if group == 'comment' else ''
+            labels[identifier] = f'[{author}{counts[group]}]'
     for kind, tag in (('footnote', 'li'), ('endnote', 'li'), ('comment', 'dt')):
         seen = set()
         for note in list(soup.find_all(tag, id=lambda value: value and value.startswith(kind+'-'))):
@@ -41,12 +52,17 @@ def _normalize_notes(soup):
             seen.add(identifier)
             references = soup.find_all('a', href='#'+identifier)
             body = note.find_next_sibling('dd') if tag == 'dt' else note
-            label = references[0].get_text() if references else ''
+            note['data-docx-note'] = kind
+            if body is not None:
+                body['data-docx-note'] = kind
+            label = labels.get(identifier, '')
+            if tag == 'dt' and references:
+                note.string = 'Comment '+label
             for index, reference in enumerate(references, 1):
                 original = reference.get('id')
+                reference.string = label
                 if index > 1 and original:
                     reference['id'] = original+f'-occurrence-{index}'
-                    reference.string = label
                     back = soup.new_tag('a', href='#'+reference['id'])
                     back.string = f' ↑{index}'
                     if body is not None:
@@ -68,6 +84,7 @@ def _apply_numbering(soup, hints, diagnostics, path):
             diagnostics.append(Diagnostic('docx_numbering', f'尚不能完整保留列表编号格式：{hint.kind} / {hint.text}', severity='error', source_path=path))
         listing = item.find_parent(['ol', 'ul'])
         listings.setdefault(id(listing), (listing, {}))[1][id(item)] = hint
+        listing['data-docx-list-instance'] = hint.instance
         if hint.kind != 'bullet':
             item['value'] = str(hint.value)
     for listing, items in listings.values():
@@ -84,6 +101,7 @@ def _apply_numbering(soup, hints, diagnostics, path):
                     current = following
                 if key != previous:
                     current.name = 'ul' if hint.kind == 'bullet' else 'ol'
+                    current['data-docx-list-instance'] = hint.instance
                     if hint.kind != 'bullet':
                         current['start'] = str(hint.value)
                     if types.get(hint.kind):
@@ -155,15 +173,25 @@ def read_docx_document(
         lost = message.type == 'error' or any(token in text.lower() for token in ('could not', 'was ignored', 'unlikely to display'))
         diagnostics.append(Diagnostic('docx_conversion', text, severity='error' if lost else 'warning', source_path=prepared.document_path))
     soup = BeautifulSoup(result.value, 'html.parser')
-    for identifier, location in prepared.image_locations.items():
-        anchor = soup.find('a',id=identifier)
-        image = anchor.find_next('img') if anchor is not None else None
-        if image is not None and image.find_parent(['p','li']) is anchor.find_parent(['p','li']):
-            image['data-source-location'] = location
-            anchor.decompose()
-        else:
-            diagnostics.append(Diagnostic('docx_image_location','源图片位置未映射到对应正文图片。',severity='error',source_path=prepared.document_path))
     _normalize_notes(soup)
+    for identifier, location in prepared.image_locations.items():
+        anchors = soup.find_all('a', id=identifier)
+        ends = soup.find_all('a', id=identifier+'-end')
+        images = []
+        if len(anchors) == len(ends) == 1:
+            for element in anchors[0].find_all_next():
+                if element is ends[0]:
+                    break
+                if element.name == 'img':
+                    images.append(element)
+            else:
+                images = []  # The end marker must follow this exact occurrence.
+        if len(images) == 1 and not images[0].get('data-source-location'):
+            images[0]['data-source-location'] = location
+        else:
+            diagnostics.append(Diagnostic('docx_image_location','源图片位置未映射到对应正文图片。',severity='error',source_path=location))
+        for marker in [*anchors, *ends]:
+            marker.decompose()
     _apply_numbering(soup, prepared.list_hints, diagnostics, prepared.document_path)
     _check_source_text(soup, prepared.expected_text, diagnostics, prepared.document_path)
     book = BookRevision(book_id, edition_id, revision_id, source_id, source_path, source_sha256, metadata, [], {}, [], {}, diagnostics, PIPELINE_VERSION, source_format='docx')

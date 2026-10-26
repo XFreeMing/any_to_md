@@ -199,6 +199,7 @@ def prepare_docx(archive: ZipFile, edition_id: str, diagnostics: list[Diagnostic
             start = _value(override, 'startOverride', _value(definition, 'start', '1'))
             levels[(number.get(W+'numId'), level)] = (int(start), _value(definition, 'numFmt', 'decimal'), _value(definition, 'lvlText', f'%{int(level)+1}.'), _value(definition, 'lvlRestart'))
     modified, trees, hints, image_locations = {}, {}, {}, {}
+    image_fragments = set()
     # Mammoth otherwise resolves embedded images against a literal "word/".
     # Root-relative package URIs also handle nested/custom part directories.
     for name in names:
@@ -229,13 +230,23 @@ def prepare_docx(archive: ZipFile, edition_id: str, diagnostics: list[Diagnostic
                 relation.set('Target', '/'+resolved)
                 changed = True
                 if parsed.fragment:
-                    diagnostics.append(Diagnostic('docx_image_fragment', '嵌入图像的 URI 片段尚不能完整保留。', severity='error', source_path=owner))
+                    image_fragments.add((owner, relation.get('Id')))
         if changed:
             modified[name] = ET.tostring(relationships, encoding='utf-8', xml_declaration=True)
-    def read_story(path, note_kind=None, active_ids=None):
+    def read_story(path, note_kind=None, active_ids=None, *, delivered=True):
         if path in trees:
             return trees[path]
         tree, bindings, changed = _parse(archive.read(path))
+        note_positions = {}
+        if active_ids is not None:
+            # Only referenced notes belong to the interpreted story. Preserve
+            # their physical ordinal before pruning so source locations remain
+            # tied to the original package, not the filtered intermediate ZIP.
+            for ordinal, note in enumerate(tree.findall(W+note_kind), 1):
+                note_positions[id(note)] = ordinal
+                if note.get(W+'id') not in active_ids:
+                    tree.remove(note)
+                    changed = True
         changed |= _select_alternatives(tree, bindings, diagnostics, path)
         def mark_images(parent, position):
             nonlocal changed
@@ -243,17 +254,32 @@ def prepare_docx(archive: ZipFile, edition_id: str, diagnostics: list[Diagnostic
             for child in list(parent):
                 name = child.tag.rsplit('}',1)[-1]
                 counts[name] += 1
-                location = f'{position}/{name}[{counts[name]}]' if position else name
+                if child.tag in {W+'del', W+'moveFrom'}:
+                    continue
+                segment = f'{name}[{note_positions.get(id(child), counts[name])}]'
+                if id(child) in note_positions:
+                    segment += f'[id={child.get(W+"id")}]'
+                location = f'{position}/{segment}' if position else segment
                 if child.tag in {W+'drawing',W+'pict'}:
+                    for image in child.iter():
+                        if any((path, value) in image_fragments for key, value in image.attrib.items()
+                               if key in {'{http://schemas.openxmlformats.org/officeDocument/2006/relationships}'+name for name in ('embed','link','id')}):
+                            diagnostics.append(Diagnostic('docx_image_fragment', '嵌入图像的 URI 片段尚不能完整保留。', severity='error', source_path=path+'#'+location))
                     anchor = 'any-to-md-image-'+uuid.uuid5(uuid.UUID(edition_id),path+'#'+location).hex
                     marker = ET.Element(W+'bookmarkStart',{W+'id':str(2000000+len(image_locations)),W+'name':anchor})
-                    parent.insert(list(parent).index(child),marker)
+                    index = list(parent).index(child)
+                    parent.insert(index,marker)
+                    # Mammoth ignores bookmarkEnd. A second named bookmark
+                    # bounds this occurrence even when the drawing emits no img.
+                    parent.insert(index+2, ET.Element(W+'bookmarkStart', {
+                        W+'id':str(3000000+len(image_locations)), W+'name':anchor+'-end'}))
                     image_locations[anchor] = path+'#'+location
                     changed = True
                 else:
                     mark_images(child,location)
         body = tree.find(W+'body')
-        mark_images(body if body is not None else tree,'body' if body is not None else '')
+        if delivered:
+            mark_images(body if body is not None else tree,'body' if body is not None else '')
         counts = defaultdict(dict)
         paragraphs = tree.iter(W+'p') if active_ids is None else (paragraph for note in tree.findall(W+note_kind) if note.get(W+'id') in active_ids for paragraph in note.iter(W+'p'))
         for index, paragraph in enumerate(paragraphs):
@@ -295,7 +321,7 @@ def prepare_docx(archive: ZipFile, edition_id: str, diagnostics: list[Diagnostic
     expected += ''.join(note_texts.get(key, '') for key in [*note_order, *comment_order])
     for kind in ('header', 'footer'):
         for path in parts.get(kind, []):
-            if _has_visible_content(read_story(path)):
+            if _has_visible_content(read_story(path, delivered=False)):
                 diagnostics.append(Diagnostic('docx_unsupported_part', '页眉/页脚中的文字、图形或字段尚不能完整保留到重排版输出。', severity='error', source_path=path))
     stream = None
     if modified:
