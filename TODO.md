@@ -8,32 +8,33 @@
 
 ## 当前执行批次
 
-### EX-08 — 修复 Word 注释图片定位并完整验收列表与注释
+### EX-09 — 离线解释已捕获来源，来源变化保留独立版本
 
 | 字段 | 当前值 |
 | --- | --- |
-| 批次状态 | 待规划复核 |
-| 关联 | E2 / US-09 / 完整 `UC-06-S4`；`UC-08-S2 / S4` 与 UC-03-S3～S8 继续回归 |
-| 执行者 / 接单时间 | Codex EX-08 / 会话 01a17881-c926-73c0-96ec-41f04010b7eb；2026-10-26 22:00 +08:00；main，实际 HEAD `a35e5dae8332dc9270373b79e85bc760673d9e5f`，起始工作区干净 |
-| 规划基线 | `717a212`；EX-07 实现 `18cbe5c` 的 S2 范围接受，新增 DOCX 注释图片回归未接受 |
-| 文档更新时间 | 2026-10-26 22:19 +08:00；执行与匹配阅读完成，保留附加失败，待规划复核 |
-| 实现最后核对 | 2026-10-26 22:18 +08:00；实现 `b7a03f4`，九场景匹配快照 9 passed / 0 failed / 0 blocked；浏览器附加三场景仍失败 |
+| 批次状态 | 待执行 |
+| 关联 | E5 / US-12 / `UC-08-S1` 与完整 `UC-08-S3`；保留 S2 / S4、Word S4 与任务资料回归 |
+| 执行者 / 接单时间 | 未接单；启动后记录会话标识、时间、实际 HEAD 与已有差异 |
+| 规划基线 | `58b3ce5`；EX-08 实现 `b7a03f4` 与既定 Word 列表 / 注释验收接受，非完整 US-09 交付 |
+| 文档更新时间 | 2026-10-27 21:37 +08:00；EX-09 仅规划，尚未实施 |
+| 实现最后核对 | 2026-10-27 21:33 +08:00；持久来源及终态修订选择已有实现，S1 / S3 尚无场景文件，未宣称满足其完整条件 |
 
 **交付目标与范围**
 
-- 在 `tests/E2/UC-06-S4.py` 完整承接 [US-09](#word-content) 的原 S4 三个 Examples：编号类型 / 起始值 / 实例 / 重启，多级列表交替并返回上层，脚注 / 尾注 / 批注的单次及重复引用。保留稳定场景编号，不能只补两个脚注例就宣称整个 S4 通过；不新建平行验收编号或函数级测试。
-- 先以[新旧对照](var/quality/planner-review/ex-07/20261026T213710466-docx-note-regression/summary.json)中的两份独立源复现，再将该边界纳入 S4 的注释 Example：多个被引用注释使用相同内部段落 / drawing 形状，同资源在不同注释出现，已引用与未引用注释共存。源注释 ID、引用位置、编号、正文、图片及内部容器位置须在转换前列明；其他两类注释按同一语义核验，不能只修 footnote 名称特例。
-- 共用修复 [OOXML 包解释](src/readers/docx/package.py) 与 [DOCX Reader](src/readers/docx/reader.py) 的逐次定位及映射集合。位置须可区分部件、注释类型及 ID / 序号与内部出现；定位仅核验实际承接的内容。未引用注释不能触发虚假损失或进入交付；真实被引用图片丢失 / 无法映射仍须准确诊断，不得一律降成 warning 或跳过断言。
-- 通过现有完整转换或 Web/API 生成 Markdown / HTML / PDF 和适用分章；逐项核对列表值与层级、交替顺序、每个引用目标和返回位置、注释正文出现次数，以及注释内图片的归属 / 顺序 / 逐次源位置。支持的视图能力及实际损失如实表达；图文可见或只命中 marker 不足以验收。
-- 复用唯一正文、编号 / 注释处理及 Writer；必要共同重构和模型 / pipeline 兼容调整限于本目标。保护已发布修订与历史下载，保留 EX-07 的完整 S2 矩阵、定位及旧 pipeline 守卫。S5 的包结构、S6 的全部损失 Examples、S11 的完整标题语义继续保留；本批最小损失负例不替代整个 S6。
-- US-12 的 S1 / S3 仍为后续主线，不能因本批回归通过宣称离线快照或变化来源已完整交付。浏览器 T-04-7、真实旧数据、PDF / 图片 Reader、真实 OCR、非 Windows与安装 / 部署不纳入本批。
+- 完整建立 `tests/E5/UC-08-S1.py` 与 `tests/E5/UC-08-S3.py`，承接 [US-12](#body-reuse) 的现有 EPUB / HTML / DOCX / URL 范围，验证 Markdown / HTML / PDF 及该来源适用分章。S3 原三个 Examples 全保留；不新建恢复参数、来源入口或平行正文 / 输出实现。
+- S1 必须经真实入口先完整捕获原件及必要资源，目标来源尚无 ready 正文；同库另有不同 source_id 的早期成功资料作保护对照。再移除原位置 / 原资源或关闭真实源站，重新打开运行时，通过现有任务继续 / 重试完成解释。URL 必须实际捕获并持久保存 `.zip`，只有 `.url` 指针不算；可在真实捕获后、Reader 前建立可重试状态，保留实际捕获身份和失败 / 中止窗口，不手写快照或用 schema-1 / 已发布正文重导出替代。
+- S1 观察并确认真实 Reader 及持久 `data/sources` 读取，同时禁止 HTTP / OCR 和原始位置读取；不能直接照搬 S2 的全禁止 Reader 观察器。核对新正文、资源及交付视图的独立结构参考，原件、无关早期任务 / 修订 / 文件和实际下载保持。
+- S3 对同一真实路径 / URL 分别重新提交“正文变化”“仅资源变化”，在转换前固定各版本的标题路径、直接正文、逐次图文与源定位参考。分别比较实际包 / 捕获成员，证明正文例变化符合参考、仅资源例正文未改；实际执行新的解释，新来源 / 正文身份和产物反映变化，旧任务、修订、资源和下载仍可读取且哈希不变。
+- S3 的稳定性 Example 固定同一已捕获字节、资源、解释选项和 pipeline，验证 revision / 节点 / 正文 / 资源身份稳定、新 job / export 独立且不串用其他版本。URL 重新抓取可因 Date / 响应头或 ZIP 元数据而有不同原始 SHA，须保留各自真实身份并比较页面 / 资源；不能为测试删除元数据或把跨抓取 SHA 相同当默认要求。
+- 先编码独立场景并运行真实基线；已有路径若满足就保留真实通过，无须制造失败或无谓改生产。发现真实缺口时先保留失败再修复，主要边界为 [任务与捕获](src/application/jobs.py)、[转换用例](src/application/convert.py)、来源适配器及必要持久索引；扩展公共检查器时保护既有场景预期。
+- 本批只验收现有四 Reader 的对应范围。PDF / 图片 Reader 与其复用依赖、真实 OCR、完整内容 Epic、Word 修订 / 删除语义、浏览器 T-04-7、真实旧数据、非 Windows及安装 / 部署仍保留；即使本批通过，也不能删除 US-12 的 PDF / 图片未完成范围。
 
 **验收与证据**
 
-- 新建 S4 前固定独立 OOXML 样本及编号 / 注释 / 图文 / 链接清单，覆盖原全部 Examples；先保存真实失败，再修复实现。回归基线同时保留两个已确认回归：旧版对两例均 completed；当前两有效脚注的第二图定位为空且仍 completed，未引用脚注图使无实际交付损失的任务变 partial。四次对照进程均退出 0，不能用“命令执行成功”代替语义正确。
-- 使用真实应用 / 持久资料及实际产物，检查诊断、状态、资源、引用与返回、单次 / 重复引用、原件和早期下载。图像字节可复用，每次出现与源注释位置分别核验；注释正文不得随重复引用丢失或无依据重复，未引用内容也不得凭空进入交付。
-- 继续使用隔离 PDF runtime：`WEASYPRINT_DLL_DIRECTORIES=<仓库>/var/quality/ex-06/pdf-environment/runtime/ucrt64/bin`、`FONTCONFIG_PATH=<仓库>/var/quality/ex-06/pdf-environment/runtime/ucrt64/etc/fonts`、`XDG_CACHE_HOME=<仓库>/var/quality/ex-06/pdf-environment/cache`。先核实可用性，生成实际 PDF 并逐页阅读，保存匹配源 / 产物身份；旧阅读不能签新文件。环境或阅读缺失如实 blocked，继续其他独立组合。
-- 工作目录为仓库根目录，记录实际环境、起始提交、差异、命令及进程标识；下面九场景及实际受影响回归每次使用新目录。开始即保留匹配源码快照；运行期间冻结 AGENTS / TODO 与源码，完成匹配阅读后再回写交接，保留 red / blocked / 附加失败，不改报告哈希或降低断言。
+- 先为每来源及版本列独立结构 / 直接归属 / 顺序、每次图片容器 / 图题 / 源位置及资源内容参考，再实际捕获 / 解释。复用 E1～E3 与现有 S2 的同一判断方法，整体及适用分章分别核对；不能只比较标题、数量、两份同错输出或 revision 字符串。确认的正例未满足仍为 failed / blocked，不能降为 partial 算通过。
+- 保留捕获前后实际来源、原始包及成员身份、URL HTTP 到达 / 关闭标识、目标无 ready 正文的数据库证据、离线原位置、重新打开 / 重试路径及实际 Reader / HTTP / OCR / 文件读取观察；S1 的 Reader 允许边界与 S2 明确区分。S3 另保存每次新提交与新旧 job / source / revision / export 的真实关联和保留下载哈希。
+- 复核本机隔离 PDF 环境，生成本批真实 PDF 并逐页阅读，阅读与当前源 / 实际输出身份匹配。环境缺失或阅读未完成时如实 blocked，继续独立组合，保留失败和匹配源码；不以旧阅读给新文件签通过。
+- 工作目录为仓库根目录，记录实际环境、起始提交、差异和运行标识。下面十一场景及实际受影响回归每次新目录，运行前保存匹配源码快照、期间冻结 AGENTS / TODO 与源码；技术完成后先补匹配阅读，再回写交接，保留所有基线、失败与限制。
 
 ```powershell
 $env:PYTHONUTF8 = '1'
@@ -42,34 +43,29 @@ $env:WEASYPRINT_DLL_DIRECTORIES = "$PWD/var/quality/ex-06/pdf-environment/runtim
 $env:FONTCONFIG_PATH = "$PWD/var/quality/ex-06/pdf-environment/runtime/ucrt64/etc/fonts"
 $env:XDG_CACHE_HOME = "$PWD/var/quality/ex-06/pdf-environment/cache"
 $exRunId = Get-Date -Format 'yyyyMMddTHHmmssfff'
-.venv/Scripts/python.exe tests/common/run.py UC-06-S4 UC-08-S2 UC-08-S4 UC-03-S3 UC-03-S4 UC-03-S5 UC-03-S6 UC-03-S7 UC-03-S8 --report "var/quality/ex-08/$exRunId/scenarios.json"
+.venv/Scripts/python.exe tests/common/run.py UC-08-S1 UC-08-S3 UC-06-S4 UC-08-S2 UC-08-S4 UC-03-S3 UC-03-S4 UC-03-S5 UC-03-S6 UC-03-S7 UC-03-S8 --report "var/quality/ex-09/$exRunId/scenarios.json"
 ```
 
-- 整批接受须九场景、原 S4 全部 Examples 与输出 / 阅读条件均满足。实现存在、技术执行、阅读和完整产品验收分别回报；S4 声明留待规划复核，不自行清理其他未完成故事。
+- 整批接受须十一场景、四来源全部已列操作 / 输出组合及必要阅读证据满足；实现、执行与完整验收分别回报。S1 / S3 声明保留到规划复核，其他内容与 PDF / 图片依赖不得顺带清理。
 
 **执行者回报（接单及取得新结论时局部更新）**
 
-- 实现：`package.py` 按部件 / 注释原始序号及 ID / 内部 drawing 次序定位，只解释实际引用的注释；成对标记限制每图映射，过滤未引用关系片段诊断。`reader.py` 在去重注释后逐图映射并保留精确损失来源，重复引用不占用后续标签编号；pipeline 升至 `docx-dom-v3`。Writer 保留 bullet 实例边界，并避免短注释 PDF 跨页拆开正文与返回。新增完整 `UC-06-S4.py` 及独立清单，包含旧 v2 真实发布 / 副本升级 / 四输出重用与主动新提交守卫；S2 文件未削减。
-- 失败基线：两个规划源在 `var/quality/ex-08/repro-red/` 复现，均退出 0；第二图缺定位但 completed / 未引用图虚假 partial。独立样本及清单位于 `tests/common/docx_lists_notes.py`，覆盖七类编号的 28 实例 / 42 项、9 项三级交替、三类注释 21 引用 / 9 正文及同 run 多图。`s4-red-03/scenarios.json` 保留完整语义 red，red-01 / 02 保留检查器调试与真实产物。`repro-green/` 对原两源均 completed、无诊断、逐图唯一非空定位；源码身份引用 final-01 匹配快照。
-- 补充验证：`s4-label-red` 保留重复引用提前出现造成后续标签跳号的失败；`s4-inactive-fragment-red` 保留未引用图关系片段的虚假 partial。`s4-green-05/scenarios.json` 为 0 failed / 1 blocked，全部自动语义检查通过，唯一阻塞是匹配阅读。早期 `s4-green-01～04` 含检查器调试失败或缺阅读 blocked，均保留。负例已由空 drawing 加强为真实外链图片不可获取，逐类精确诊断；不替代 S6 全部范围。
-- 最终验证：[九场景报告](var/quality/ex-08/final-01/scenarios.json)为 **9 passed / 0 failed / 0 blocked**；S4 原三个 Examples 的五样本均经实际 Markdown / HTML / PDF / 分章与独立参考核对，正常图 12 次 / 缺图负例 9 次逐次归属定位，全部 21 引用及返回在各视图核对；PDF 另核对实际标签、链接矩形及目标坐标。S4 的 API 四输出重导出、旧文件 / 行 / 原件 / 下载保护、真实 v2 发布的独立副本升级与主动 v3 新提交通过。S2 完整代表矩阵、历史 v1、离线与身份守卫保留，27 组合记录无失败。`real-loss-control/` 另保存真实外链缺图的新旧完整转换：旧 v2 虽 partial 却无逐图定位诊断，v3 精确报告三类注释 7 的第一图，不借用同 run 后一图。
-- 环境 / 运行：仓库根目录，Windows 11 26340 / CPython 3.13.12，Mammoth 1.11.0、WeasyPrint 66.0、PyMuPDF 1.26.7、Playwright 1.64.0；PDF 使用顶部隔离环境。`.venv/Scripts/python.exe var/quality/ex-08/run_capture.py final-01` 加顶部九编号实际执行同一命令，PID 32348，22:10:23～22:12:03；首次 7 passed / 2 缺阅读 blocked，退出 1，原报告保留为 `technical-scenarios.json`。随后以 `tests/common/run.py --report var/quality/ex-08/final-01/scenarios.json --review-evidence var/quality/ex-08/final-01/visual-review.json` 匹配补审退出 0，命令、日志与退出码见 `process.json` / `review-process.json`。
-- 阅读与快照：[执行者阅读](var/quality/ex-08/final-01/visual-review.json)关联 S4 的 10 导出 / 54 阅读文件、S2 的 28 导出 / 128 阅读文件。Poppler 实际渲染 15 PDF 共 23 页，查看全部 16 个不同像素页，另 7 页像素相同；核对 99 个 Markdown / HTML / 分章 / 目录文件并查看 48 个不同字节视图，其余字节相同，原资源身份一并匹配。页索引、截图及等价关系见 `final-01/reading/`。各报告的 128 输入均在运行前保存、全程不变并逐哈希匹配 ZIP；[快照核验](var/quality/ex-08/final-01/snapshot-audit.json)保留 red / failed / blocked 的适用版本。最终 ZIP SHA-256 `9bbcc6c173f87cb97cea53c4b86a9920ca33d0511015f78a3ee48e0b58cd5f1c`。本次回写改变 TODO 指纹，原报告只证明 ZIP 内匹配版本；补审须用该快照或重新运行，不能直接给回写后的 TODO 签旧报告。
-- 附加失败：[受影响浏览器回归](var/quality/ex-08/affected-01/scenarios.json) UC-04-S1 / S3 / S4 均在启动阶段 failed（`pass_fds not supported on Windows.`），未进入浏览器转换；[规划基线独立检出](var/quality/ex-08/affected-baseline/scenarios.json)在 `a35e5da` 复现相同三项失败，原源码 ZIP、命令和退出 1 保留。未当通过，公共驱动缺口归 US-06，不借本批扩展恢复浏览器。
-- 运行中任务：无；22:18 核实测试 PID 与含 ex-08 的 Python 子进程均已退出，无运行结论继承。
-- 未完成 / 下一步：执行者已完成本批实现与固定范围验证，等待规划者独立复核实际 diff、匹配源码与阅读；未代替规划接受。UC-06-S4 声明保留；US-12 S1/S3、S5/S6/S11、浏览器驱动及 T-04-7、真实旧数据、真实 OCR、PDF / 图片 Reader、非 Windows、安装 / 部署等原范围继续保留。仅代表小型样本，未宣称完整 Word / 长书或整个产品交付。
-- 提交 / 推送：实现与场景 `b7a03f4` 已提交且 `git push origin main` 成功（`a35e5da..b7a03f4`，退出 0）；本 TODO 检查点随后独立提交并推送，包含它的提交由 `git log` 定位，最终回复给出实际结果。
+- 实现：未执行；接单后记录实际基线、差异及关键文件。
+- 验证：未执行；先固定独立参考，建立完整 S1 / S3 并核验真实基线。
+- 运行中任务：无本批任务；启动后记录命令、工作目录、PID / 端口、日志与最近核实时间。
+- 未完成 / 阻塞：尚未接单；真实离线捕获、变化来源完整矩阵和本批阅读待执行。
+- 下一步建议：先明确 S1 捕获完成 / 尚无正文窗口及 S3 三种身份条件，按实际证据决定必要实现。
+- 提交 / 推送：未执行；按 AGENTS 收尾并记录结果，最终回复给出实际提交号。
 
 <a id="latest-review"></a>
 
 ## 最近规划复核
 
-- 2026-10-26 21:41 +08:00，**部分接受 EX-07**：实现 `18cbe5c` / 交接 `717a212` 的既有 UC-08-S2 完整代表矩阵、结构 / 图题 / 逐次定位与匹配阅读接受，S2 移交保留场景回归；两个新增 DOCX 注释图片回归不接受，由 EX-08 优先处理。US-12 整体及完整内容 Epic 仍未交付。
-- 执行者[最终报告](var/quality/ex-07/final-01/scenarios.json)为 8 passed / 0 failed / 0 blocked。五轮各 126 输入 ZIP 逐项匹配报告；它们由规划 Git / 可逆补丁或当前文件事后恢复，字节准确，不能称运行时自动捕获。原 76 条失败、补强后 126 条、缺阅读 blocked、集成 URL 头导致的身份误比及附加两项旧失败均保留；固定旧版本也复现过渡 OCR 缺 book.json 与 Windows pass_fds，未当通过。
-- 规划者在干净 `717a212`、仓库根目录、CPython 3.13.12 / Windows 11 UTF-8、相同隔离 PDF 环境独立运行八场景：初次 7 passed / 0 failed / 1 blocked（仅 S2 缺新阅读，退出 1），保留技术报告；实际核对并渲染本次 9 份 PDF 全部 9 页、查看 5 个不同页面及 4 对相同页，匹配阅读补充命令退出 0，最终 **8 passed / 0 failed / 0 blocked**。126 输入源码在运行前即保存且期间不变；[规划复核](var/quality/planner-review/ex-07/20261026T213329880/review.json)含命令、报告、源码 ZIP、阅读和边界。
-- 独立只读核验实际 15 条精确修订关联、163 项新发布文件及离线调用观察；历史四来源 81 项原基线、77 项升级副本旧文件及 86 条旧行保持，旧任务仍选旧修订，新提交用新 pipeline。执行者的 5 源 / 28 导出 / 128 阅读文件（含 9 页 PDF）及 938 项 S2 产物身份匹配。阅读结论只限这些代表小型样本，不扩大为完整 Word / 长书质量。21:39 核实本批测试无残留进程。
-- [新回归证据](var/quality/planner-review/ex-07/20261026T213710466-docx-note-regression/summary.json)：相对固定 `862f10e`，当前两个被引用脚注的同形图像路径碰撞，五图均交付但第二注释图定位为空，任务仍 completed 无诊断；另一个未引用脚注图被登记而未映射，无实际交付损失却从 completed 变为 partial。四次完整转换退出 0；源、原始新旧数据 / 产物与命令保留。问题已回到 US-09 / UC-06-S4，不能由 S2 的八场景通过抹去。
-- 下一批 EX-08 完整承接原 Word 列表与注释 S4 并修上述回归；US-12 的 S1 / S3、S5 / S6 / S10～S13 等完整内容范围、T-04-7、真实旧数据、隔离重试异常链静态风险、真实 OCR、PDF / 图片 Reader、非 Windows及安装 / 部署继续保留。
+- 2026-10-27 21:35 +08:00，**接受 EX-08 的既定 UC-06-S4 范围**：实现 `b7a03f4` / 交接 `58b3ce5` 的编号 / 重启 / 实例、三级交替与三类注释单次 / 重复引用、图像逐次定位及实际损失均由场景承接；原两个脚注回归已闭环。S4 交保留场景回归，清理其 TODO 声明及待复核说明；US-09 整体、Word 全部内容与长篇文档未宣称交付。
+- 执行者[最终报告](var/quality/ex-08/final-01/scenarios.json)为 9 passed / 0 failed / 0 blocked，技术原报告 7 passed / 2 blocked，匹配补审退出 0。独立核验十三份报告的输入字节与 ZIP（十二轮各 128 项、旧基线 126 项），最终 ZIP 与回报 SHA 一致，均有运行前保存及期间不变的证据；旧 red / 检查器 failed / 阅读 blocked 均保留。三项附加浏览器失败与固定规划基线原因相同，仍归 US-06 / T-04-7，未当通过。
+- 规划者在干净 `58b3ce5`、仓库根目录、CPython 3.13.12 / Windows 11 UTF-8 及隔离 PDF 环境独立跑九场景：先为 7 passed / 0 failed / 2 blocked（只有 S4 / S2 缺新阅读，退出 1），保留技术报告；本轮 15 份 PDF 共 23 页全部渲染、16 个不同页面由规划者及协作复核实际查看，其余页 SHA 相同，并核对实际文本视图 / 独立参考。正式匹配阅读补审退出 0，最终 **9 passed / 0 failed / 0 blocked**。运行前保存 128 输入源码 ZIP，期间不变；[规划复核](var/quality/planner-review/ex-08/20261027T212519106/review.json)含报告、命令、快照、阅读分工及限制。
+- 实际只读核验本轮 S4 的 431 项冻结产物与 120 项发布索引、S2 的 938 项冻结产物 / 15 条准确修订链 / 163 项重导出文件。v2 原基线 20 文件、升级副本 19 旧文件 / 21 旧行及四个旧修订重导出保持，API 历史 16 文件 / 22 旧行保持。执行者 S4 的 5 源 / 10 导出 / 54 阅读文件和 S2 的 5 源 / 28 导出 / 128 文件身份均匹配。原两源 green 的图像定位唯一完整；真实外链缺图仍 partial 且三类注释第一图精确诊断，不借用后一图。21:33 核实本批测试无残留进程。
+- 另复现一个既有修订 / 删除引用边界：`w:del` 中注释引用仍被计入 active，源中已删除注释未交付却出现损失 / 文本不符而 partial；当前 v3 与固定 `a35e5da` 的 v2 均存在，非本批新回归。已留 US-09 待明确语义及补验，[新旧证据](var/quality/planner-review/ex-08/20261027T212617658-deleted-note-check/current.json)同目录含源及 baseline，不用本批普通引用通过覆盖该边界。EX-09 转入 US-12 的 S1 / 完整 S3；其余 Word / 内容、PDF / 图片、真实 OCR、真实旧数据、非 Windows与安装 / 部署范围保持。
 
 <a id="product-backlog"></a>
 
@@ -373,14 +369,12 @@ US-03 新增剩余 Task：准备含多级标题、正文与图题的单张扫描
 作为 DOCX 使用者，我希望大纲、正文与图文关系、列表、注释和合法包结构被正确处理，不能保留的内容有说明，以便判断转换结果是否可用。
 
 - 状态：进行中。
-- 验收关联：UC-06-S3～S6 中 DOCX 的全部 Examples，以及新增 UC-06-S11。
-- 剩余 Tasks：为 `readers/docx/reader.py` 与 `package.py` 的实际分支准备固定 DOCX，独立列出编号值、注释引用、部件与损失清单；由完整转换验证，不直接测试内部函数。损失触发的入口反馈关联 UC-04-S6 / UC-05-S2。
-- 待规划复核：原同形注释图片位置碰撞和未引用图片虚假 partial 由完整 UC-06-S4 固定；执行回报与匹配证据见 EX-08，接受前保留声明。S3 / S5 / S6 / S11 的其余范围仍需各自完整验收。
+- 验收关联：UC-06-S3 / S5 / S6 中 DOCX 的全部 Examples 与 UC-06-S11；列表与注释由 [S4](tests/E2/UC-06-S4.py) 保留回归。
+- 剩余 Tasks：完整承接 S5 的合法部件结构、S6 的实际损失及 S11 的标题 / 正文语义，准备固定源与独立参考并经完整转换核对；损失触发的入口反馈关联 UC-04-S6 / UC-05-S2。
+- 待明确 / 补验（2026-10-27）：带删除标记的注释引用仍进入 active 集合，可能在未交付已删除注释时误报损失 / 文本不符并 partial；v2 / v3 均已复现。先明确修订 / 删除内容的承接语义，再为实际损失边界补独立源及完整验证；[新旧对照](var/quality/planner-review/ex-08/20261027T212617658-deleted-note-check/current.json)同目录保留源、基线及命令，普通引用 S4 通过不覆盖此项。
 
 UC-06-S3 的 DOCX 归档安全条件归 E5，US-09 引用其全部适用 Examples。新增 Task：准备带独立标题树和段落 / 图片归属的 Word 样本，按 S11 验证语义标题与 Markdown 层级。
 
-
-Scenario: UC-06-S4 [Word 列表与注释正确关联](tests/E2/UC-06-S4.py)
 
 ```gherkin
   Scenario Outline: UC-06-S5 合法 OOXML 包结构不丢内容
@@ -410,7 +404,7 @@ Scenario: UC-06-S4 [Word 列表与注释正确关联](tests/E2/UC-06-S4.py)
       | 未支持正文元素或样式映射造成的内容损失 |
 ```
 
-UC-06-S4 场景由 [完整测试](tests/E2/UC-06-S4.py) 承接，声明保留待规划复核；S5 / S6 测试文件仍待实现。S6 检查实际内容损失，普通格式差异告警不一律变成 `partial`，S4 最小损失负例不代替 S6 全部 Examples。
+S5 / S6 测试文件仍待实现。S6 检查实际内容损失，普通格式差异告警不一律变成 `partial`，S4 最小损失负例不代替 S6 全部 Examples。
 
 ```gherkin
   Scenario Outline: UC-06-S11 Word 标题与正文归属可用于结构化阅读
@@ -595,7 +589,7 @@ Scenario: UC-03-S1 [离开源码目录使用安装包](tests/E4/UC-03-S1.py)
 - 状态：待验收。
 - 待验收：真实 OCR 输入的完整浏览器流程、人工阅读反馈及实际部署环境；本机 Chrome 的技术流程不能代替这些证据，各项独立判断。
 - 验收关联：UC-04 全部场景，以及真实浏览器、人工阅读和部署证据；完整输入范围还依赖 US-02、US-03。
-- 公共驱动缺口（2026-10-26 核实）：Windows 的 `tests/common/browser_support.py` 使用不支持的 `pass_fds`，UC-04-S1 / S3 / S4 当前及 `a35e5da` 独立检出均在启动失败，证据见 EX-08 附加失败；先修启动边界，再复验这些场景及原有 OCR / 阅读 / 重转页面缺口。不能把 API 或阅读截图当成实际浏览器流程通过。
+- 公共驱动缺口（2026-10-26 核实）：Windows 的 `tests/common/browser_support.py` 使用不支持的 `pass_fds`，UC-04-S1 / S3 / S4 当前及 `a35e5da` 独立检出均在启动失败，证据见[附加失败](var/quality/ex-08/affected-01/scenarios.json)及[规划基线](var/quality/ex-08/affected-baseline/scenarios.json)；先修启动边界，再复验这些场景及原有 OCR / 阅读 / 重转页面缺口。不能把 API 或阅读截图当成实际浏览器流程通过。
 
 #### Use Case UC-04 — 上传、转换并下载文档
 
