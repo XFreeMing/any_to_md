@@ -53,9 +53,13 @@ class SQLiteCatalog:
             connection.execute('BEGIN IMMEDIATE')
             # All schema decisions are made after acquiring the write lock.
             version = connection.execute('PRAGMA user_version').fetchone()[0]
-            if version > 5:
+            if version > 6:
                 raise ValueError(f'不支持的数据库版本：{version}')
+            if version == 6:
+                return
             if version == 5:
+                self._ensure_current_exports(connection)
+                connection.commit()
                 return
             if connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='jobs'").fetchone():
                 backup = self.database_path.with_name(f'{self.database_path.stem}.before-v5.{uuid.uuid4().hex}.sqlite')
@@ -208,6 +212,7 @@ class SQLiteCatalog:
             connection.execute('PRAGMA user_version = 5')
             if connection.execute('PRAGMA foreign_key_check').fetchone():
                 raise ValueError('数据库升级后的外键检查失败')
+            self._ensure_current_exports(connection)
             connection.commit()
         except BaseException:
             connection.rollback()
@@ -251,6 +256,20 @@ class SQLiteCatalog:
         if connection.execute('PRAGMA foreign_key_check').fetchone():
             raise ValueError('任务 schema 升级后的外键检查失败')
         connection.execute('INSERT OR IGNORE INTO schema_migrations VALUES(3, ?)', (_now(),))
+
+    def _ensure_current_exports(self, connection: sqlite3.Connection) -> None:
+        """One current markdown export per book, stored in this catalog."""
+        connection.execute(
+            '''CREATE TABLE IF NOT EXISTS current_exports (
+                book_id TEXT PRIMARY KEY REFERENCES books(book_id),
+                export_id TEXT NOT NULL REFERENCES exports(export_id),
+                updated_at TEXT NOT NULL
+            )'''
+        )
+        connection.execute('INSERT OR IGNORE INTO schema_migrations VALUES(6, ?)', (_now(),))
+        connection.execute('PRAGMA user_version = 6')
+        if connection.execute('PRAGMA foreign_key_check').fetchone():
+            raise ValueError('数据库升级后的外键检查失败')
 
     def create_job(self, job_id: str, filename: str, input_format: str, targets: tuple[str, ...], output_format: str | None, source_id: str | None = None) -> Job:
         with self._transaction() as connection:
@@ -478,6 +497,7 @@ class SQLiteCatalog:
         plan: ExportPlan | None = None, revision_storage_key: str | None = None,
         revision_content_sha256: str | None = None,
         rebuilt_revisions: tuple[str, ...] = (),
+        current_export_id: str | None = None,
     ) -> None:
         if not JobStatus(final_status).downloadable:
             raise ValueError('失败任务不能发布下载')
@@ -518,7 +538,66 @@ class SQLiteCatalog:
             changed = connection.execute("UPDATE exports SET status=?, storage_key=?, published_at=? WHERE export_id=? AND job_id=? AND status='staging'", (final_status, storage_key, published_at, export_id, job_id)).rowcount
             if changed != 1:
                 raise JobConflict('导出已被终结')
+            if current_export_id is not None:
+                self._assign_current_export(connection, export_id, current_export_id, published_at)
             connection.execute("UPDATE jobs SET status=?, progress=100, message=?, finished_at=?, download_relative=?, report_key=?, lease_expires=NULL WHERE job_id=?", (final_status, 'Conversion is partial; see report' if final_status == 'partial' else 'Conversion completed', published_at, download_relative, storage_key + '/report.json', job_id))
+
+    def _assign_current_export(self, connection: sqlite3.Connection, publishing_export_id: str, current_export_id: str, published_at: str) -> None:
+        """Point the book at one published export. Failed and unpublished rows cannot be current."""
+        def owner(export_id: str):
+            return connection.execute(
+                '''SELECT ed.book_id FROM exports e
+                   JOIN revisions r ON r.revision_id = e.revision_id
+                   JOIN editions ed ON ed.edition_id = r.edition_id
+                   WHERE e.export_id = ? AND r.status = 'ready'
+                     AND e.status IN ('completed', 'completed_with_warnings')
+                     AND e.storage_key IS NOT NULL AND e.published_at IS NOT NULL''',
+                (export_id,),
+            ).fetchone()
+
+        publishing = owner(publishing_export_id)
+        chosen = owner(current_export_id)
+        if publishing is None or chosen is None or publishing['book_id'] != chosen['book_id']:
+            raise ValueError('当前语料与本书的已发布修订不一致')
+        connection.execute(
+            '''INSERT INTO current_exports(book_id, export_id, updated_at) VALUES(?, ?, ?)
+               ON CONFLICT(book_id) DO UPDATE SET
+                 export_id = excluded.export_id, updated_at = excluded.updated_at''',
+            (chosen['book_id'], current_export_id, published_at),
+        )
+
+    def markdown_catalog(self) -> dict[str, list[dict]]:
+        """Books, filenames, eligible exports and the current pointer. Read-only."""
+        with closing(self._connect()) as connection:
+            def dump(sql: str) -> list[dict]:
+                return [dict(row) for row in connection.execute(sql)]
+
+            return {
+                'books': dump('SELECT book_id, title, authors_json FROM books ORDER BY book_id'),
+                'filenames': dump(
+                    '''SELECT ed.book_id AS book_id, s.original_filename AS original_filename
+                       FROM editions ed JOIN sources s ON s.edition_id = ed.edition_id
+                       ORDER BY s.created_at, s.original_filename'''
+                ),
+                'exports': dump(
+                    '''SELECT ed.book_id AS book_id, e.export_id, e.status, e.storage_key,
+                              e.published_at, e.created_at, r.revision_id, r.status AS revision_status
+                       FROM editions ed
+                       JOIN revisions r ON r.edition_id = ed.edition_id
+                       JOIN exports e ON e.revision_id = r.revision_id
+                       WHERE r.status = 'ready'
+                         AND e.status IN ('completed', 'completed_with_warnings')
+                         AND e.published_at IS NOT NULL AND e.storage_key IS NOT NULL
+                       ORDER BY e.published_at DESC, e.created_at DESC, e.export_id DESC'''
+                ),
+                'pointers': dump(
+                    '''SELECT c.book_id, c.export_id, e.status, e.storage_key, e.published_at,
+                              r.status AS revision_status
+                       FROM current_exports c
+                       JOIN exports e ON e.export_id = c.export_id
+                       LEFT JOIN revisions r ON r.revision_id = e.revision_id'''
+                ),
+            }
 
     def fail_job(self, job_id: str, error: str, report_key: str, token: str | None = None) -> None:
         condition = "status='pending'" if token is None else "status='processing' AND owner_token=?"

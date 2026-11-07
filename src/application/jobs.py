@@ -21,6 +21,7 @@ from ..domain.jobs import Job, JobConflict
 from ..export.downloads import prepare_download
 from ..export.files import write_json
 from .capabilities import CAPABILITIES, OUTPUT_TARGET, input_format, validate_outputs
+from .library import choose_current_export
 
 APPLICATION_NAMESPACE = uuid.UUID('ca7eb847-13d5-48a3-b0ca-44d59fedb155')
 LEASE_SECONDS = 60
@@ -316,8 +317,12 @@ class JobExecution:
         self.published = self.runtime.storage.publish(self.export_id)
         revision_key = self.runtime.storage.preserve_revision(book.revision_id, self.published) if book is not None else None
         revision_hash = sha256_file(self.published / 'book.json') if book is not None else None
+        current_export_id = None
+        if book is not None:
+            # Same Markdown keeps the existing directory current; a changed corpus moves the pointer.
+            current_export_id = choose_current_export(self.runtime.catalog, self.runtime.storage, book.book_id, self.export_id, self.published, report['status'])
         try:
-            self.runtime.catalog.publish_export(job_id=self.job_id, token=self.token, export_id=self.export_id, storage_key=self.published.relative_to(self.runtime.storage.root).as_posix(), final_status=report['status'], artifacts=artifacts, download_relative=download_relative, book=book, plan=plan, revision_storage_key=revision_key, revision_content_sha256=revision_hash, rebuilt_revisions=rebuilt_revisions)
+            self.runtime.catalog.publish_export(job_id=self.job_id, token=self.token, export_id=self.export_id, storage_key=self.published.relative_to(self.runtime.storage.root).as_posix(), final_status=report['status'], artifacts=artifacts, download_relative=download_relative, book=book, plan=plan, revision_storage_key=revision_key, revision_content_sha256=revision_hash, rebuilt_revisions=rebuilt_revisions, current_export_id=current_export_id)
         except Exception:
             if not self._committed():
                 raise

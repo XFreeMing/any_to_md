@@ -26,6 +26,8 @@ uv run e2m "/path/to/book.epub" --data-dir "./var"
 
 CLI 的 `--data-dir` 与 Web 的 `DATA_DIR` 需要显式指向同一位置才共享资料。输入与输出定义见 [能力表源码](src/application/capabilities.py)，参数定义见 [CLI 源码](src/interfaces/cli/convert_book.py)；此处不再维护一份格式或参数清单。
 
+同一本书的当前 Markdown 在仓库根目录 `library/<书名>/`，其中有 `book.md`、`TOC.md`、`chapters/` 和 `manifest.json`。`uv run any-to-md-library --data-dir ./var --link` 按 `var/catalog.sqlite` 和导出目录生成这些链接；历史导出仍留在 `var/exports/`。
+
 准备 [TV-01](TODO.md#tv-01) 实验模型：`uv run mineru4 download`（参数见 `uv run mineru4 download --help`）。此命令仅在源码检出使用，模型保存到 `var/mineru4/`；推理环境与实验命令仍待实现。
 
 ## 代码结构
@@ -55,6 +57,7 @@ any_to_md/
 │   ├── E4/                 # 可靠完成转换
 │   └── E5/                 # 长期保留与复用资料
 ├── specs/                   # 架构约束、设计理由与独立证据
+├── library/                 # 每本书当前语料的链接（Git 忽略）
 └── var/                     # 本地数据、运行报告与产物（Git 忽略）
 ```
 
