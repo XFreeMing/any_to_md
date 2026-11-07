@@ -380,7 +380,8 @@ def run(workdir: Path) -> dict:
     with web_client(success) as client:
         assert client.get('/api/download/job-1').status_code == 200
     after = inspect_database(success/'catalog.sqlite')
-    assert after['logical']['version'] == 5
+    assert after['logical']['version'] == 6
+    assert after['logical']['tables']['current_exports']['records'] == []
     jobs = after['logical']['tables']['jobs']
     assert 'selected_revision_id' in [r[1] for r in jobs['columns']]
     assert any(r[2]=='revisions' and r[3]=='selected_revision_id' for r in jobs['foreign_keys'])

@@ -36,6 +36,7 @@ dependencies = [
 [project.scripts]
 any-to-md = "web.app:main"
 any-to-md-book = "src.interfaces.cli.convert_book:main"
+any-to-md-library = "src.interfaces.cli.library:main"
 e2m = "src.interfaces.cli.convert_book:e2m"
 mineru4 = "src.interfaces.cli.mineru4:main"
 
