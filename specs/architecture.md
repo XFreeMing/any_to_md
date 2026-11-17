@@ -4,16 +4,44 @@
 
 ## 方案结论
 
-采用一个统一知识服务，连接 XShadow 的公告栏与执行系统。any_to_md 演进为知识权威，保存原件、知识、证据、关系和版本。XShadow 管理话题、任务、Agent、执行及偏航监控。两边通过稳定引用和 API 连接，各自管理自己的数据。
+当前执行路线是先以固定提交纳入七个开源方案，用隔离主项目连接现成能力跑通最小链路，再按真实证据决定采用、薄适配、吸收或放弃；统一知识服务仍描述目标能力与领域模型，但不是本轮已实现的交付路径。any_to_md 保留为独立的文档模块，独占原件、正文修订和导出；主项目负责授权、资料身份和跨模块交接。XShadow 管理话题、任务、Agent、执行及偏航监控。各方通过稳定引用和接口连接，各自管理自己的数据。
+
+基线、固定提交和真实串联证据见[当前执行基线](#module-combination-baseline)。组合跑通不等于产品验收，未跑通的模块按源码、运行和集成三个层级分开记录。
 
 - 用户可以持续收集书籍、文章、笔记与项目资料，按主题或项目阅读、检索、修正并导出。
 - 知识分为原始证据、可复用理解、个人偏好和项目决策。临时任务现场继续归 XShadow，经过核对的成果再沉淀。
 - 多个 Agent 可以整理知识，但通过同一提议和发布接口协作。每个结论保留来源、条件、版本与冲突。
 - 公告栏先按权限和订阅过滤小事件，相关 Agent 再决定读取、回应或领取任务。leader 只监控目标、争议与偏航。
 - 上下文由任务需要决定，按需取得摘要、知识和证据。图谱帮助追踪关系，向量帮助召回，二者都不决定事实真假。
-- 首版沿用 Python、FastAPI、SQLite 和本机文件存储；XShadow 沿用其 Go、PostgreSQL 和 React 技术栈。外部记忆系统、向量引擎与模型按实际缺口替换相应能力。
+- any_to_md 文档模块沿用 Python、FastAPI、SQLite 和本机文件存储；主项目的入口形态、存储与检索组件由固定版本上的组合验证决定，不先锁死。XShadow 沿用其 Go、PostgreSQL 和 React 技术栈，外部记忆系统、向量引擎与模型按实际缺口替换相应能力。
 
-采用自有知识权威、开源方法与可替换组件。七个调研项目均不作为首版必装后台。当前缺口集中在现有来源身份、知识版本、权限和 XShadow 参与协议；额外启动完整记忆产品不能自动补齐这些连接。
+采用自有知识权威、开源方法与可替换组件。七个调研项目已按固定提交纳入隔离主项目作为组合候选，源码纳入不等于常驻安装，也不表示已选型；保留哪些由真实串联、重复能力和维护成本决定。当前缺口集中在现有来源身份、知识版本、权限和 XShadow 参与协议；额外启动完整记忆产品不能自动补齐这些连接。
+
+<a id="module-combination-baseline"></a>
+
+## 当前执行基线：固定提交的模块组合
+
+本轮按用户决定先组合跑通再精简。隔离主项目 `second-brain`（本机工作区，无公开远程）只承载主项目入口、流程编排、配置和必要薄适配；any_to_md 原仓库、历史、原件与入口保持独立，源码以子模块和既有 CLI / API 接入，不物理搬迁转换内核。
+
+固定源码基线（与上文调研引用同一提交）：
+
+| 模块 | 上游 | 固定提交 |
+| --- | --- | --- |
+| GBrain | `https://github.com/garrytan/gbrain` | `09fe4c5ae0d1b42a6c5fceaa9a3820c12bf7d74b` |
+| LLM Wiki | `https://gist.github.com/442a6bf555914893e9891c11519de94f.git` | `ac46de1ad27f92b28ac95459c782c07f6b8c964a` |
+| ai-memory | `https://github.com/akitaonrails/ai-memory` | `b38c6e573be9333d060b8970f40d8afae7857652` |
+| COG | `https://github.com/huytieu/COG-second-brain` | `144c7a3a959cc99538b7dfee9c22c4b065a0e156` |
+| agent-second-brain | `https://github.com/smixs/agent-second-brain` | `7828ed62cf76aae87bee7f2660468ab88495cf3d` |
+| open-second-brain | `https://github.com/itechmeat/open-second-brain` | `3310c95f70e49377e0898dece1f456387ac86cfc` |
+| claude-second-brain | `https://github.com/jessepinkman9900/claude-second-brain` | `599f55ad50afceb9eae4f31746aa37274087d239` |
+
+**数据权威与唯一写入口。** 主项目负责授权、稳定的资料 ID、请求与引用映射，只写自己的小型持久交接记录；any_to_md 经现有入口独占原件、正文修订、资源、目录和导出的写入；候选知识模块经自己的 CLI 独占派生检索副本的写入。主项目是试验中唯一调用候选写入的进程入口；候选侧禁用 hook、自动摄取、sync / watch 和直接 Agent 写入。不共写 vault、数据库或转换目录。文件名、URL、字节哈希和旧 `book_id` 不当作主项目的逻辑资料 ID；同字节可共享物理存储，授权与来源归属仍独立。同一逻辑资料只有显式更新才追加版本，旧 ID 与旧导出原样保留。
+
+**交接记录。** 调用方填 `contract_version`、`scope_id`、`document_id`、`request_id`、`input_sha256`；转换侧从已发布导出取 `job_id`、`export_id`、转换状态与诊断，以及 `source_id`、`book_id`、`edition_id`、`source_sha256`、`revision_id`、`pipeline_version`、节点定位、阅读位置和资源清单；投影侧记录 `projection_key`、投递字节哈希、目标 slug 和交接状态。`projection_key` 为 `[scope_id, document_id, source_id, revision_id, node_id]` 紧凑 UTF-8 JSON 的 SHA-256。候选回的 slug 不是文档或修订 ID；引用一律回到原导出的 `book.md#anchor`，找不到或拒绝授权时显式失败，不改跳当前版本。
+
+**已验证。** 2026-11-17 在固定提交上真实执行：`structured.epub` 经 `any-to-md-book` 导出（输入哈希、`book.json.source_sha256` 与保存原件一致，图片哈希与清单一致）；生成一条交接记录与投影；隔离 `GBRAIN_HOME` 下 `init --pglite --no-embedding`，`put` 后 `get` 读回，`search BODY_FIRST_101 --match keyword` 命中同一 slug，不存在的词返回空，同一 `request_id` 重试不产生新修订；命中 slug 可回到原导出的章节锚点。命令、ID、哈希与限制记录在主项目 `docs/baseline.md`。
+
+**未验证。** 主项目服务入口、scope 授权与拒绝路径、同字节不同 scope 的隔离、部分产物状态机、真实旧库副本迁移、中文召回质量和其余六个模块的实际运行。薄适配只在同一提交的真实入口明确后接入；这些缺口不得因本基线写为已交付。
 
 ## 设计依据
 
@@ -54,6 +82,8 @@
 Markdown 和纯文本尚未在正式输入能力表中注册。已有 Markdown 导入 helper 不等于笔记输入已交付。音频、视频、邮件、聊天、代码和表格可逐步纳入知识来源，但“可保存原件”“可提取内容”“可检索”“可用于回答”必须分别表达。
 
 ## 选择统一知识服务
+
+本节描述目标能力与领域边界，不是当前已实现的自研路线。当前执行路线是先以固定提交组合现成模块并跑通最小链路；哪些能力由上游承载、哪些需要薄适配或自研，按[当前执行基线](#module-combination-baseline)的证据决定。
 
 ```mermaid
 flowchart LR
@@ -346,6 +376,8 @@ XShadow 当前 `server/internal/events/bus.go` 和 `server/internal/realtime/` �
 综合页、摘要和上下文包默认采用全部依赖来源授权范围的交集，复制内容不扩大可见性。确需共享经过脱敏的结论，须显式审核该派生版本的共享范围。来源撤权后，后续派生页、缓存和上下文包读取重新核验依赖；对已经下载或发送给模型的副本不承诺远程撤回。
 
 ## 模块与运行形态
+
+下表是目标形态的技术选择；当前组合基线优先调用各上游固定版本的真实入口，Python / FastAPI / SQLite 仍是 any_to_md 文档模块的既有栈，不先定为整个主项目必须自研的前提。
 
 ### 选定技术与条件采用的组件
 
