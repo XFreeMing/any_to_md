@@ -41,7 +41,9 @@
 
 **已验证。** 2026-11-17 在固定提交上真实执行：`structured.epub` 经 `any-to-md-book` 导出（输入哈希、`book.json.source_sha256` 与保存原件一致，图片哈希与清单一致）；生成一条交接记录与投影；隔离 `GBRAIN_HOME` 下 `init --pglite --no-embedding`，`put` 后 `get` 读回，`search BODY_FIRST_101 --match keyword` 命中同一 slug，不存在的词返回空，同一 `request_id` 重试不产生新修订；命中 slug 可回到原导出的章节锚点。命令、ID、哈希与限制记录在主项目 `docs/baseline.md`。
 
-**未验证。** 主项目服务入口、scope 授权与拒绝路径、同字节不同 scope 的隔离、部分产物状态机、真实旧库副本迁移、中文召回质量和其余六个模块的实际运行。薄适配只在同一提交的真实入口明确后接入；这些缺口不得因本基线写为已交付。
+薄适配（主项目 `a51a945`）在同一固定入口上由 7 项受控试验验证，在线与 `unshare -rn` 无网络各跑一次：身份到 scope 只从可信配置推导，每 scope 独立 any_to_md 数据目录与 GBrain home；scope 不符、跨 scope slug、未授权资料与跨 scope 记录都在 GBrain 查询前拒绝（退出 4），拒绝前后 `search` / `get` 调用计数不变；同字节输入在两个 scope 得到不同 slug，互不命中；转换前持久化身份与输入指纹，候选写入前保存 slug、稳定候选请求 ID 与投递哈希，读回匹配后才建索引；候选写入后硬中断可由 `recover` 读回补记为 `indexed`，候选被改成不同正文时显式 `failed_conflict`（退出 5），转换结果不明保留 `pending_review`（退出 6）；更新后旧 slug、旧导出、旧原件哈希与锚点不变，检索只返回当前修订。入口为本地 CLI，实际输出在 `dist/evidence-dev58-adapter.json`，说明见 `docs/adapter.md`。
+
+**未验证。** 产品级认证与主项目服务入口、真实旧库副本迁移、中文召回质量、同一 scope 的并发写入锁和其余六个模块的实际运行。试验中的调用身份由受控旗帜模拟，只证明适配器逻辑与 scope 隔离，不证明登录会话；以上缺口不得因本基线写为已交付。
 
 ## 设计依据
 
