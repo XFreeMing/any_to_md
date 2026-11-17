@@ -16,7 +16,7 @@
 | 关联 | E6 / E7、US-14～US-20、UC-10～UC-16、TV-02～TV-04；既有 US-01～US-13 / TV-01 保留 |
 | 规划者 / 执行者 | Codex 会话 01a1e7dc-6e9c-7bd3-b4dc-11f90a139d3e，主会话负责集成 |
 | 接单时间 / 起始提交 | 2026-11-17 13:00 +08:00；885a160；起始工作区干净 |
-| 文档更新时间 | 2026-11-17 13:13 +08:00 |
+| 文档更新时间 | 2026-11-17 13:15 +08:00 |
 | 实现最后核对 | 2026-11-17 13:12 +08:00；静态核对正文、身份、发布和 XShadow MCP 边界；本批无功能实现 |
 
 **目标与范围**
@@ -38,11 +38,11 @@
 - 独立复核：两个候选均只读；第三位协作者按同一标准复核后复查最终差异，结论无阻塞问题。补充 K1 必须含基础版本发布，不能拖到提议 UI 完成后才处理历史。
 - 验证命令 / 结果：在本仓库运行 git diff --check；CPython 3.13 执行 tests/common/run.py --list；运行 python3 var/quality/ex-11/check_docs.py var/quality/ex-11/document-checks-01.json 的等价内联检查。编号、Epic 归属、23 个新增本地链接与旧范围保护均通过。十二个新场景均显示 missing file，符合未实现状态；没有运行产品验收或技术实验。
 - 环境与快照：any_to_md 基线 885a160，文档检查 Python 3.12.3，场景发现使用已安装 CPython 3.13；XShadow 研发 a1f5acae6、日常 306dbfe10，仅核对检出而非服务运行状态。上层工作台存在用户改动，保持不变。旧 EX-10 报告目录 var/quality/ex-10/ 在本机不存在。
-- 报告：[初次文档检查](var/quality/ex-11/document-checks-01.json)保存其文档哈希；回写后另生成新报告，不改旧报告。检查器保存在同目录 check_docs.py，不纳入产品回归或实验通过数。
+- 报告：[初次文档检查](var/quality/ex-11/document-checks-01.json)与[设计提交前检查](var/quality/ex-11/document-checks-02.json)保存各自文档哈希；后者对应设计提交 3a0b421 的文件内容，24 个新增本地链接均有效。交接回写后使用 python3 var/quality/ex-11/check_docs.py var/quality/ex-11/document-checks-03.json 生成新快照，不改旧报告。检查器保存在同目录，不纳入产品回归或实验通过数。
 - 运行中任务：无本批转换、实验或服务进程；只读候选与复核均已结束。
 - 未完成 / 阻塞：设计无阻塞。US-14～US-20 / TV-02～TV-04 全部尚未实施；真实语料清单、承载主机与后续具体客户端由对应批次确定，不预填验收。原 US-12 / US-13、OCR 和其他旧需求保持原状态。
 - 下一步建议：先复核本设计，再单独派发 TV-02；之后从 K1 切产品批次。本轮没有创建或派发下一批。
-- 提交：未执行，仅纳入 README.md、TODO.md、specs/0003-second-brain-architecture.md；提交号由 Git 定位。推送：未执行，目标为 origin 的 codex/second-brain-design。
+- 提交：设计内容已提交为 3a0b421，仅纳入 README.md、TODO.md、specs/0003-second-brain-architecture.md；本条交接随后单独提交，其提交号由 Git 定位，不自引用。推送：3a0b421 已成功推送到 origin/codex/second-brain-design；交接提交随收尾再次推送，最终远端核对结果见会话回报。
 
 <a id="latest-review"></a>
 
