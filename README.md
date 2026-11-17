@@ -4,7 +4,7 @@ any_to_md 提供 Web、CLI 和目录批处理，将 EPUB、HTML、DOCX 与网页
 
 **研发协作统一入口：[TODO](TODO.md)。** 规划者在其中明确当前批次，执行者回写实现、验证证据、阻塞和交接；产品需求与[技术验证](TODO.md#technical-validation)在同一文件分区维护。协作和开发边界见 [AGENTS](AGENTS.md)。已验收行为由 `tests/E*/UC-*.py` 的条件、操作和断言维护，阅读与运行方法见[场景说明](tests/common/README.md)；其中也包含开发中的测试，是否通过以相应版本的运行报告为准，技术结论不代表产品已交付。
 
-[第二大脑设计](specs/0003-second-brain-architecture.md)说明知识、项目和 XShadow 智能体军团的职责边界；尚未交付的范围与顺序在 [TODO 的 E6 / E7](TODO.md#second-brain)。当前可用方式仍以下文转换入口为准。
+[唯一架构方案](specs/architecture.md)说明转换基座、知识管理与 XShadow 智能体军团的职责边界；尚未交付的范围与顺序在 [TODO 的 E6 / E7](TODO.md#second-brain)。当前可用方式仍以下文转换入口为准。
 
 ## 开始使用
 
@@ -58,7 +58,7 @@ any_to_md/
 │   ├── E2/                 # 办公与扫描文档结构化
 │   ├── E4/                 # 可靠完成转换
 │   └── E5/                 # 长期保留与复用资料
-├── specs/                   # 架构约束、设计理由与独立证据
+├── specs/architecture.md    # 唯一架构方案、设计理由与独立证据
 ├── library/                 # 每本书当前语料的链接（Git 忽略）
 └── var/                     # 本地数据、运行报告与产物（Git 忽略）
 ```

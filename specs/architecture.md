@@ -1,6 +1,6 @@
 # 个人第二大脑：总体架构与技术方案
 
-推荐定稿日期：2026-11-17。本文汇总需求、现有源码、七个开源项目复核与真实 EPUB 样例，确定架构和技术取舍。设计尚未转成完整产品，文中的拟议对象与接口不代表已经实现。产品承诺和交付顺序只维护在 [TODO 的 E6 / E7](../TODO.md#second-brain)；实验问题在同文档技术区。现有转换职责继续遵循 [转换架构](0002-conversion-architecture.md)。
+本文是唯一现行架构方案，统一转换、知识管理与 XShadow 协作边界。设计尚未全部实现，拟议对象与接口不代表已交付。产品行为以[场景](../tests/common/README.md)和 [TODO 产品区](../TODO.md#product-backlog)为准，未完成实验在 [TODO 技术区](../TODO.md#technical-validation)，执行交接留在 TODO。历史方案通过 Git 查询。
 
 ## 方案结论
 
@@ -13,20 +13,20 @@
 - 上下文由任务需要决定，按需取得摘要、知识和证据。图谱帮助追踪关系，向量帮助召回，二者都不决定事实真假。
 - 首版沿用 Python、FastAPI、SQLite 和本机文件存储；XShadow 沿用其 Go、PostgreSQL 和 React 技术栈。外部记忆系统、向量引擎与模型按实际缺口替换相应能力。
 
-本方案明确采用“自有知识权威 + 开源方法与可替换组件”。七个调研项目均不作为首版必装后台。理由是当前缺口集中在现有来源身份、知识版本、权限和 XShadow 参与协议；额外启动完整记忆产品不能自动补齐这些连接。
+采用自有知识权威、开源方法与可替换组件。七个调研项目均不作为首版必装后台。当前缺口集中在现有来源身份、知识版本、权限和 XShadow 参与协议；额外启动完整记忆产品不能自动补齐这些连接。
 
 ## 设计依据
 
-用户提供的《AI 第二大脑：七个开源项目调研、功能重叠与落地方案》v1.0，日期为 2026-11-12，是本设计的调研输入。分享页未能直接读取，本轮依据用户在会话中补充的全文。该报告是文档研究，不能作为安装、中文检索或联合部署证据。
+《AI 第二大脑：七个开源项目调研、功能重叠与落地方案》v1.0，日期为 2026-11-12，是本设计的调研输入。该报告是文档研究，不能作为安装、中文检索或联合部署证据。
 
 采用报告的三个判断：每类内容明确权威来源；只保留一个主要知识维护流程；知识、持久记忆与任务现场分开。对本项目的推论是：知识服务由 any_to_md 演进，任务执行由 XShadow 承担，生成模型和检索实现均可替换。
 
-2026-11-17 重新核对七项官方资料，仓库引用固定到当时读取的提交。以下是设计取舍，不是统一性能排名；本轮未安装或测试这些系统。
+七项官方资料于 2026-11-17 核对，仓库引用固定到查阅的提交。以下是设计取舍，不是性能排名或部署测试结果。
 
 | 调研对象 | 本设计采用的部分 | 采用边界 |
 | --- | --- | --- |
 | [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f/ac46de1ad27f92b28ac95459c782c07f6b8c964a) | 原件、持续维护 Wiki、ingest / query / lint | 采纳方法；把模型直接维护文件改为提交提议、版本检查和统一发布，这是本方案增加的约束 |
-| [GBrain](https://github.com/garrytan/gbrain/blob/09fe4c5ae0d1b42a6c5fceaa9a3820c12bf7d74b/README.md) | 来源、更正、撤回及共享查询 | 借鉴机制；保留为后续替代后端候选，首版不安装、不增加第二份知识权威 |
+| [GBrain](https://github.com/garrytan/gbrain/blob/09fe4c5ae0d1b42a6c5fceaa9a3820c12bf7d74b/README.md) | 来源、更正、撤回及共享查询 | 借鉴机制；来源、更正和撤回归统一知识服务，首版不安装该后台 |
 | [ai-memory](https://github.com/akitaonrails/ai-memory/blob/b38c6e573be9333d060b8970f40d8afae7857652/docs/ARCHITECTURE.md) | 编程会话交接、Git Markdown、SQLite 派生检索 | 借鉴有界交接与捕获幂等；任务现场仍由 XShadow 管理，有原生 CLI 接续缺口时再评估 |
 | [open-second-brain](https://github.com/itechmeat/open-second-brain/blob/3310c95f70e49377e0898dece1f456387ac86cfc/docs/how-it-works.md) | 偏好、反馈证据、规则生命周期和可重建索引 | 借鉴偏好作用域与失效机制；自动归纳先成为提议，不改项目 AGENTS 或全局规则 |
 | [COG](https://github.com/huytieu/COG-second-brain/blob/144c7a3a959cc99538b7dfee9c22c4b065a0e156/WORKFLOW.md) | 收集、整理、复盘、独立核验 | 转为 XShadow 可领取的维护任务；不复制另一套目录、任务系统或中心编排者 |
@@ -35,18 +35,18 @@
 
 这些项目的默认行为不能代替本系统的发布规则。GBrain 的 [setup 会话捕获 hooks](https://github.com/garrytan/gbrain/blob/09fe4c5ae0d1b42a6c5fceaa9a3820c12bf7d74b/docs/guides/setup.md)默认拒绝，[个人会话归档](https://github.com/garrytan/gbrain/blob/09fe4c5ae0d1b42a6c5fceaa9a3820c12bf7d74b/docs/guides/memory-boundaries.md)默认开启，这些不等于同一个事实提炼开关。[ai-memory 自动改进路径](https://github.com/akitaonrails/ai-memory/blob/b38c6e573be9333d060b8970f40d8afae7857652/docs/ARCHITECTURE.md)默认自动批准经验证提议，可设置 `require_approval = true`；[open-second-brain](https://github.com/itechmeat/open-second-brain/blob/3310c95f70e49377e0898dece1f456387ac86cfc/README.md)的 staged review 默认关闭。整套接入时必须显式配置并验证，不能推断其默认安装符合我们的审核与权限要求。
 
-仓库复核的六个软件项目声明 MIT；这不代表模型、外部服务或所有依赖具有相同许可。LLM Wiki idea file 未见明确许可证，本文借鉴方法并引用原文，不据此授权复制代码。GBrain 上述快照来自默认分支，本轮没有确认 stable 分支身份。COG 技能覆盖随客户端变化；agent-second-brain 的 [v3.0.3 发布记录](https://github.com/smixs/agent-second-brain/releases/tag/v3.0.3)确认 Todoist 已移除，采用内部定时流程。正式引入依赖仍需固定实际部署版本与依赖清单。
+仓库复核的六个软件项目声明 MIT；这不代表模型、外部服务或所有依赖具有相同许可。LLM Wiki idea file 未见明确许可证，本文借鉴方法并引用原文，不据此授权复制代码。GBrain 上述快照来自默认分支，该次核查未确认 stable 分支身份。COG 技能覆盖随客户端变化；agent-second-brain 的 [v3.0.3 发布记录](https://github.com/smixs/agent-second-brain/releases/tag/v3.0.3)确认 Todoist 已移除，采用内部定时流程。正式引入依赖仍需固定实际部署版本与依赖清单。
 
 ## 当前基础决定了怎样升级
 
-本轮源码基线为 any_to_md `e0ba05a`，它相对最初检查的 `885a160` 只增加了设计文档。XShadow 研发检出仍为 `a1f5acae6`。以下是代码能力和缺口，不是产品验收通过表。
+以下是 2026-11-17 源码核对的能力与缺口，不是产品验收通过表。
 
 | 基础 | 源码依据 | 对升级的影响 |
 | --- | --- | --- |
 | 正文、层级、资源与来源位置 | [BookRevision / ContentFragment / SourceLocator](../src/domain/book.py) | 继续作为来源解释结果，检索可定位到版本中的内容片段 |
 | 原件与修订保存、发布与历史索引 | [LocalStorage](../src/adapters/storage.py)、[SQLiteCatalog](../src/adapters/persistence/sqlite.py)、[JobRuntime](../src/application/jobs.py) | 复用保存和发布流程，不再建一套转换存储 |
 | 当前 Markdown 指针与可读目录 | [library](../src/application/library.py) | 是派生阅读视图，不能充当完整知识目录或稳定引用 |
-| EPUB / HTML / DOCX / URL 的共同转换路径 | [能力表](../src/application/capabilities.py)、[convert](../src/application/convert.py) | 首批可选这些格式的已验证样本；PDF / 图片的共同 Reader 仍是旧待办 |
+| EPUB / HTML / DOCX / URL 的共同转换路径 | [能力表](../src/application/capabilities.py)、[convert](../src/application/convert.py) | 首批可选这些格式的已验证样本；PDF / 图片的共同 Reader 仍是尚未完成的事项 |
 | Web、CLI 与输出 | [Web 入口](../web/app.py)、[CLI](../src/interfaces/cli/convert_book.py) | 在现有入口上演进；搜索、Wiki、记忆、身份授权和知识 MCP 尚需建设 |
 
 两个现有约束必须先处理。`source_ids()` 用原件摘要生成 `book_id`，字节变化会改变身份。`corpus_ready()` 要求分章 Markdown，因此单篇输出和仅保存的原件不一定出现在当前语料视图。不能通过扫描 `library/` 推断资料全集，也不能把同名书或同 URL 自动合并为同一知识。
@@ -75,13 +75,39 @@ flowchart LR
 
 用户的知识阅读、来源查看与纠错使用同一知识 API。XShadow 的公告栏和任务界面可显示相关知识、固定引用和跳转入口。第一阶段在现有转换 Web 与 CLI 上增加知识入口，XShadow 沿用共享 React 组件，不以统一前端技术栈为先决条件。Obsidian 是可选阅读出口，知识身份和授权不依赖它。
 
-| 候选形态 | 好处 | 代价与选择 |
-| --- | --- | --- |
-| any_to_md 扩展为统一知识服务 | 复用原件、正文、修订和发布；可统一引用与更正 | 需新增知识目录、检索与审核；本设计采用 |
-| any_to_md 只做转换，独立 Markdown Wiki 为权威 | Obsidian 直接编辑自然，文件工作流成熟 | 需要重新协调数据库身份、文件修改和发布；暂不作为主架构 |
-| any_to_md 转换后全量导入外部记忆服务 | 可利用候选服务已有检索与记忆功能 | 来源映射、授权、删除和更正传播仍需适配；只作为 TV-04 的替代方案 |
-
 外部搜索组件可以成为可替换的只读索引。外部记忆系统若未来成为某个内容域的权威，必须明确转移该域的写入责任并退役旧写入口，不能默认两边双向自动修改。
+
+## 统一转换基座
+
+```text
+Web / CLI / 批处理
+        ↓
+应用服务：能力选择、任务与发布
+        ↓
+格式 Reader → 共享规范化 → BookRevision → ExportPlan
+                                         ↙       ↘
+                                Markdown Writer  HTML Writer → PDF 渲染
+```
+
+同一格式只有一个正式 Reader，同一输出只有一个 Writer。入口处理交互与参数，Reader 解释来源，Writer 消费正文和导出计划；PDF 从 HTML 打印结果生成，避免各输出重新解释来源。OCR、HTTP、SQLite 与文件系统位于 adapter 边界，配置由应用入口注入，核心不依赖 Web 配置。正式业务归入 `src/`，同步、异步入口和薄脚本复用同一实现。
+
+替代实现按 TODO 完成切换，不保留同格式双引擎或运行时回退。旧实现只通过隔离 Git 版本作对照，仅剩 Markdown 的资料也不能借迁移恢复旧引擎，其支持范围仍由 TODO 决定。
+
+### 正文身份与输出职责
+
+[BookRevision](../src/domain/book.py) 是唯一正式正文，输出均为派生视图。正文采用可序列化语义 HTML 片段，以保留表格跨度、脚注、资源和必要样式，避免先转 Markdown 再回转造成提前损失；具体样本依据见[转换依据](#conversion-evidence)。设计优先保留内容、结构和阅读顺序，不追求原版面像素复刻。
+
+正文片段的直接归属唯一。章节节点、导航项、来源定位和输出文件分别建模，因为同一正文可有多个导航入口，一章也可跨多个源文件。节点身份不依赖标题或文件名，输出格式不参与正文身份；来源、解释选项和 pipeline 版本决定修订适用性。字段以领域模型为准，复用行为由 UC-08 承接。
+
+[共享规范化](../src/content/revision.py)统一资源内容身份、路径别名、CSS 来源基准和文档作用域，格式解释留在 Reader。[ExportPlan](../src/export/planning.py)先确定全部输出位置，再由 Writer 重写规范引用，避免各格式分别猜测文件名与目标。具体顺序、导航、样式和损失预期由 UC-06 承接。
+
+图片的每次出现通过共同正文的 `img[data-source-location]` 保留源位置，各 Writer 将其带到对应输出位置。DOM 定位使用改写前的文档地址和从 body 开始的同名元素序号路径；DOCX 使用包内 OOXML 路径及 drawing / pict 的段落、运行和容器序号。资源字节可复用，出现位置不合并。标题建树和定位解释变化由 Reader pipeline 区分，不等于 schema 字段变化；旧快照按原 pipeline 加载，不补造定位或改写原下载。必要时 Markdown 保留 figure / figcaption 和图片定位属性的内嵌 HTML。
+
+### 修订复用与历史读取
+
+终态任务换输出时，从原任务已发布的导出选择正文修订，并在新任务中持久绑定。来源索引不是“最新正文”指针。读取以数据库身份和快照 SHA 为信任根，恢复并校验完整模型、结构与内容归属、资源路径和字节身份；损坏正文不能按缓存未命中处理。
+
+schema-2 修订的读取不依赖原件在线。schema-1 缺少完整正文时，只能显式从保留原件重建。主动提交仍解释来源，重导出保持选定修订的 pipeline 与诊断，不隐式升级解释结果。读取、迁移与发布复用现有应用流程，不维护第二套 Writer。上游只有 Markdown 时使用[共享导入](../src/content/markdown.py)，它不能恢复已丢信息，也不等于正式 `.md` 输入已交付。
 
 ## 每类状态只有一个所有者
 
@@ -124,7 +150,7 @@ KnowledgeItem 用类型区分来源资料、概念、方法、条件化结论、
 
 例如“模型 B 比 A 快”应是一条带硬件、精度、引擎版本、负载及来源的结论，关联 A 与 B 两个实体。比较其他条件时重新检索证据，不能从一条不带条件的 `faster_than` 边推广。某条结论更正时，可沿派生关系找出需要复核的项目页和决策。
 
-用户提供的《Bulletproof Problem Solving》说明了这套结构的用途：书籍原件对应来源快照，“工作计划”形成方法与模板条目，图 4.2 保存为原始图片和出现位置，“将其用于 XShadow 任务卡”另存项目提议。本次样例发现图 3.13 与邻近正文对轴方向的描述不一致，因此冲突必须关联两处固定证据。样例由实际 EPUB 转换和本次整理组成，未完成全书自动知识提炼，也未验证真实智能体收益。
+用户提供的《Bulletproof Problem Solving》说明了这套结构的用途：书籍原件对应来源快照，“工作计划”形成方法与模板条目，图 4.2 保存为原始图片和出现位置，“将其用于 XShadow 任务卡”另存项目提议。书籍样例发现图 3.13 与邻近正文对轴方向的描述不一致，因此冲突必须关联两处固定证据。样例由实际 EPUB 转换和示范性知识整理组成，未完成全书自动知识提炼，也未验证真实智能体收益。
 
 收集时的请求身份、字节去重和知识合并是三个不同判断。相同字节可以共享物理对象，但每次来源记录和权限仍独立。多个摘要若引用同一份原件，只算一个独立证据来源。同名资料只提示可能重复，不自动合并。
 
@@ -199,6 +225,8 @@ flowchart TD
 
 多个 Agent 可以各自产生提议；知识应用服务是唯一的发布入口。提交携带基础版本，发布时比较当前版本，冲突进入复核，不能后写覆盖先写。重试携带幂等身份，避免同一任务反复写出相同知识。
 
+现有[任务运行时](../src/application/jobs.py)协调数据库和文件存储，数据库决定任务状态、身份及产物索引，文件保存不可变内容。存储键与展示名分离，下载依据发布索引，不按文件名猜路径。进程缓存不是权威状态，Reader / Writer 不提交任务终态，执行和恢复须核实所有权。转换发布及隔离由 UC-03-S6 / S7 承接；manifest 不把自己的文件纳入哈希清单，避免自引用。
+
 文件与数据库仍没有共同事务。先准备并校验不可变文件，再由数据库事务发布版本、当前指针和待处理的变更事件。索引消费者可重试；崩溃后对账只接受已发布版本，不把孤立文件当成知识。避免另做一套全量事件存储，变更事件只承担同步工作。
 
 更正区分两种情况：同一条件下的错误可被新版本替代；条件不同的结果可以并存。实验结论的硬件、模型、版本、负载、日期与证据必须随结论保留。热度、重复次数和更晚日期不能单独证明更正确。
@@ -245,7 +273,7 @@ ContextBundle 绑定调用者、项目、任务、知识版本和生成时点，
 
 ## XShadow 接入
 
-2026-11-17 只读检查 XShadow-workbench：上层工作台 `3f2fb1c` 有用户未提交改动，研发 `a1f5acae6` 与日常 `306dbfe10` 检出干净。本轮均保持不变，代码检查不证明日常服务配置已生效。
+本节代码依据为 2026-11-17 核对的 XShadow 研发快照 `a1f5acae6`，不证明日常服务配置已生效。
 
 依据是工作台 `AGENTS.md`、`CONTEXT.md`、`agent-team/CONTEXT.md`，以及研发源码 `server/internal/handler/workspace_mcp.go` 和 `project_resource.go`。现有项目资源只接受 Git 仓库和本地目录，不能假装已经支持知识库资源类型。工作区 MCP 创建后还需显式绑定 Agent；Agent 自身同名配置和任务覆盖也可能改变最终连接目标。
 
@@ -264,7 +292,7 @@ MCP 是调用协议，不替应用决定如何组织上下文，[官方边界](h
 
 军团开始任务时读取项目知识和适用约定，同时读取 XShadow 实时任务状态。结束任务时提交带 run / task 来源的结论提议，原日志仍由原系统保管。有长期价值的决策和研究结果经复核入库；临时进度不批量转成长久记忆。读取知识不会创建任务、触发日程或改变军团配置。
 
-用户明确的未来协作形态是公告栏：Agent 订阅精简事件，判断相关性后选择读取、回应或领取任务；leader 转为目标与讨论范围的监控角色。事件过滤、任务领取与并发归属由 XShadow 管理，知识服务按具体任务返回有预算的证据与知识，不能靠全量广播再让每个 Agent 阅读后筛选来节省上下文。该目标不代表现有 XShadow 已完成改造，也不要求知识库承担任务调度。
+协作采用公告栏：Agent 订阅精简事件，判断相关性后选择读取、回应或领取任务；leader 负责目标与讨论范围的监控。事件过滤、任务领取与并发归属由 XShadow 管理，知识服务按具体任务返回有预算的证据与知识，不能靠全量广播再让每个 Agent 阅读后筛选来节省上下文。现有 XShadow 尚需改造，知识库不承担任务调度。
 
 ### 公告栏的处理协议
 
@@ -307,7 +335,7 @@ XShadow 当前 `server/internal/events/bus.go` 和 `server/internal/realtime/` �
 
 `server/pkg/db/queries/agent.sql` 的 ClaimAgentTask 与 `server/internal/service/task.go` 已有事务、并发限制和执行租约，但其领取对象是已绑定 Agent 的运行任务。同一 issue 可以由不同 Agent 执行。公告栏还需要业务工作项的原子领取，不能把现有执行队列锁当成唯一业务归属保证。租约过期只允许接管，不保证旧进程已经停止；发布和有副作用的执行边界还需检查代次及幂等记录。
 
-`server/internal/daemon/prompt.go` 已有先读讨论摘要、再展开相关线程的方向，可以延伸到知识按需读取。`server/internal/service/issue_wakeup.go` 仍有 leader 归属与 `is_leader_task`，因此自治协作需要调整派发及权限逻辑，修改角色提示词不能完成迁移。这些路径以本节的研发快照为依据，未在本仓库改动。
+`server/internal/daemon/prompt.go` 已有先读讨论摘要、再展开相关线程的方向，可以延伸到知识按需读取。`server/internal/service/issue_wakeup.go` 仍有 leader 归属与 `is_leader_task`，因此自治协作需要调整派发及权限逻辑，修改角色提示词不能完成迁移。这些路径以本节的研发快照为依据。
 
 知识变化采用单向传递的引用事件：知识服务发布后提供带游标的授权变更读取，XShadow 适配器消费并在自己的事务中记录游标及公告。传输允许重复，接收方按来源事件身份去重；任何通知都不等于把知识发布权交给接收方。MCP 负责 Agent 读知识和提议操作，不能充当业务任务调度协议。
 
@@ -321,7 +349,7 @@ XShadow 当前 `server/internal/events/bus.go` 和 `server/internal/realtime/` �
 
 ### 选定技术与条件采用的组件
 
-| 层次 | 本轮选择 | 理由与边界 |
+| 层次 | 技术选择 | 理由与边界 |
 | --- | --- | --- |
 | 知识应用 | Python 3.13 + FastAPI，沿用现有领域、应用、adapter 分层 | 复用 Reader、转换、保存和 Writer；一个发布入口，不重写为另一门语言 |
 | 权威目录 | SQLite，知识服务同机持有，短写事务 | 管身份、版本、授权、关系、提议和发布；多 Agent 通过 API 提交，不直连库文件 |
@@ -349,7 +377,7 @@ PDF / 图片识别继续由 [TV-01](../TODO.md#tv-01) 判断 MinerU 4 路线，�
 
 现有 Reader、共享正文规范化、Writer、发布与恢复仍各有一个实现。新增笔记输入应走正式 Reader 或明确的知识创作入口，不让文件扫描器绕过内容校验。索引分段是派生计算，不修改原 BookRevision 的语义块。
 
-首版推荐一个持久运行的知识服务，SQLite 和原件放在同机磁盘，客户端通过 API 访问。多设备共享服务不等于在网盘上同步活跃数据库。共享范围扩大前先补认证、授权、备份与恢复；如果实测出现多服务写入或数据库瓶颈，再决定是否迁移 PostgreSQL。承载主机尚未选择，不在设计阶段抢占现有模型服务。
+首版采用一个持久运行的知识服务，SQLite 和原件放在同机磁盘，客户端通过 API 访问。多设备共享服务不等于在网盘上同步活跃数据库。共享范围扩大前先补认证、授权、备份与恢复；如果实测出现多服务写入或数据库瓶颈，再决定是否迁移 PostgreSQL。承载主机尚未选择，不在设计阶段抢占现有模型服务。
 
 SQLite 的拟议运行模式采用 WAL，并让原件发布、目录事务和索引作业保持短事务。它仍然只有一个同时写入者，且 WAL 依赖同机共享内存，不能放在跨主机共享文件系统上。[SQLite 官方说明](https://www.sqlite.org/wal.html) 客户端数量增加不直接触发迁移；持续写锁排队、无法满足实测延迟目标，或需要多主机服务实例时，再迁移知识目录到独立 PostgreSQL 数据库。XShadow 已有 PostgreSQL 不意味着两个系统应直接共用业务表。
 
@@ -367,4 +395,47 @@ Obsidian 作为可选阅读客户端，使用导出的独立 Markdown 集合。�
 
 原件、修订和已导出的历史继续保留。日常归档与撤回只影响当前可用性；永久清除不是默认维护动作，需明确范围与引用关系，并按独立授权执行。密钥不进入知识正文、可读导出或版本仓库。
 
+数据库结构升级与文件迁移分开，代码回退不等于数据回退，不能假定旧代码能读取升级后的数据库。原件、原响应、修订和历史导出是长期资料，不套用临时上传 TTL；仍有引用的共享资源不得删除。真实旧库的来源和副本边界保留在[转换依据](#legacy-data-evidence)，当前升级与完整性由 UC-03 / UC-08 验收。
+
 后续换模型、搜索组件或记忆引擎，应沿用同一来源、版本与查询集比较；替换索引不改变知识身份。是否引入外部服务，由 [TV-02～TV-04](../TODO.md#second-brain-validation) 的证据决定。分期、首批边界和验收场景只在 TODO 维护。
+
+<a id="conversion-evidence"></a>
+
+## 转换依据
+
+以下保留方案取舍、样本来源、人工观察边界与报告定位。报告和原件位于 Git 忽略的 `var/quality/`，统计与执行结果以各自快照为准；历史报告不能替代当前产品验收。
+
+### 实现取舍
+
+下表报告路径均相对 `var/quality/`。
+
+| 依据 | 保留的理由与适用边界 |
+| --- | --- |
+| 旧实现 `fc5b9a6193d25fb2f3f1efc7321bd7dfc7a124b4` 的 [基线](../tests/common/baselines/fc5b9a6.json)；`baseline-final/` | 无目录 EPUB、正文重复、引用、表格与图片丢失等观察支持按样本选择规则，不能按代码新旧选定全格式赢家 |
+| `docx-before/checks.json` | 结构损失支持保留 Mammoth 语义 HTML 后进入共同正文，避免私有 Markdown 往返；不证明全部 Word 无损 |
+| `docx-upstream-source-v1/provenance.json`、`checks-v3.json` | 固定提交与 SHA256 的 OOXML 样本，元数据为 Microsoft Office Word；属于测试素材，不是用户业务样本 |
+| `url-phase02/candidate-comparison.json`；[固定网页样本](../tests/common/url_fixtures.py) | 本机 Trafilatura 2.0.0 的样本对照出现正文重复、表格跨度和图片候选丢失，Markdown 另丢代码缩进，支持保留语义文章 DOM；不推及所有网页。源站浮动 / flex 造成 PDF 空白的观察支持改为 block 阅读流，不承诺像素复刻 |
+
+### 独立观察与报告定位
+
+| 证据目录（相对 `var/quality/`） | 不能由场景定义代替的信息 |
+| --- | --- |
+| `checkpoints/phase-01-2026-10-16-final/` | `checkpoint.json`、`installed-source-hashes.json`、`artifacts.json` 定位验证版本；`real-epub/full-book.json`、`visual-review.json` 保留整书源对照与代表页观察。未精确匹配的历史段落探针含源编号 / 字体差异，不能直接推算丢失率，图片核对也不能替代表格验收 |
+| `url-phase02/` | 真实来源为 [Python 官方教程](https://docs.python.org/3/tutorial/introduction.html) 的一次捕获；`real-data/` 保留响应和资源，`real-fetch.json`、`real-replay.json` 定位捕获与重放，`checkpoint.json`、`fixture-export.json` 定位固定样本。人工仅检查真实 PDF 前两页与中文固定样本 |
+| `pdf-phase03/` | `checkpoint.json`、`classification.json`、`installed-report.json` 定位页分类与协议证据；`ocr-environment.json` 只记录当时连通性，见下方环境依据 |
+| `markdown-import/` | `checkpoint.json`、`visual-review.json` 保留共享 Markdown 导入的安装与代表页观察，不证明 PDF / 图片迁移完成 |
+| `resource-cleanup/` | `report.json` 保留被删旧资源的边界和所留字体身份 |
+
+旧安装包及产物曾早于共享分节修复，复验时需核对报告中的源码、检查器和样本身份；不能据目录名认定对应当前实现。
+
+<a id="legacy-data-evidence"></a>
+
+### 真实旧数据副本
+
+`var/quality/storage-migration-copy/report.json` 保留真实源库盘点、schema 1 修订在副本重建、数据库升级到 schema 4 及新旧关联和文件哈希证据。原数据库和原文件未升级或改写，也未验证仅剩 Markdown 的迁移。该报告的价值是记录真实资料来源与副本边界；当前升级行为见 [UC-03-S2](../tests/E5/UC-03-S2.py)。
+
+<a id="environment-evidence"></a>
+
+### 环境依据
+
+离线依赖来源见 `var/quality/cached-wheels/provenance.json`；本机缓存安装不证明在线下载或远程 wheel 字节身份。`var/quality/pdf-phase03/ocr-environment.json` 记录过 OCR 连接失败，不能以旧连通记录解除 TODO 的真实服务阻塞。
