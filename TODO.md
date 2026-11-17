@@ -43,11 +43,11 @@
 - 验证命令 / 结果：在本仓库运行 git diff --check；CPython 3.13 执行 tests/common/run.py --list；运行 python3 var/quality/ex-11/check_docs.py var/quality/ex-11/document-checks-01.json 的等价内联检查。编号、Epic 归属、23 个新增本地链接与旧范围保护均通过。十二个新场景均显示 missing file，符合未实现状态；没有运行产品验收或技术实验。
 - 环境与快照：any_to_md 基线 885a160，文档检查 Python 3.12.3，场景发现使用已安装 CPython 3.13；XShadow 研发 a1f5acae6、日常 306dbfe10，仅核对检出而非服务运行状态。上层工作台存在用户改动，保持不变。旧 EX-10 报告目录 var/quality/ex-10/ 在本机不存在。
 - 报告：[初次文档检查](var/quality/ex-11/document-checks-01.json)与[设计提交前检查](var/quality/ex-11/document-checks-02.json)保存各自文档哈希；后者对应设计提交 3a0b421 的文件内容，24 个新增本地链接均有效。交接回写后使用 python3 var/quality/ex-11/check_docs.py var/quality/ex-11/document-checks-03.json 生成新快照，不改旧报告。检查器保存在同目录，不纳入产品回归或实验通过数。
-- 本轮验证：python3 var/quality/ex-11/check_docs.py var/quality/ex-11/document-checks-04.json 已通过旧 E1～E5 / TV-01 原文保持、编号唯一、27 个新增本地链接、场景发现和差异检查。其后补充去重与失效例，另以 document-checks-05.json 保存提交前新快照；旧报告不改写。仍未运行产品验收、提炼或检索实验。
+- 本轮验证：python3 var/quality/ex-11/check_docs.py var/quality/ex-11/document-checks-04.json 已通过旧 E1～E5 / TV-01 原文保持、编号唯一、27 个新增本地链接、场景发现和差异检查。补充去重与失效例后的 document-checks-05.json 同样通过，对应 8b2de6f 的文档内容；本条回写后另以相同命令生成 document-checks-06.json，不改旧报告。仍未运行产品验收、提炼或检索实验。
 - 运行中任务：无本批转换、实验或服务进程；只读候选与复核均已结束。
 - 未完成 / 阻塞：设计无阻塞。US-14～US-20 / TV-02～TV-04 全部尚未实施；真实语料清单、承载主机与后续具体客户端由对应批次确定，不预填验收。原 US-12 / US-13、OCR 和其他旧需求保持原状态。
 - 下一步建议：先复核本设计，再单独派发 TV-02；之后从 K1 切产品批次。本轮没有创建或派发下一批。
-- 提交 / 推送：上一轮设计 3a0b421 与交接 f8d7f78 均已推送到 origin/codex/second-brain-design。本轮仅追加 TODO.md 和 specs/0003-second-brain-architecture.md；细化内容的提交与推送未执行，收尾回写实际结果。
+- 提交 / 推送：上一轮设计 3a0b421 与交接 f8d7f78、本轮细化 8b2de6f 均已成功推送到 origin/codex/second-brain-design。本轮仅改 TODO.md 和 specs/0003-second-brain-architecture.md；当前交接单独提交，提交号由 Git 定位并在会话中报告最终推送核对结果。
 
 <a id="latest-review"></a>
 
