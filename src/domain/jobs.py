@@ -13,11 +13,12 @@ class JobStatus(StrEnum):
     COMPLETED = "completed"
     COMPLETED_WITH_WARNINGS = "completed_with_warnings"
     PARTIAL = "partial"
+    SAVED_ONLY = "saved_only"
     FAILED = "failed"
 
     @property
     def terminal(self) -> bool:
-        return self in {self.COMPLETED, self.COMPLETED_WITH_WARNINGS, self.PARTIAL, self.FAILED}
+        return self in {self.COMPLETED, self.COMPLETED_WITH_WARNINGS, self.PARTIAL, self.SAVED_ONLY, self.FAILED}
 
     @property
     def downloadable(self) -> bool:

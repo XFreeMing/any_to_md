@@ -25,6 +25,8 @@ CAPABILITIES = {
     "epub": Capability((".epub",), ("md_single", "md_chapters", "html", "pdf"), 'src.readers.epub:read_epub_book'),
     "html": Capability((".html", ".htm", ".zip"), ("md_single", "md_chapters", "html", "pdf"), 'src.readers.html:read_html_document'),
     "docx": Capability((".docx",), ("md_single", "md_chapters", "html", "pdf"), 'src.readers.docx:read_docx_document'),
+    "markdown": Capability((".md", ".markdown"), ("md_single", "md_chapters", "html", "pdf"), 'src.readers.markdown:read_markdown_document'),
+    "text": Capability((".txt",), ("md_single", "md_chapters", "html", "pdf"), 'src.readers.text:read_text_document'),
     "pdf": Capability((".pdf",), ("md_single", "html", "pdf")),
     "image": Capability((".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"), ("md_single", "html", "pdf")),
     "url": Capability((".url",), ("md_single", "html", "pdf"), 'src.readers.url:read_url_document'),
