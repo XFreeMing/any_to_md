@@ -289,7 +289,8 @@ class JobRuntime:
         if existing is None:
             return self.catalog.create_job(job_id, filename, format_name, targets, output_format)
         receipt = self.result(job_id) or {}
-        known = (receipt.get('source') or {}).get('original_sha256')
+        source_receipt = receipt.get('source') or {}
+        known = source_receipt.get('submitted_sha256') or source_receipt.get('original_sha256')
         if isinstance(known, str) and known and known != original_sha256:
             raise JobConflict('已绑定的 job 与本次输入指纹不一致')
         if existing.filename != filename or existing.input_format != format_name:
@@ -491,8 +492,26 @@ class JobRuntime:
         source = self.source_path(job)
         if job.input_format == 'url' and source.suffix == '.url':
             snapshot = capture_url_source(source.read_text(encoding='utf-8').strip())
+            submitted_sha = source.stem
             _, key, digest = self.storage.store_bytes(snapshot, '.zip')
-            return self.source_path(self._register(job, key, digest, token))
+            job = self._register(job, key, digest, token)
+            # The captured snapshot replaces the address text as the durable
+            # original. Record that identity now: the published export and any
+            # later reader must agree on the ZIP's digest, never expose the
+            # pre-fetch .url file as the user's original.
+            receipt = self.result(job.job_id) or self._base_receipt(job)
+            receipt['source'] = {
+                'source_id': job.source_id,
+                'storage_key': key,
+                'source_sha256': digest,
+                'original_sha256': digest,
+                'original_size_bytes': len(snapshot),
+                'package': {'format': 'url-source-v1', 'entrypoint': 'response.html'},
+                'submitted_sha256': submitted_sha,
+                'submitted_size_bytes': source.stat().st_size,
+            }
+            self._write_receipt(job.job_id, receipt)
+            return self.source_path(job)
         return source
 
     def execute(self, job_id: str) -> JobExecution:
