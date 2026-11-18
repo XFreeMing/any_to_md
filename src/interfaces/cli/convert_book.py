@@ -46,6 +46,11 @@ def build_parser(*, shortcut: bool = False) -> argparse.ArgumentParser:
     parser.add_argument("--target", nargs="+", choices=("markdown", "html", "pdf"), default=["markdown"], help="输出格式，可一次选择多个")
     parser.add_argument("--collect", action="store_true", help="收集模式：先登记原件；未知类型仅保存为 saved_only")
     parser.add_argument("--job-id", help="为本次收集绑定调用方生成的 UUID（与业务 request_id 相同）")
+    parser.add_argument(
+        "--resume-job",
+        metavar="JOB_ID",
+        help="从已登记的原件继续提取和发布；不重新读取输入，也不改动 job 身份",
+    )
     parser.add_argument("--json", action="store_true", help="按任务输出机器可读结果（每行一个 JSON）")
     parser.add_argument("--fingerprint", action="store_true", help="只计算整理后的输入与资源指纹，不写入任何文件")
     parser.add_argument("--result", metavar="JOB_ID", help="输出既有任务的机器可读结果")
@@ -92,6 +97,29 @@ def main(argv: list[str] | None = None, *, shortcut: bool = False) -> int:
             return 1
         return 0
     runtime = JobRuntime(args.data_dir)
+    if args.resume_job is not None:
+        if args.input or args.url or args.input_dir is not None or args.job_id is not None or args.collect:
+            print("--resume-job 只读取已登记的原件，不能与其他输入或收集参数同时使用。", file=sys.stderr)
+            return 2
+        try:
+            result = convert(
+                ConversionRequest(
+                    None,
+                    args.data_dir,
+                    tuple(args.target),
+                    job_id=args.resume_job,
+                    collect=False,
+                )
+            )
+        except Exception as exc:
+            print(f"续跑失败：{args.resume_job}：{exc}", file=sys.stderr)
+            return 1
+        receipt = result.receipt if result.receipt is not None else runtime.result(result.job_id)
+        if args.json:
+            _print_receipt(receipt or {"job_id": result.job_id, "status": result.status})
+        else:
+            print(f"输入：{args.resume_job}\n状态：{result.status}\njob_id：{result.job_id}")
+        return 2 if result.status == "partial" else 0
     if args.job_id is not None and len(args.input or []) + len(args.url or []) != 1:
         print("--job-id 一次只接受一个输入。", file=sys.stderr)
         return 2
