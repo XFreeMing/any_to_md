@@ -13,6 +13,7 @@ from ..export.planning import create_export_plan
 from ..export.bundle import write_bundle
 from .capabilities import CAPABILITIES
 from .jobs import JobRuntime, source_ids
+from ..domain.jobs import JobStatus
 
 
 @dataclass(frozen=True)
@@ -21,19 +22,25 @@ class ConversionRequest:
     data_dir: Path | str = 'var'
     targets: tuple[str, ...] = ('markdown',)
     job_id: str | None = None
+    collect: bool = False
 
 
 @dataclass(frozen=True)
 class ConversionResult:
     job_id: str
-    book_id: str
-    edition_id: str
-    revision_id: str
-    export_id: str
+    book_id: str | None
+    edition_id: str | None
+    revision_id: str | None
+    export_id: str | None
     status: str
-    output_dir: Path
-    report_path: Path
+    output_dir: Path | None
+    report_path: Path | None
     warning_count: int
+    receipt: dict | None = None
+
+    @property
+    def saved_only(self) -> bool:
+        return self.status == 'saved_only'
 
 
 def _semantic_snapshot_sha256(book: BookRevision) -> str:
@@ -43,19 +50,65 @@ def _semantic_snapshot_sha256(book: BookRevision) -> str:
     return hashlib.sha256(serialized).hexdigest()
 
 
+def _result_from_job(runtime: JobRuntime, job_id: str) -> ConversionResult:
+    receipt = runtime.result(job_id) or {}
+    conversion = receipt.get('conversion') or {}
+    return ConversionResult(
+        job_id=job_id,
+        book_id=conversion.get('book_id'),
+        edition_id=conversion.get('edition_id'),
+        revision_id=conversion.get('revision_id'),
+        export_id=conversion.get('export_id'),
+        status=str(receipt.get('status') or 'saved_only'),
+        output_dir=None,
+        report_path=None,
+        warning_count=0,
+        receipt=receipt,
+    )
+
+
 def convert(request: ConversionRequest) -> ConversionResult:
     """Persist a job before reading, then publish only while owning its lease."""
     runtime = JobRuntime(request.data_dir)
     if request.job_id is not None:
         if request.input_path is not None:
-            raise ValueError('job_id 与 input_path 不能同时提供')
-        job = runtime.get(request.job_id)
+            # Collection callers bind their request id to the job before the
+            # input is touched, so the receipt is addressable even if the
+            # process dies later. Extraction-only callers address a job that
+            # was already collected.
+            if not request.collect:
+                raise ValueError('job_id 与 input_path 不能同时提供')
+            job = runtime.file_job(
+                request.input_path,
+                request.targets,
+                job_id=request.job_id,
+                collect=True,
+            )
+        else:
+            job = runtime.get(request.job_id)
         if job is None:
             raise KeyError(request.job_id)
     else:
         if request.input_path is None:
             raise ValueError('需要输入文件或已创建的 job_id')
-        job = runtime.file_job(request.input_path, request.targets)
+        job = runtime.file_job(request.input_path, request.targets, collect=request.collect)
+    if job.status == JobStatus.SAVED_ONLY:
+        return _result_from_job(runtime, job.job_id)
+    if job.source_id is None:
+        runtime.reconcile()
+        job = runtime.get(job.job_id)
+        if job is None or job.source_id is None:
+            raise ValueError('任务没有已登记的原件，需重新提交输入')
+    if job.status in {JobStatus.COMPLETED, JobStatus.COMPLETED_WITH_WARNINGS, JobStatus.PARTIAL}:
+        return _result_from_job(runtime, job.job_id)
+    try:
+        return _extract(runtime, job)
+    except Exception as error:
+        runtime.record_failed(job.job_id, error)
+        raise
+
+
+def _extract(runtime: JobRuntime, job) -> ConversionResult:
     with runtime.execute(job.job_id) as execution:
         book = None
         if job.selected_revision_id is not None:
@@ -68,7 +121,7 @@ def convert(request: ConversionRequest) -> ConversionResult:
             source = runtime.capture_source(job, execution.token)
             source_id, book_id, edition_id = source_ids(job.input_format, source.stem)
             execution.progress(15, 'Reading source')
-            reader_options = {'original_filename': job.filename} if job.input_format == 'html' else {}
+            reader_options = {'original_filename': job.filename} if job.input_format in {'html', 'markdown', 'text'} else {}
             book = reader(
                 source, fallback_title=Path(job.filename).stem,
                 source_sha256=source.stem, source_id=source_id, book_id=book_id,
@@ -89,9 +142,11 @@ def convert(request: ConversionRequest) -> ConversionResult:
         execution.progress(50, 'Writing requested views')
         report, artifacts = write_bundle(book, plan, staging, job.targets, job_id=job.job_id)
         output_dir = execution.publish(report, artifacts, book, plan, rebuilt_from_original=not reused)
+        receipt = runtime.record_published(job.job_id, book=book, plan=plan, report=report, export_dir=output_dir)
         return ConversionResult(
             job_id=job.job_id, book_id=book.book_id, edition_id=book.edition_id,
             revision_id=book.revision_id, export_id=plan.export_id,
             status=report['status'], output_dir=output_dir,
             report_path=output_dir / 'report.json', warning_count=report['summary']['warning_count'],
+            receipt=receipt,
         )

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Run this checkout's conversion CLI without relying on an editable install.
+#   ANY_TO_MD_PYTHON=/path/to/python ./scripts/any-to-md-book --input file.md --data-dir var
+set -eu
+root="$(cd "$(dirname "$0")/.." && pwd -P)"
+python="${ANY_TO_MD_PYTHON:-$root/.venv/bin/python}"
+if [ ! -x "$python" ]; then
+    python="$(command -v python3 || true)"
+fi
+[ -n "$python" ] || { echo "no Python interpreter found" >&2; exit 1; }
+export PYTHONPATH="$root${PYTHONPATH:+:$PYTHONPATH}"
+exec "$python" -m src.interfaces.cli.convert_book "$@"

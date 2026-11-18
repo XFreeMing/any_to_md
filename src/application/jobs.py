@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import errno
+import hashlib
 import json
 import logging
 import os
@@ -12,12 +13,14 @@ import uuid
 from pathlib import Path
 
 from ..adapters.persistence.sqlite import SQLiteCatalog
-from ..adapters.html_source import capture_html_source, pack_html_source
+from ..adapters.html_source import capture_html_members, pack_html_source
+from ..adapters.markdown_source import capture_resources, pack_markdown_source
+from ..adapters.source_package import resources_fingerprint
 from ..adapters.url_source import capture_url_source
 from ..adapters.storage import LocalStorage, sha256_file
 from ..domain.artifacts import ArtifactRecord, ExportPlan
 from ..domain.book import BookRevision
-from ..domain.jobs import Job, JobConflict
+from ..domain.jobs import Job, JobConflict, JobStatus
 from ..export.downloads import prepare_download
 from ..export.files import write_json
 from .capabilities import CAPABILITIES, OUTPUT_TARGET, input_format, validate_outputs
@@ -118,44 +121,346 @@ class JobRuntime:
         report = self.storage.diagnostic_path(job.job_id)
         write_json(report, {'schema_version': 2, 'job_id': job.job_id, 'status': 'failed', 'error': str(error)})
         self.catalog.fail_job(job.job_id, str(error), report.relative_to(self.storage.root).as_posix())
+        receipt = self._base_receipt(job)
+        receipt['status'] = 'failed'
+        receipt['phase']['save'] = 'failed'
+        receipt['diagnostic_code'] = 'save_failed'
+        receipt['diagnostic_key'] = report.relative_to(self.storage.root).as_posix()
+        self._write_receipt(job.job_id, receipt)
         raise ConversionFailure(job.job_id, report, error) from error
 
-    def upload(self, filename: str, content: bytes, format_name: str | None = None) -> Job:
-        format_name = format_name or input_format(filename) or 'unknown'
-        job = self.catalog.create_job(str(uuid.uuid4()), filename, format_name, (), None)
-        try:
-            if format_name not in CAPABILITIES:
+    # -- collection receipts and intents --------------------------------
+
+    def _job_dir(self, job_id: str) -> Path:
+        path = self.storage.root / 'jobs' / str(uuid.UUID(job_id))
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    def _receipt_path(self, job_id: str) -> Path:
+        return self._job_dir(job_id) / 'result.json'
+
+    def _intent_path(self, job_id: str) -> Path:
+        return self._job_dir(job_id) / 'intent.json'
+
+    def _write_receipt(self, job_id: str, receipt: dict) -> None:
+        write_json(self._receipt_path(job_id), receipt)
+
+    @staticmethod
+    def _base_receipt(job: Job) -> dict:
+        return {
+            'schema_version': 1,
+            'job_id': job.job_id,
+            'input_format': job.input_format,
+            'filename': job.filename,
+            'status': str(job.status),
+            'phase': {'save': 'pending', 'extraction': 'not_started', 'publish': 'not_started'},
+            'diagnostic_code': None,
+            'source': None,
+            'conversion': None,
+        }
+
+    def result(self, job_id: str) -> dict | None:
+        """Versioned machine-readable receipt for one job, if it exists."""
+        path = self._receipt_path(job_id)
+        if path.is_file():
+            try:
+                data = json.loads(path.read_text(encoding='utf-8'))
+            except (json.JSONDecodeError, UnicodeError):
+                data = None
+            if isinstance(data, dict):
+                return data
+        job = self.get(job_id)
+        if job is None:
+            return None
+        # A crash may land between a committed catalog transition and the
+        # receipt write; rebuild the stable subset from the catalog.
+        receipt = self._base_receipt(job)
+        receipt['status'] = str(job.status)
+        if job.source_id is not None and job.input_key is not None:
+            receipt['phase']['save'] = 'saved'
+            stored = job.input_key.split('/', 1)[-1]
+            digest = stored.split('.', 1)[0]
+            receipt['source'] = {
+                'source_id': job.source_id,
+                'storage_key': job.input_key,
+                'source_sha256': digest,
+                'original_sha256': None,
+                'original_size_bytes': None,
+                'package': None,
+            }
+        if job.status in {JobStatus.COMPLETED, JobStatus.COMPLETED_WITH_WARNINGS, JobStatus.PARTIAL}:
+            receipt['phase']['extraction'] = str(job.status)
+            receipt['phase']['publish'] = 'published'
+            receipt['conversion'] = {
+                'export_id': job.export_id,
+                'status': str(job.status),
+                'report_key': job.report_key,
+            }
+        elif job.status == JobStatus.SAVED_ONLY:
+            receipt['phase']['save'] = 'saved'
+            receipt['phase']['extraction'] = 'not_applicable'
+        elif job.status == JobStatus.FAILED:
+            receipt['diagnostic_code'] = 'extraction_failed'
+            receipt['phase']['extraction'] = 'failed'
+        return receipt
+
+    def _write_source_receipt(self, job: Job, *, package: dict | None, original_sha256: str, original_size_bytes: int, stored_sha256: str, key: str) -> dict:
+        receipt = self.result(job.job_id) or self._base_receipt(job)
+        receipt['status'] = str(job.status)
+        receipt['phase']['save'] = 'saved'
+        receipt['source'] = {
+            'source_id': job.source_id,
+            'storage_key': key,
+            'source_sha256': stored_sha256,
+            'original_sha256': original_sha256,
+            'original_size_bytes': original_size_bytes,
+            'package': package,
+        }
+        self._write_receipt(job.job_id, receipt)
+        return receipt
+
+    def record_published(self, job_id: str, *, book: BookRevision, plan: ExportPlan, report: dict, export_dir: Path) -> dict:
+        job = self.get(job_id)
+        receipt = self.result(job_id) or self._base_receipt(job)
+        receipt['status'] = report['status']
+        receipt['phase']['extraction'] = report['status']
+        receipt['phase']['publish'] = 'published'
+        receipt['conversion'] = {
+            'book_id': book.book_id,
+            'edition_id': book.edition_id,
+            'revision_id': book.revision_id,
+            'export_id': plan.export_id,
+            'status': report['status'],
+            'pipeline_version': book.pipeline_version,
+            'report_key': (export_dir / 'report.json').relative_to(self.storage.root).as_posix(),
+        }
+        self._write_receipt(job_id, receipt)
+        return receipt
+
+    def record_failed(self, job_id: str, error: BaseException) -> dict:
+        job = self.get(job_id)
+        if job is None:
+            raise KeyError(job_id)
+        receipt = self.result(job_id) or self._base_receipt(job)
+        receipt['status'] = str(job.status)
+        if receipt['phase']['save'] != 'failed':
+            receipt['phase']['save'] = 'saved' if job.source_id else 'pending'
+        interrupted = str(job.status) == 'failed' and 'interrupt' in (job.message or '').lower()
+        receipt['phase']['extraction'] = 'interrupted' if interrupted else 'failed'
+        receipt['diagnostic_code'] = 'interrupted' if interrupted else 'extraction_failed'
+        receipt['diagnostic_message'] = str(error)
+        self._write_receipt(job_id, receipt)
+        return receipt
+
+    # -- collection -----------------------------------------------------
+
+    @staticmethod
+    def _safe_filename(filename: str) -> str:
+        name = Path(filename).name
+        if name in {'', '.', '..'}:
+            raise ValueError(f'无效的输入文件名：{filename!r}')
+        return name
+
+    @staticmethod
+    def _stored_bytes(format_name: str, filename: str, content: bytes, *, resources: dict[str, bytes] | None = None, collect: bool) -> tuple[bytes, str, dict | None]:
+        """Decide the stored representation before the blob is written."""
+        suffix = Path(filename).suffix.lower()
+        if format_name == 'html' and suffix != '.zip':
+            return pack_html_source(filename, content, resources), '.zip', {'format': 'html-source-v1', 'entrypoint': Path(filename).name, 'resources_sha256': resources_fingerprint(resources or {})}
+        if format_name == 'markdown':
+            resources = resources if resources is not None else {}
+            return pack_markdown_source(filename, content, resources), '.zip', {'format': 'markdown-source-v1', 'entrypoint': Path(filename).name, 'resources_sha256': resources_fingerprint(resources)}
+        if format_name not in CAPABILITIES:
+            if not collect:
                 raise ValueError(f'不支持的输入：{filename}')
-            suffix = '.url' if format_name == 'url' else Path(filename).suffix
-            if format_name == 'html' and suffix.lower() != '.zip':
-                content = pack_html_source(filename, content)
-                suffix = '.zip'
-            _, key, digest = self.storage.store_bytes(content, suffix)
-            return self._register(job, key, digest)
+            return content, '.bin', None
+        if format_name == 'url':
+            return content, '.url', None
+        return content, suffix or '.bin', None
+
+    def _create_or_resume(self, job_id: str | None, filename: str, format_name: str, targets: tuple[str, ...], output_format: str | None, original_sha256: str) -> Job:
+        if job_id is None:
+            return self.catalog.create_job(str(uuid.uuid4()), filename, format_name, targets, output_format)
+        try:
+            uuid.UUID(job_id)
+        except (ValueError, AttributeError) as error:
+            raise ValueError(f'job_id 必须是 UUID：{job_id!r}') from error
+        existing = self.get(job_id)
+        if existing is None:
+            return self.catalog.create_job(job_id, filename, format_name, targets, output_format)
+        receipt = self.result(job_id) or {}
+        source_receipt = receipt.get('source') or {}
+        known = source_receipt.get('submitted_sha256') or source_receipt.get('original_sha256')
+        if isinstance(known, str) and known and known != original_sha256:
+            raise JobConflict('已绑定的 job 与本次输入指纹不一致')
+        if existing.filename != filename or existing.input_format != format_name:
+            raise JobConflict('已绑定的 job 与本次输入的文件名或格式不一致')
+        return existing
+
+    def _collect_stored(self, job: Job, *, content: bytes, stored: bytes, suffix: str, package: dict | None) -> Job:
+        """Persist the intent, write and verify the blob, then register source."""
+        filename = job.filename
+        stored_sha = hashlib.sha256(stored).hexdigest()
+        key = f'sources/{stored_sha}{suffix}'
+        original_sha = hashlib.sha256(content).hexdigest()
+        intent = {
+            'schema_version': 1,
+            'job_id': job.job_id,
+            'filename': filename,
+            'input_format': job.input_format,
+            'storage_key': key,
+            'source_sha256': stored_sha,
+            'original_sha256': original_sha,
+            'original_size_bytes': len(content),
+            'package': package,
+        }
+        write_json(self._intent_path(job.job_id), intent)
+        try:
+            _, stored_key, digest = self.storage.store_bytes(stored, suffix)
+            if stored_key != key or digest != stored_sha:
+                raise ValueError('写入后的来源存储键或摘要不一致')
+            job = self._register(job, stored_key, digest)
+            if job.input_format not in CAPABILITIES:
+                self.catalog.finish_saved_only(job.job_id, self._receipt_path(job.job_id).relative_to(self.storage.root).as_posix())
+                job = self.get(job.job_id)
         except Exception as error:
             self._ingestion_failed(job, error)
+        receipt = self._write_source_receipt(
+            job, package=package, original_sha256=original_sha,
+            original_size_bytes=len(content), stored_sha256=stored_sha, key=stored_key,
+        )
+        if job.status == JobStatus.SAVED_ONLY:
+            receipt['status'] = 'saved_only'
+            receipt['phase']['extraction'] = 'not_applicable'
+            self._write_receipt(job.job_id, receipt)
+        self._intent_path(job.job_id).unlink(missing_ok=True)
+        return job
 
-    def file_job(self, path: Path | str, targets: tuple[str, ...]) -> Job:
+    def collect(self, filename: str, content: bytes, *, job_id: str | None = None, resources: dict[str, bytes] | None = None, targets: tuple[str, ...] = (), output_format: str | None = None) -> Job:
+        """Accept and register a source before deciding whether to extract.
+
+        Unknown formats are stored verbatim and end as ``saved_only``. Known
+        formats are stored in the same way and remain pending extraction, which
+        ``convert(..., job_id=...)`` performs while holding the job lease.
+        """
+        filename = self._safe_filename(filename)
+        format_name = input_format(filename) or 'unknown'
+        job = self._create_or_resume(job_id, filename, format_name, targets, output_format, hashlib.sha256(content).hexdigest())
+        if job.source_id is not None:
+            return job
+        self._write_receipt(job.job_id, self._base_receipt(job))
+        stored, suffix, package = self._stored_bytes(format_name, filename, content, resources=resources, collect=True)
+        return self._collect_stored(job, content=content, stored=stored, suffix=suffix, package=package)
+
+    def collect_path(self, path: Path | str, *, job_id: str | None = None, targets: tuple[str, ...] = (), output_format: str | None = None) -> Job:
+        """Collect one local file, capturing the resources it references."""
+        source = Path(path).expanduser().absolute()
+        if not source.is_file():
+            raise FileNotFoundError(f'输入文件不存在：{source}')
+        return self.file_job(source, targets, job_id=job_id, output_format=output_format, collect=True)
+
+    @classmethod
+    def fingerprint(cls, path: Path | str) -> dict:
+        """Prepared-input identities without creating a job or writing a blob."""
+        source = Path(path).expanduser().absolute()
+        if not source.is_file():
+            raise FileNotFoundError(f'输入文件不存在：{source}')
+        filename = cls._safe_filename(source.name)
+        format_name = input_format(filename) or 'unknown'
+        content = source.read_bytes()
+        resources = None
+        if format_name == 'markdown':
+            resources = capture_resources(source, content)
+        elif format_name == 'html' and source.suffix.lower() != '.zip':
+            content, resources = capture_html_members(source)
+        stored, _, package = cls._stored_bytes(format_name, filename, content, resources=resources, collect=True)
+        return {
+            'schema_version': 1,
+            'input_format': format_name,
+            'filename': filename,
+            'input_sha256': hashlib.sha256(content).hexdigest(),
+            'original_size_bytes': len(content),
+            'package_sha256': hashlib.sha256(stored).hexdigest(),
+            'resources_sha256': (package or {}).get('resources_sha256'),
+            'package': package,
+        }
+
+    def reconcile(self) -> int:
+        """Register blobs written before a crash; never invent a missing file."""
+        root = self.storage.root / 'jobs'
+        if not root.is_dir():
+            return 0
+        repaired = 0
+        for intent_path in sorted(root.glob('*/intent.json')):
+            try:
+                intent = json.loads(intent_path.read_text(encoding='utf-8'))
+                job_id = str(uuid.UUID(str(intent['job_id'])))
+            except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+                continue
+            job = self.get(job_id)
+            if job is None:
+                continue
+            if job.source_id is not None:
+                intent_path.unlink(missing_ok=True)
+                continue
+            try:
+                path = self.storage.resolve(str(intent['storage_key']))
+            except ValueError:
+                continue
+            if not path.is_file() or sha256_file(path) != intent.get('source_sha256'):
+                continue
+            job = self._register(job, str(intent['storage_key']), str(intent['source_sha256']))
+            if job.input_format not in CAPABILITIES:
+                self.catalog.finish_saved_only(job.job_id, self._receipt_path(job.job_id).relative_to(self.storage.root).as_posix())
+                job = self.get(job.job_id)
+            receipt = self._write_source_receipt(
+                job, package=intent.get('package'),
+                original_sha256=str(intent.get('original_sha256') or ''),
+                original_size_bytes=int(intent.get('original_size_bytes') or 0),
+                stored_sha256=str(intent['source_sha256']), key=str(intent['storage_key']),
+            )
+            if job.status == JobStatus.SAVED_ONLY:
+                receipt['status'] = 'saved_only'
+                receipt['phase']['extraction'] = 'not_applicable'
+                self._write_receipt(job.job_id, receipt)
+            intent_path.unlink(missing_ok=True)
+            repaired += 1
+        return repaired
+
+    def upload(self, filename: str, content: bytes, format_name: str | None = None, *, collect_unknown: bool = False) -> Job:
+        format_name = format_name or input_format(filename) or 'unknown'
+        if format_name not in CAPABILITIES and not collect_unknown:
+            filename = self._safe_filename(filename)
+            job = self.catalog.create_job(str(uuid.uuid4()), filename, format_name, (), None)
+            self._ingestion_failed(job, ValueError(f'不支持的输入：{filename}'))
+        return self.collect(filename, content)
+
+    def file_job(self, path: Path | str, targets: tuple[str, ...], *, job_id: str | None = None, output_format: str | None = None, collect: bool = False) -> Job:
         is_url = isinstance(path, str) and path.startswith(('http://', 'https://'))
         source = Path('webpage.url') if is_url else Path(path).expanduser().absolute()
-        format_name = 'url' if is_url else input_format(source.name) or 'unknown'
-        output = 'md_single' if 'markdown' in targets else 'pdf' if 'pdf' in targets else 'html'
-        job = self.catalog.create_job(str(uuid.uuid4()), source.name, format_name, targets, output)
-        try:
-            validate_outputs(format_name, targets, output)
-            if format_name == 'url':
-                content = path.encode('utf-8') if is_url else source.read_bytes()
-                _, key, digest = self.storage.store_bytes(content, '.url')
-            elif not source.is_file():
+        filename = self._safe_filename(source.name if not is_url else 'webpage.url')
+        format_name = 'url' if is_url else input_format(filename) or 'unknown'
+        if output_format is None:
+            output_format = 'md_single' if 'markdown' in targets else 'pdf' if 'pdf' in targets else 'html'
+        if format_name not in CAPABILITIES and not collect:
+            job = self.catalog.create_job(str(uuid.uuid4()), filename, format_name, targets, output_format)
+            try:
+                validate_outputs(format_name, targets, output_format)
+            except Exception as error:
+                self._ingestion_failed(job, error)
+        if format_name == 'url':
+            content = path.encode('utf-8') if is_url else source.read_bytes()
+            resources = None
+        else:
+            if not source.is_file():
                 raise FileNotFoundError(f'输入文件不存在：{source}')
+            content = source.read_bytes()
+            resources = None
+            if format_name == 'markdown':
+                resources = capture_resources(source, content)
             elif format_name == 'html' and source.suffix.lower() != '.zip':
-                _, key, digest = self.storage.store_bytes(capture_html_source(source), '.zip')
-            else:
-                digest = sha256_file(source)
-                _, key = self.storage.store_source(source, digest)
-            return self._register(job, key, digest)
-        except Exception as error:
-            self._ingestion_failed(job, error)
+                content, resources = capture_html_members(source)
+        return self.collect(filename, content, job_id=job_id, resources=resources, targets=targets, output_format=output_format)
 
     def queue(self, job_id: str, output_format: str) -> Job:
         job = self.get(job_id)
@@ -187,8 +492,26 @@ class JobRuntime:
         source = self.source_path(job)
         if job.input_format == 'url' and source.suffix == '.url':
             snapshot = capture_url_source(source.read_text(encoding='utf-8').strip())
+            submitted_sha = source.stem
             _, key, digest = self.storage.store_bytes(snapshot, '.zip')
-            return self.source_path(self._register(job, key, digest, token))
+            job = self._register(job, key, digest, token)
+            # The captured snapshot replaces the address text as the durable
+            # original. Record that identity now: the published export and any
+            # later reader must agree on the ZIP's digest, never expose the
+            # pre-fetch .url file as the user's original.
+            receipt = self.result(job.job_id) or self._base_receipt(job)
+            receipt['source'] = {
+                'source_id': job.source_id,
+                'storage_key': key,
+                'source_sha256': digest,
+                'original_sha256': digest,
+                'original_size_bytes': len(snapshot),
+                'package': {'format': 'url-source-v1', 'entrypoint': 'response.html'},
+                'submitted_sha256': submitted_sha,
+                'submitted_size_bytes': source.stat().st_size,
+            }
+            self._write_receipt(job.job_id, receipt)
+            return self.source_path(job)
         return source
 
     def execute(self, job_id: str) -> JobExecution:
@@ -236,6 +559,7 @@ class JobRuntime:
         # committing the failure, or its first quarantine attempt failed.
         for job in self.catalog.failed_jobs():
             self._reconcile_failure(job)
+        recovered += self.reconcile()
         return recovered
 
     def _reconcile_failure(self, job: Job, *, error: BaseException | None = None) -> None:

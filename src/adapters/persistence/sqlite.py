@@ -609,6 +609,16 @@ class SQLiteCatalog:
                 raise JobConflict(f'无法覆盖已经终结的任务：{job_id}')
             connection.execute("UPDATE exports SET status='failed' WHERE job_id=? AND status='staging'", (job_id,))
 
+    def finish_saved_only(self, job_id: str, report_key: str) -> None:
+        """Terminal state for an original that was collected without extraction."""
+        with self._transaction() as connection:
+            changed = connection.execute(
+                "UPDATE jobs SET status='saved_only', message='Original saved; extraction not applicable', report_key=?, finished_at=? WHERE job_id=? AND status='pending'",
+                (report_key, _now(), job_id),
+            ).rowcount
+            if changed != 1:
+                raise JobConflict(f'无法将任务标记为仅保存：{job_id}')
+
     def interrupt_job(self, job_id: str, owner_pid: int | None, lease_expires: float | None, report_key: str) -> bool:
         with self._transaction() as connection:
             changed = connection.execute("UPDATE jobs SET status='failed', error_json=?, message=?, report_key=?, finished_at=?, download_relative=NULL, lease_expires=NULL WHERE job_id=? AND status IN ('queued','processing') AND owner_pid IS ? AND lease_expires IS ?", (json.dumps({'code': 'interrupted'}), 'Worker interrupted; create a new conversion to retry', report_key, _now(), job_id, owner_pid, lease_expires)).rowcount

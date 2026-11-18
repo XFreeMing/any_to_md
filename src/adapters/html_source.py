@@ -7,13 +7,12 @@ hashed stored input or fetches a network resource.
 
 from __future__ import annotations
 
-import io
 import json
 import mimetypes
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from urllib.parse import urlsplit
-from zipfile import ZIP_STORED, ZipFile, ZipInfo, is_zipfile
+from zipfile import ZipFile, is_zipfile
 
 from bs4 import BeautifulSoup
 
@@ -22,10 +21,12 @@ from ..content.document import document_base, element_resource_base
 from ..content.media import decode_svg_data
 from ..content.styles import style_references
 from .archive import member_name as _member_name, validate_archive
-
-SOURCE_MANIFEST = 'any-to-md-source.json'
-MAX_SOURCE_BYTES = 256 * 1024 * 1024
-MAX_SOURCE_FILES = 10000
+from .source_package import (
+    MAX_SOURCE_BYTES,
+    MAX_SOURCE_FILES,
+    SOURCE_MANIFEST,
+    pack_source,
+)
 
 
 @dataclass(frozen=True)
@@ -97,21 +98,10 @@ def _html_references(content: bytes, path: str, depth: int = 0) -> list[tuple[st
 
 
 def pack_html_source(filename: str, content: bytes, resources: dict[str, bytes] | None = None) -> bytes:
-    name = _member_name(Path(filename).name)
-    members = {**(resources or {}), name: content}
-    if SOURCE_MANIFEST in members:
-        raise ValueError('HTML 来源资源与保留清单名称冲突')
-    members[SOURCE_MANIFEST] = json.dumps({'format': 'html-source-v1', 'entrypoint': name}, ensure_ascii=False, sort_keys=True).encode()
-    if len(members) > MAX_SOURCE_FILES or sum(map(len, members.values())) > MAX_SOURCE_BYTES:
-        raise ValueError('HTML 来源超出 10000 个文件或 256 MiB 大小限制')
-    stream = io.BytesIO()
-    with ZipFile(stream, 'w', compression=ZIP_STORED) as archive:
-        for member, value in sorted(members.items()):
-            archive.writestr(ZipInfo(_member_name(member), date_time=(2020, 1, 1, 0, 0, 0)), value)
-    return stream.getvalue()
+    return pack_source('html-source-v1', filename, content, resources)
 
 
-def capture_html_source(path: Path) -> bytes:
+def capture_html_members(path: Path) -> tuple[bytes, dict[str, bytes]]:
     """Freeze only referenced files within the document's local directory."""
     path = path.resolve()
     content = path.read_bytes()
@@ -142,4 +132,9 @@ def capture_html_source(path: Path) -> bytes:
                 raise ValueError('HTML 来源超出 10000 个文件或 256 MiB 大小限制')
             members[target] = candidate.read_bytes()
             pending.append(target)
-    return pack_html_source(path.name, content, members)
+    return members.pop(path.name), members
+
+
+def capture_html_source(path: Path) -> bytes:
+    content, resources = capture_html_members(path)
+    return pack_html_source(path.name, content, resources)
