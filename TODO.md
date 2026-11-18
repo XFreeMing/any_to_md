@@ -34,7 +34,7 @@
 - 交接与检索：`projection_key=eda25aaf…`，slug `dev58/eda25aaf…`；GBrain 在隔离 home 用 PGLite、无向量、无密钥完成 `init`、`put`、`get`；`search BODY_FIRST_101 --match keyword` 命中同一 slug，不存在的词返回空，同一 `request_id` 重试 `created=0`。
 - 限制：投影丢失表格单元格分隔与代码块内空行；GBrain 把代码行推断成标题。回跳只验证到章节锚点。权限拒绝、scope 隔离、部分产物状态机、真实旧库迁移、中文召回和其余六个模块运行仍未验证。
 - 薄适配（`a51a945`）：主项目新增本地 CLI 与隔离试验配置，从可信配置推导身份所属 scope，每 scope 独立 any_to_md 数据目录与 GBrain home；转换前先持久化身份与输入指纹，写入前保存 slug、稳定候选请求 ID 与投递哈希，候选读回匹配后才记账。
-  - 受控试验 7 项在在线与 `unshare -rn` 离线各跑一次，全部通过；实际输出在 `dist/evidence-dev58-adapter.json`，日志在 `dist/trial-*.log`。
+  - 受控试验 8 项在在线与 `unshare -rn` 离线各跑一次，全部通过；实际输出在 `dist/evidence-dev58-adapter.json`，日志在 `dist/trial-*.log`。
   - 同字节不同 scope：输入 SHA-256 相同、slug 不同、GBrain home 不同；Alice 对 Bob 的 slug `get` 返回不存在。
   - 越权：scope 不符、跨 scope slug、未授权资料、跨 scope 记录均在 GBrain 查询前拒绝（退出 4），拒绝前后 `search` / `get` 调用计数各 4→4，审计记录 4 类拒绝码。
   - 更新：旧 slug、旧导出、旧原件哈希、`book.md` 哈希、图片哈希与锚点均不变；新修订成为当前，检索只返回新修订。
@@ -42,9 +42,10 @@
   - 标题：新投影以一级标题开头，读回标题为 `第一章：图表与代码`；旧投影 `##` 开头时读回仍为 `CODE_HASH_106`，复现保留在试验 7。
   - 未覆盖：身份为受控旗帜而非登录会话；无 Web 入口；仅接入 GBrain；中文召回未验证；同一 scope 并发写未加锁；真实旧库未读取。
   - 路径归一修正（`8deacea`）：配置载入对绝对与相对路径统一 `resolve`，`Store` 根与交给 GBrain 的 `HOME` / `GBRAIN_HOME` / `TMPDIR` 再次归一；准备脚本对目标用 `realpath` 后再写配置。用户 `review-20261118-01` 的旧 `config.json` 原样可用。旧版在独立目录按相对路径复现出同一 `GBRAIN_HOME must not contain '..'` 失败；修复后相对路径 `prepare→ingest→query→read`、旧绝对含 `..` 配置、正常绝对路径均通过。用户目录保留失败记录 `b5eb9f0f…`（`pending_review`，`recover` 退出 6），新请求 `d35e8f7f…` 为 `indexed`，slug `dev58/7e27e2c8…10c1b5`，查询命中并打开锚点与 PNG。新增 4 项路径边界测试并纳入 `run-trial.sh`。
+  - 调用者相对输入修正（`edde6ce`）：适配器在 CLI 进程目录解析相对 `--input`，`run_conversion` 在切换到 scope 数据目录前再次兜底归一。旧版从 `second-brain` 执行 `--input ../.dev58-relinput-old/samples/structured.epub` 时，转换子进程按数据目录重解析，报输入不存在并留下 `pending_review`（请求 `152e44db…`，作业 `7b2fea8d…`）。修复后在全新空索引目录 `.dev58-relinput-new` 用同一相对命令首次导入得到 `indexed`（请求 `23e62e90…`，修订 `596f2d73…`，锚点 `sec-07e2e344…`），再次导入返回 `duplicate` 且请求与 slug 不变，`query BODY_FIRST_101` 与 `read --slug` 指向同一 slug、修订与锚点；记录中的 `input_path` 为绝对路径，`original.matches_input=true`。新增第 8 项受控试验覆盖该路径；原有用户目录和真实旧库未改动。
   - 复现入口修正（`ac2c0ea`）：干净检出脚本拒绝覆盖已有目录，哨兵文件保持不变；手册命令统一从重建目录执行；新增空状态手工入口 `prepare-manual-trial.sh`，生成固定样本与独立配置。`run-trial.sh` 在 any_to_md/GBrain 依赖、bun 或 `unshare` 缺失时退出 1，并按日志核对每轮执行 7 项、无跳过。从 `second-brain-ac2c0ea.bundle` 空目录克隆并重建后复跑：`BASELINE: PASS`、`verify-baseline` 0、两次试验 7/7、坏依赖退出 1、手工导入命中并打开锚点与 121 字节 PNG（64×32）。
 - 阻塞：无。薄适配以本地 CLI 交付；生产服务入口与真实认证层待后续批次。
-- 提交 / 推送：主项目提交 `ad30566`（子模块基线）、`174d85b`（证据与限制）、`abc49ee`（干净检出）、`a51a945`（薄适配）、`ac2c0ea`（复现入口修正）与 `8deacea`（路径归一）；可下载 Git bundle `second-brain-8deacea.bundle`，七个上游按 gitlink 从原地址取得。any_to_md 文档在本独立检出提交，结果见会话回报。
+- 提交 / 推送：主项目提交 `ad30566`（子模块基线）、`174d85b`（证据与限制）、`abc49ee`（干净检出）、`a51a945`（薄适配）、`ac2c0ea`（复现入口修正）、`8deacea`（路径归一）与 `edde6ce`（调用者相对输入）；可下载 Git bundle `second-brain-edde6ce.bundle`，七个上游按 gitlink 从原地址取得。any_to_md 文档在本独立检出提交，结果见会话回报。
 
 ### EX-12 历史（未复核）
 
